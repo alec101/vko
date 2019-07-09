@@ -1,4 +1,4 @@
-#include "vkObject.h"
+#include "vko/include/vkObject.h"
 // dynamic library link
 #ifdef OS_WIN
 #include <Windows.h>
@@ -33,6 +33,11 @@
 
 
 
+VkoFuncs::VkoFuncs() {
+  uint8_t *p= (uint8_t *)this;
+  for(uint32_t a= 0; a< sizeof(VkoFuncs); a++, p++)
+    *p= 0;
+}
 
 
 
@@ -41,7 +46,46 @@
 // FUNCTIONS LINKING //
 ///=================///
 
-// this is called by osi constructor, imediatly linking to the library and getting global-critical functions
+void vkObject::_linkLib() {
+  #ifdef VK_VERSION_1_0
+  // link to Vulkan library
+  if(_vulkanLib== null) {
+    #if defined(OS_WIN)
+    _vulkanLib= LoadLibrary(str8("vulkan-1.dll"));
+    #elif defined(OS_LINUX) || defined(OS_MAC)
+
+    
+      and ofc, libvulkan.so is not the easily advetised link to vulkan
+
+        vvv
+        ye but if no driver instals it, then the app will HAVE to come with it
+        therefore, i just get that file and that's that!
+        so libvulkan.so will be required to be on the executable path dir
+        ^^^
+
+        ye, so if libvulkan.so is required to go with the application, then why not link statically, just incorporate it in the executable
+        probly it's the best way to go imho
+        grab the vulkan1.1 library, link it with the program.
+
+        DO NOT DEL THIS TEXT, COMMENT IT, UNTIL IT'S FULLY STATICALLY LINKED IN
+
+
+    _osiVulkanLib= dlopen("libvulkan.so.1.1.92.osi", RTLD_NOW);
+
+
+
+    #endif
+  }
+
+  #endif /// vulkan 1,0
+
+
+
+  if(_vulkanLib== null) { errorText= "Couldn't open vulkan library"; return; }
+}
+
+/*
+// this is called by vko constructor, imediatly linking to the library and getting global-critical functions
 void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
   bool chatty= true;
   #ifdef VK_VERSION_1_0
@@ -53,9 +97,6 @@ void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
 
     
       and ofc, libvulkan.so is not the easily advetised link to vulkan
-  it's a total mess and crap', it seems that lunar crap is totally required
-  and until i figure if i just get that .so and it might work... who the heck knows
-  nvidia don't install no vulkan driver it seems'
 
         vvv
         ye but if no driver instals it, then the app will HAVE to come with it
@@ -78,7 +119,7 @@ void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
   }
 
 
-  if(_vulkanLib== null) { if(chatty) printf("couldn't open vulkan library\n"); return; }
+  if(_vulkanLib== null) { errorText= "Couldn't open vulkan library"; return; }
 
   // instance/global function grabber
   in_f->GetInstanceProcAddr= null;
@@ -99,10 +140,11 @@ void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
   #ifdef VK_VERSION_1_1   // vulkan 1.1
   VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceVersion);
   #endif
-
+  
   // installed api version on the system, instance level
   if(in_f->CreateInstance) {                             // if not even vkCreateInstance is avaible, the api version will stay 0.0.0
     if(!in_f->EnumerateInstanceVersion)                  // if EnumerateInstanceVersion is not on the system, it's vulkan 1.0
+      info.installedVulkanVersion= VK_MAKE_VERSION(1, 0, 0);
       osi.vkApiVersion= VK_MAKE_VERSION(1, 0, 0);
     else
       in_f->EnumerateInstanceVersion(&osi.vkApiVersion); // grab the vulkan version
@@ -111,8 +153,45 @@ void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
   if(chatty)
     printf("Installed Vulkan API ver[%u.%u.%u]\n", VK_VERSION_MAJOR(osi.vkApiVersion), VK_VERSION_MINOR(osi.vkApiVersion), VK_VERSION_PATCH(osi.vkApiVersion));
 }
+*/
 
 
+
+
+void vkObject::_linkCriticalFuncs(VkoFuncs *in_f) {
+  /// abort if already linked
+  if(in_f->critInit)
+    return;
+
+  #ifdef VK_VERSION_1_0
+  // instance/global function grabber
+  in_f->GetInstanceProcAddr= null;                      // vulkan 1.0
+  #if defined(OS_WIN)
+  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)GetProcAddress((HMODULE)_vulkanLib, "vkGetInstanceProcAddr");
+  #elif defined(OS_LINUX) || defined(OS_MAC)
+  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)dlsym(_vulkanLib, "vkGetInstanceProcAddr");
+  #endif
+  if(in_f->GetInstanceProcAddr== null) { errorText= "could not link critical function GetInstanceProcAddr"; return; }
+
+  // global functions that will work without a created instance
+  VKO_LINK_INSTANCE_FUNC(null, CreateInstance);
+  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceExtensionProperties);
+  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceLayerProperties);
+  #endif /// vulkan 1.0
+
+  #ifdef VK_VERSION_1_1   // vulkan 1.1
+  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceVersion);
+  #endif
+  
+  // installed api version on the system, instance level
+  if(in_f->CreateInstance) {                             // if not even vkCreateInstance is avaible, the api version will stay 0.0.0
+    if(in_f->EnumerateInstanceVersion== null)                  // if EnumerateInstanceVersion is not on the system, it's vulkan 1.0
+      info.apiVersion= VK_MAKE_VERSION(1, 0, 0);
+    else
+      in_f->EnumerateInstanceVersion(&info.apiVersion); // grab the vulkan version
+  }
+  in_f->critInit= true;
+}
 
 
 
@@ -120,6 +199,10 @@ void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
 
 
 void vkObject::_linkInstanceFuncs(VkoFuncs *in_f, VkInstance in_i) {
+  /// abort if already linked
+  if(in_f->instInit)
+    return;
+
   #ifdef VK_VERSION_1_0
   VKO_LINK_INSTANCE_FUNC(in_i, DestroyInstance);
   VKO_LINK_INSTANCE_FUNC(in_i, EnumeratePhysicalDevices);
@@ -352,6 +435,8 @@ void vkObject::_linkInstanceFuncs(VkoFuncs *in_f, VkInstance in_i) {
   #ifdef VK_GGP_stream_descriptor_surface
   VKO_LINK_INSTANCE_FUNC(in_i, CreateStreamDescriptorSurfaceGGP);
   #endif
+
+  in_f->instInit= true;
 }
 
 
@@ -362,11 +447,24 @@ void vkObject::_linkInstanceFuncs(VkoFuncs *in_f, VkInstance in_i) {
 
 // call it with device=null and the funcs will be linked with the instance (more driver overhead, the global funcs work with this)
 void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) {
-  
+  /// abort if already linked
+  if(in_f->devInit)
+    return;
+
+  errorText= null;
+
   #ifdef VK_VERSION_1_0
-  in_f->GetDeviceProcAddr= (PFN_vkGetDeviceProcAddr)vk.GetDeviceProcAddr(in_d, "vkGetDeviceProcAddr");
-  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)vk.GetInstanceProcAddr(osi.vkInstance, "vkGetInstanceProcAddr");
-  if(in_f->GetDeviceProcAddr== null) { error.detail("Could not aquire vkGetDeviceProcAddr. aborting", __FUNCTION__); return; }
+
+  // get the instance-level GetDeviceProcAddr
+  in_f->GetDeviceProcAddr= (PFN_vkGetDeviceProcAddr)in_f->GetInstanceProcAddr(instance, "vkGetDeviceProcAddr");
+  if(in_f->GetDeviceProcAddr== null) { errorText= "Could not aquire instance-level vkGetDeviceProcAddr. aborting"; return; }
+
+  // get the device-level GetDeviceProcAddr - IS THIS RIGHT? PROBLY IT'S THE SAME THING BUT, WHO THE HECK KNOWS
+  if(in_d) {
+    in_f->GetDeviceProcAddr= (PFN_vkGetDeviceProcAddr)in_f->GetDeviceProcAddr(in_d, "vkGetDeviceProcAddr");
+    if(in_f->GetDeviceProcAddr== null) { errorText= "Could not aquire device-level vkGetDeviceProcAddr. aborting"; return; }
+  }
+  
 
   VKO_LINK_DEVICE_FUNC(DestroyDevice);
   VKO_LINK_DEVICE_FUNC(GetDeviceQueue);
@@ -791,7 +889,7 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(GetDeviceGroupSurfacePresentModes2EXT);
   #endif
 
-
+  in_f->devInit= true;
 }
 
 

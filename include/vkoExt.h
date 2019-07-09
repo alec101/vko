@@ -224,6 +224,8 @@ struct VkoExtensions {
 
   private:
   void _createExtStr(int8_t type, char ***out_stringArray, uint32_t *out_nrExtensions);
+  vkObject _vko;
+  friend class vkObject;
 };
 
 

@@ -21,10 +21,19 @@
 
 
 struct VkoFuncs {
+  bool critInit, instInit, devInit;
+  VkoFuncs();
+
+  // critical funcs, avaible from start - at least these 5 will be declared no matter what
+  VKO_FUNC(GetInstanceProcAddr);                      // vulkan 1.0
+  VKO_FUNC(CreateInstance);                           // vulkan 1.0
+  VKO_FUNC(EnumerateInstanceExtensionProperties);     // vulkan 1.0
+  VKO_FUNC(EnumerateInstanceLayerProperties);         // vulkan 1.0
+  VKO_FUNC(EnumerateInstanceVersion);                 // vulkan 1.1
 
   // VULKAN 1.0 ========================================================================
   #ifdef VK_VERSION_1_0
-  VKO_FUNC(CreateInstance);                          // 1.0 critical func, avaible from start
+  //VKO_FUNC(CreateInstance);                          // 1.0 critical func, avaible from start
   VKO_FUNC(DestroyInstance);
   VKO_FUNC(EnumeratePhysicalDevices);
   VKO_FUNC(GetPhysicalDeviceFeatures);
@@ -33,13 +42,13 @@ struct VkoFuncs {
   VKO_FUNC(GetPhysicalDeviceProperties);
   VKO_FUNC(GetPhysicalDeviceQueueFamilyProperties);
   VKO_FUNC(GetPhysicalDeviceMemoryProperties);
-  VKO_FUNC(GetInstanceProcAddr);
+  //VKO_FUNC(GetInstanceProcAddr);                       // 1.0 critical func, avaible from start
   VKO_FUNC(GetDeviceProcAddr);
   VKO_FUNC(CreateDevice);
   VKO_FUNC(DestroyDevice);
-  VKO_FUNC(EnumerateInstanceExtensionProperties);    // 1.0 critical func, avaible from start
+  //VKO_FUNC(EnumerateInstanceExtensionProperties);    // 1.0 critical func, avaible from start
   VKO_FUNC(EnumerateDeviceExtensionProperties);      
-  VKO_FUNC(EnumerateInstanceLayerProperties);        // 1.0 critical func, avaible from start
+  //VKO_FUNC(EnumerateInstanceLayerProperties);        // 1.0 critical func, avaible from start
   VKO_FUNC(EnumerateDeviceLayerProperties);
   VKO_FUNC(GetDeviceQueue);
   VKO_FUNC(QueueSubmit);
@@ -165,7 +174,7 @@ struct VkoFuncs {
 
   // VULKAN 1.1 ========================================================================
   #ifdef VK_VERSION_1_1
-  VKO_FUNC(EnumerateInstanceVersion);                // 1.1 critical func, avaible from start
+  //VKO_FUNC(EnumerateInstanceVersion);                // 1.1 critical func, avaible from start
   VKO_FUNC(BindBufferMemory2);
   VKO_FUNC(BindImageMemory2);
   VKO_FUNC(GetDeviceGroupPeerMemoryFeatures);
@@ -651,6 +660,24 @@ struct VkoFuncs {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+///============///
+// GLOBAL funcs //
+///============///
+
+
+#ifdef VKO_USE_GLOBAL_FUNCS
 // VULKAN 1.0 ========================================================================
 #ifdef VK_VERSION_1_0
 inline VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkInstance *pInstance) {
@@ -1417,6 +1444,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkGetRandROutputDisplayEXT(VkPhysicalDevice physi
 #endif
 
 
+#endif // VKO_USE_GLOBAL_FUNCS
 
 
 

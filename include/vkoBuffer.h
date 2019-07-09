@@ -1,10 +1,6 @@
 #pragma once
 
 
-
-
-
-
 class VkoBuffer;
 
 class VkoBufferManager {
@@ -42,16 +38,16 @@ public:
   VkBuffer buffer;
   inline operator VkBuffer() { return buffer; }
   VkMemoryRequirements memRequirements;           // populated after build
-  uint32 offset;                                  // memory offset, it's advised to manually populate this, and use it when allocating memory
+  uint32_t offset;                                  // memory offset, it's advised to manually populate this, and use it when allocating memory
 
   // settings - set all these before building
 
-  void setSize(uint32 in_bytes);                  // [def:0] size, in bytes of the buffer
+  void setSize(uint32_t in_bytes);                  // [def:0] size, in bytes of the buffer
   void setUsage(VkBufferUsageFlagBits in_usage);  // [def:VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT] https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap11.html#VkBufferUsageFlagBits
   void setFlags(VkBufferCreateFlagBits in_flags); // [def:0] https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap11.html#VkBufferCreateFlagBits
   void setSharingMode(VkSharingMode in_sharing);  // [def:VK_SHARING_MODE_EXCLUSIVE] https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap11.html#VkSharingMode
-  void addFamily(uint32 in_family); // when sharing mode is CONCURRENT, all queueFamilies that can access this buffer must be added.
-  void setFamilies(uint32 in_nrFamilies, const uint32 *in_families); // same as addFamily, but sets all families in one go
+  void addFamily(uint32_t in_family); // when sharing mode is CONCURRENT, all queueFamilies that can access this buffer must be added.
+  void setFamilies(uint32_t in_nrFamilies, const uint32_t *in_families); // same as addFamily, but sets all families in one go
 
 
   // build / destroy
@@ -62,7 +58,7 @@ public:
 
   
   inline bool isMemoryCompatible(const VkoMemory *in_memory) { return (memRequirements.memoryTypeBits& (1 << in_memory->typeIndex)); }
-  inline bool isMemoryCompatibleIndex(uint32 in_index) { return (memRequirements.memoryTypeBits& (1<< in_index)); }
+  inline bool isMemoryCompatibleIndex(uint32_t in_index) { return (memRequirements.memoryTypeBits& (1<< in_index)); }
 
   // memory asignment IF NEEDED?????/ bindBufferMemory seems straightforward, dono if i'd need another func
 

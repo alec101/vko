@@ -1,4 +1,4 @@
-#include "vkObject.h"
+#include "vko/include/vkObject.h"
 
 
 
@@ -62,7 +62,7 @@ VkoBuffer::~VkoBuffer() {
 void VkoBuffer::destroy() {
   if(_parent->_parent->device== null) return;
   if(buffer) {
-    _parent->_parent->vk->DestroyBuffer(_parent->_parent->device, buffer, _parent->_parent->memCallback);
+    _parent->_parent->DestroyBuffer(_parent->_parent->device, buffer, _parent->_parent->memCallback);
     buffer= null;
   }
 }
@@ -70,7 +70,7 @@ void VkoBuffer::destroy() {
 
 // settings
 
-void VkoBuffer::setSize(uint32 in_size) {
+void VkoBuffer::setSize(uint32_t in_size) {
   _createInfo.size= in_size;
 }
 
@@ -102,7 +102,6 @@ void VkoBuffer::addFamily(uint32 in_f) {
   _createInfo.pQueueFamilyIndices= new uint32[_createInfo.queueFamilyIndexCount];
 
   if(_createInfo.pQueueFamilyIndices== null) {
-    error.alloc(__FUNCTION__);
     /// revert
     _createInfo.queueFamilyIndexCount= oldNr;
     _createInfo.pQueueFamilyIndices= oldFamilies;
@@ -132,7 +131,6 @@ void VkoBuffer::setFamilies(uint32 in_nrFamilies, const uint32 *in_families) {
   }
   
   _createInfo.pQueueFamilyIndices= new uint32[in_nrFamilies];
-  if(_createInfo.pQueueFamilyIndices== null) { error.alloc(__FUNCTION__); return; }
   _createInfo.queueFamilyIndexCount= in_nrFamilies;
   for(uint a= 0; a< in_nrFamilies; a++)
     ((uint32 *)_createInfo.pQueueFamilyIndices)[a]= in_families[a];
@@ -152,7 +150,7 @@ bool VkoBuffer::build() {
   bool ret= false;
 
 
-  VkResult res= _parent->_parent->vk->CreateBuffer(*_parent->_parent, &_createInfo, *_parent->_parent, &buffer);
+  VkResult res= _parent->_parent->CreateBuffer(*_parent->_parent, &_createInfo, *_parent->_parent, &buffer);
 
   if(res!= VK_SUCCESS) {
     error.detail("Vulkan buffer create failed.", __FUNCTION__);
@@ -160,7 +158,12 @@ bool VkoBuffer::build() {
     goto Exit;
   }
 
-  _parent->_parent->vk->GetBufferMemoryRequirements(*_parent->_parent, *this, &memRequirements);
+  _parent->_parent->GetBufferMemoryRequirements(*_parent->_parent, *this, &memRequirements);
+
+  continue all this.
+    so basically errors are split into errorText and result (for vulkan result)
+    everything should be easy from here on
+
 
 
   ret= true; // success

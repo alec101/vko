@@ -1,6 +1,8 @@
-#include "vkObject.h"
+#include "vko/include/vkObject.h"
 
-
+#ifdef VKO_BE_CHATTY
+#include <stdio.h>
+#endif
 
 
 
@@ -12,40 +14,44 @@ extern _osiVkExtensionsRawClass _osiVkExtensionsRaw;
 //osiVkExt *_osiVkExtensionsRaw= _osiVkExtensionsRawC._ext;
 
 bool VkoExtensions::populateAvailabilityInstance() {
-  this->instance.vk_EXT_acquire_xlib_display.enable=1;
-  
-
-
   uint32_t n;
   VkExtensionProperties *ext= null;
   bool ret= true;
+  #ifdef VKO_BE_CHATTY
   bool chatty= true;
-  
-  if(vk.EnumerateInstanceExtensionProperties== null) return false;
+  #endif
+
+  if(_vko->EnumerateInstanceExtensionProperties== null) return false;
 
   /// get the number of instance extensions avaible
-  if(vk.EnumerateInstanceExtensionProperties(null, &n, null)!= VK_SUCCESS)
+  if(_vko->EnumerateInstanceExtensionProperties(null, &n, null)!= VK_SUCCESS)
     return false;
   if(n== 0) return false;
 
   /// grab all extensions
   ext= new VkExtensionProperties[n];
-  if(vk.EnumerateInstanceExtensionProperties(null, &n, ext)!= VK_SUCCESS) { ret= false; goto Exit; }
+  if(_vko->EnumerateInstanceExtensionProperties(null, &n, ext)!= VK_SUCCESS) { ret= false; goto Exit; }
 
   // populate the availability of known extensions
   
+  #ifdef VKO_BE_CHATTY
   if(chatty) printf("\npopulating instance extensions...\n");
+  #endif
 
   for(uint32 a= 0; a< n; a++) {
     VkoExt *e= getInstanceExt(ext[a].extensionName);
     if(e) {
       e->isAvaible= true;
+      #ifdef VKO_BE_CHATTY
       if(chatty) {
         if(e->type!= 0) printf("Extension [%s] should be instance extension but it's a device extension\n", e->name);
         else            printf("Extension [%s]\n", e->name);
       }
+      #endif
     } else {
+      #ifdef VKO_BE_CHATTY
       if(chatty) printf("Unknown Vulkan instance extension [%s]\n", ext[a].extensionName);
+      #endif
     }
   }
 
@@ -58,21 +64,24 @@ Exit:
 
 bool VkoExtensions::populateAvailabilityDevice(VkPhysicalDevice in_gpu) {
   if(in_gpu== null) return false;
-  if(vk.EnumerateDeviceExtensionProperties== null) return false;
+  if(_vko->EnumerateDeviceExtensionProperties== null) return false;
 
+  #ifdef VKO_BE_CHATTY
   bool chatty= true;
+  #endif
+
   uint32_t n;
   VkExtensionProperties *ext= null;
   bool ret= true;
   
   /// get the number of instance extensions avaible
-  if(vk.EnumerateDeviceExtensionProperties(in_gpu, null, &n, null)!= VK_SUCCESS)
+  if(_vko.EnumerateDeviceExtensionProperties(in_gpu, null, &n, null)!= VK_SUCCESS)
     return false;
   if(n== 0) return false;
 
   /// grab all extensions
   ext= new VkExtensionProperties[n];
-  if(vk.EnumerateDeviceExtensionProperties(in_gpu, null, &n, ext)!= VK_SUCCESS) { ret= false; goto Exit; }
+  if(_vko->EnumerateDeviceExtensionProperties(in_gpu, null, &n, ext)!= VK_SUCCESS) { ret= false; goto Exit; }
 
   // populate the availability of known extensions
 
@@ -82,12 +91,14 @@ bool VkoExtensions::populateAvailabilityDevice(VkPhysicalDevice in_gpu) {
     VkoExt *e= getDeviceExt(ext[a].extensionName);
     if(e) {
       e->isAvaible= true;
+      #ifdef VKO_BE_CHATTY
       if(chatty) {
         if(e->type!= 1) printf("Extension [%s] should be device extension but it's instance extension\n", e->name);
         else            printf("Extension [%s]\n", e->name);
       }
+      #endif
     } else {
-      #ifdef VKO_USE_STDLIB
+      #ifdef VKO_BE_CHATTY
       if(chatty) printf("Unknown Vulkan device extension [%s]\n", ext[a].extensionName);
       #endif
     }

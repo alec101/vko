@@ -3,17 +3,21 @@
 //#include "ix/ix.h"
 
 
-
-
 #include "util/typeShortcuts.h"
+#include "../include/vkObject.h"
 
 
 
-
-
-
-#include "ix/vko/vkObject.h"
 //#include "ix/GFX/ixvk.h"
+/*
+  alot of funcs to fix
+
+    osi should have the remove all opengl traces
+
+    and the option to use vko
+
+    using vko could populate display with further data to make matches.
+/*
 
 
   /*
@@ -78,28 +82,72 @@
 
 
 
-VkoFuncs *vkoGlb= null;
+//VkoFuncs *vkoGlb= null;
+
+VkInstance vkObject::instance= nullptr;
+
+VkInstance            vkObject::VkoConfiguration::customInstance= nullptr;
+VkInstanceCreateInfo *vkObject::VkoConfiguration::instanceInfo= nullptr;
+VkApplicationInfo     vkObject::VkoConfiguration::appInfo= { VK_STRUCTURE_TYPE_APPLICATION_INFO, null, 0, null, 0, 0 };
+
+uint32_t           vkObject::VkoInfo::nrPhysicalDevices= 0;
+VkoPhysicalDevice *vkObject::VkoInfo::physicalDevice=    nullptr;
 
 
-
-vkObject::vkObject() /*: parent(in_parent) */ {
+vkObject::vkObject(): VkoFuncs() {
   //vkr= null;
   //vk= null;
 
+  //vkObject::instance= nullptr;
+
   memCallback= null;
   device= null;
+
+  nrQueues= 0;
+  queue= null;              // INIT 1 - NOT DEALOCATED <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
   memory._parent= this;
   buffers._parent= this;
 
 
   cfg.parent= this;
+  cfg.extensions._vko= this;
+  #ifdef VKO_USE_GLOBAL_FUNCS
   glb= &instanceLinked;
+  #endif
+
+  //cfg.customInstance= null;
+
+  // vulkan app info
+  /*
+  cfg.appInfo.sType= VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  cfg.appInfo.pNext= null;
+  cfg.appInfo.apiVersion= 0;
+  cfg.appInfo.pApplicationName= null;
+  cfg.appInfo.applicationVersion= 0;
+  cfg.appInfo.pEngineName= null;
+  cfg.appInfo.engineVersion= 0;
+  */
+
+  info.apiVersion= 0;
+
+
+  _linkLib();
+  _linkCriticalFuncs(this);
+  cfg.extensions.populateAvailabilityInstance();
+  if(instance) {
+    _linkInstanceFuncs(this, instance);
+    _populatePhysicalDeviceInfo();
+  }
+  
+  #ifdef VKO_USE_GLOBAL_FUNCS
+  _linkCriticalFuncs(&instanceLinked);
+  #endif
 }
 
 
 
-
+/*
 void vkObject::init(const osiRenderer *in_r) {
   if(in_r->type!= 1) return;
   vkr= (osiVkRenderer *)in_r;
@@ -108,10 +156,10 @@ void vkObject::init(const osiRenderer *in_r) {
   device= vkr->vkDevice;
   memory.init();
 }
+*/
 
 
-
-void vkObject::close() {
+void vkObject::destroy() {
   if(device== null) return;
 
   // SHADERS >>> parent->shaders.delData();
@@ -137,10 +185,6 @@ void vkObject::close() {
 
 VkoSwapchain *vkObject::addSwapchain() {
   VkoSwapchain *p= new VkoSwapchain;
-  if(p== null) { error.alloc(__FUNCTION__); return null; }
-
-
-
 
   p->_parent= this;
 
@@ -158,7 +202,6 @@ void vkObject::delSwapchains() {
 
 VkoRenderPass *vkObject::addRenderPass() {
   VkoRenderPass *p= new VkoRenderPass;
-  if(p== null) { error.alloc(__FUNCTION__); return null; }
 
   p->_parent= this;
 
@@ -176,7 +219,6 @@ void vkObject::delRenderPasses() {
 
 VkoFramebuffer *vkObject::addFramebuffer() {
   VkoFramebuffer *p= new VkoFramebuffer;
-  if(p== null) { error.alloc(__FUNCTION__); return null; }
 
   p->_parent= this;
 
@@ -196,7 +238,6 @@ void vkObject::delFramebuffers() {
 
 VkoCommandPool *vkObject::addCommandPool() {
   VkoCommandPool *p= new VkoCommandPool;
-  if(p== null) { error.alloc(__FUNCTION__); return null; }
 
   p->_parent= this;
 
@@ -213,7 +254,6 @@ void vkObject::delCommandPools() {
 
 VkoDescriptorManager *vkObject::addDescriptorManager() {
   VkoDescriptorManager *p= new VkoDescriptorManager;
-  if(p== null) { error.alloc(__FUNCTION__); return null; }
 
   p->_parent= this;
 
@@ -258,24 +298,95 @@ VkoSemaphore *vkObject::addSemaphore() {
 
 
 
+bool vkObject::_createInstance() {
+  clearError();
 
-
-
-bool _createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_t *out_nrQueues, VkoQueue **out_osiQueues) {
-  if(osi.vkInstance== null) { error.simple("osiVkRenderer::_createDevice(): osi.vkInstance is null. no instance created? aborting."); return false; }
   bool ret= false;
-  //bool alocated= false;
+  bool allocated;
+  VkInstanceCreateInfo instInfo;
+  VkInstanceCreateInfo *iiToUse;
+
+  // set the requested vulkan version
+  if(cfg.appInfo.apiVersion== 0)
+    cfg.appInfo.apiVersion= VK_MAKE_VERSION(cfg.versionRequest.major, cfg.versionRequest.minor, cfg.versionRequest.patch);
+
+  // create the instance info here
+  if(cfg.instanceInfo== nullptr) {
+
+    instInfo.sType= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instInfo.pNext= null;
+    instInfo.flags= 0;
+    instInfo.pApplicationInfo= &cfg.appInfo;
+
+    /// enable requested layers
+    instInfo.enabledLayerCount= _validationLayers.nrNodes;
+    instInfo.ppEnabledLayerNames= null;
+
+    if(_validationLayers.nrNodes) {
+      instInfo.ppEnabledLayerNames= new const char *[_validationLayers.nrNodes];
+      uint a= 0;
+      for(_ValidationLayer *p= (_ValidationLayer *)_validationLayers.first; p; p= (_ValidationLayer *)p->next, a++)
+        ((char **)instInfo.ppEnabledLayerNames)[a]= p->name.d;
+    }
+
+    /// populate extension list
+    instInfo.enabledExtensionCount= 0;
+    instInfo.ppEnabledExtensionNames= null;
+    cfg.extensions.createInstanceExtensionsStringArray((char ***)&instInfo.ppEnabledExtensionNames, &instInfo.enabledExtensionCount);
+
+    iiToUse= &instInfo;
+    allocated= true;
+
+  // use provided custom instance info
+  } else {
+    iiToUse= cfg.instanceInfo;
+    allocated= false;
+  }
+
+  // create the instance
+  result= CreateInstance(iiToUse, *this, &instance);
+  if(result!= VK_SUCCESS) {
+    errorText= "vkObject::_createInstance(): vkCreateInstance failed";
+    goto Exit;
+  }
+
+  ret= true;
+
+Exit:
+  if(allocated) {
+    if(instInfo.ppEnabledExtensionNames) {
+      for(uint32 a= 0; a< instInfo.enabledExtensionCount; a++)
+        if(instInfo.ppEnabledExtensionNames[a])
+          delete[] instInfo.ppEnabledExtensionNames[a];
+      delete[] instInfo.ppEnabledExtensionNames;
+    }
+
+    if(instInfo.ppEnabledLayerNames)
+      delete[] instInfo.ppEnabledLayerNames;
+  }
+
+  return ret;
+}
+
+
+
+
+
+
+bool vkObject::_createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_t *out_nrQueues, VkoQueue **out_osiQueues) {
+  if(instance== null) { errorText= "vkObject::_createDevice(): vkInstance is null. no instance created? aborting."; return false; }
+  bool ret= false;
+  errorText= nullptr;
+
   VkDeviceCreateInfo dci;
   VkDeviceCreateInfo *dciToUse;
   VkPhysicalDeviceFeatures pdf;
   VkPhysicalDeviceFeatures *pdfToUse;
-  //VkDeviceQueueCreateInfo qci;
-  //float queuePriority= 1.0f;
-
-  osi.settings.vulkan.extensions.populateAvailabilityDevice(in_GPU);
+ 
+  cfg.extensions.populateAvailabilityDevice(physicalDevice);
 
   // custom deviceInfo would be best, if not osi will create an automatic one enabling everything
-  if(osi.settings.vulkan.deviceInfo== null) {
+  if(cfg.deviceInfo== null) {
     dci.sType= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     dci.pNext= NULL;
     dci.flags= 0;
@@ -283,11 +394,11 @@ bool _createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_t *out_nrQ
     dci.ppEnabledLayerNames= null;
   
     // enable custom GPU features - THIS IS A MUST, enabling all can create unnecesary lag
-    if(osi.settings.vulkan.gpuFeatures)
-      pdfToUse= osi.settings.vulkan.gpuFeatures;
+    if(cfg.gpuFeatures)
+      pdfToUse= cfg.gpuFeatures;
     else {
       // enable all GPU features
-      ::vk.GetPhysicalDeviceFeatures(in_GPU, &pdf);
+      GetPhysicalDeviceFeatures(in_GPU, &pdf);
       pdfToUse= &pdf;
     }
     dci.pEnabledFeatures= pdfToUse;
@@ -296,17 +407,17 @@ bool _createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_t *out_nrQ
     if(!_getRequestedQueues(in_GPU, &dci.queueCreateInfoCount, (VkDeviceQueueCreateInfo **)&dci.pQueueCreateInfos, out_nrQueues, out_osiQueues))
       return false;
     
-
     /// device extensions
-    osi.settings.vulkan.extensions.createDeviceExtensionsStringArray((char ***)&dci.ppEnabledExtensionNames, &dci.enabledExtensionCount);
+    cfg.extensions.createDeviceExtensionsStringArray((char ***)&dci.ppEnabledExtensionNames, &dci.enabledExtensionCount);
 
     dciToUse= &dci;
   } else
-    dciToUse= osi.settings.vulkan.deviceInfo;
+    dciToUse= cfg.deviceInfo;
 
   // create the device
-  if(::vk.CreateDevice(in_GPU, dciToUse, osi.settings.vulkan.memAllocCallback, out_dev)!= VK_SUCCESS) {
-    error.detail("vkCreateDevice failed", __FUNCTION__, __LINE__);
+  result= CreateDevice(in_GPU, dciToUse, memCallback, out_dev);
+  if(result!= VK_SUCCESS) {
+    errorText= "vkObject::_createDevice(): vkCreateDevice failed";
     *out_nrQueues= 0;
     delete[] *out_osiQueues;
   } else ret= true;
@@ -322,9 +433,14 @@ bool _createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_t *out_nrQ
 
 
 
-bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDeviceQueueCreateInfo **out_structs, uint32_t *out_nrQueues, osiVkQueue **out_osiQueues) {
+bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDeviceQueueCreateInfo **out_structs, uint32_t *out_nrQueues, VkoQueue **out_osiQueues) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#devsandqueues-queues
+  clearError();
+
+  #ifdef VKO_BE_CHATTY
   bool chatty= true;
+  #endif
+
   bool found;
   uint32 n;
 
@@ -341,16 +457,15 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
   *out_osiQueues= null;
   
   /// get the number of queue families
-  ::vk.GetPhysicalDeviceQueueFamilyProperties(in_GPU, &n, null);
-  if(n== 0) { error.detail("Vulkan returns no queues", __FUNCTION__, __LINE__); goto Error; }
-  //if(chatty) printf("VK returned %u queues for GPU\n", n);
+  GetPhysicalDeviceQueueFamilyProperties(in_GPU, &n, null);
+  if(n== 0) { errorText= "vkObject::_getRequestedQueues(): Vulkan returns no queues"; goto Error; }
 
   qfp= new VkQueueFamilyProperties[n];
-  if(qfp== null) { error.detail("mem alloc error", __FUNCTION__, __LINE__); goto Error; }
   
   /// get all queue families in an array
-  ::vk.GetPhysicalDeviceQueueFamilyProperties(in_GPU, &n, qfp);
+  GetPhysicalDeviceQueueFamilyProperties(in_GPU, &n, qfp);
 
+  #ifdef VKO_BE_CHATTY
   if(chatty) {
     printf("Found %u Vulkan Queue families\n", n);
     for(uint a= 0; a< n; a++) {
@@ -370,28 +485,27 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
       printf("\n");
     }
   }
+  #endif
 
   /// create requested struct. it will count how many queues are requested from each queue family, if any (requested from osi.settings)
   requested= new uint32[n];
-  if(requested== null) { error.detail("mem alloc error", __FUNCTION__, __LINE__); goto Error; }
   
   for(uint a= 0; a< n; a++)
     requested[a]= 0;
 
 
-
   // universal queues (compute/graphics/transfer)
-  if(osi.settings.vulkan.requestUniversalQueues> 0) {
+  if(cfg.queueRequestUniversal> 0) {
 
     for(uint a= 0; a< n; a++)
       if((qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT) && (qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT)) {
         /// check for extra requested flags
-        if(osi.settings.vulkan.extraFlagBits)
-          if(!(qfp[a].queueFlags& osi.settings.vulkan.extraFlagBits))
+        if(cfg.queueExtraFlagBits)
+          if(!(qfp[a].queueFlags& cfg.queueExtraFlagBits))
             continue;
 
         // found
-        requested[a]+= osi.settings.vulkan.requestUniversalQueues;
+        requested[a]+= cfg.queueRequestUniversal;
         if(requested[a]> qfp[a].queueCount)
           requested[a]= qfp[a].queueCount;
       }
@@ -400,20 +514,20 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
 
 
   // graphics queues (i think there's no way to have graphics without the others !!!!!!!)
-  if(osi.settings.vulkan.requestGraphicsQueues> 0) {
+  if(cfg.queueRequestGraphics> 0) {
 
     // search for graphics only queues (atm there's no such thing in the current drivers, but who knows)
     found= false;
     for(uint a= 0; a< n; a++)
       if((qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT) && !(qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT)) {
         /// check for extra requested flags
-        if(osi.settings.vulkan.extraFlagBits)
-          if(!(qfp[a].queueFlags& osi.settings.vulkan.extraFlagBits))
+        if(cfg.queueExtraFlagBits)
+          if(!(qfp[a].queueFlags& cfg.queueExtraFlagBits))
             continue;
 
         // found
         found= true;
-        requested[a]+= osi.settings.vulkan.requestGraphicsQueues;
+        requested[a]+= cfg.queueRequestGraphics;
         if(requested[a]> qfp[a].queueCount)
           requested[a]= qfp[a].queueCount;
       }
@@ -423,12 +537,12 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
       for(uint a= 0; a< n; a++)
         if(qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT) {
           /// check for extra requested flags
-          if(osi.settings.vulkan.extraFlagBits)
-            if(!(qfp[a].queueFlags& osi.settings.vulkan.extraFlagBits))
+          if(cfg.queueExtraFlagBits)
+            if(!(qfp[a].queueFlags& cfg.queueExtraFlagBits))
               continue;
 
           // found
-          requested[a]+= osi.settings.vulkan.requestGraphicsQueues;
+          requested[a]+= cfg.queueRequestGraphics;
           if(requested[a]> qfp[a].queueCount)
             requested[a]= qfp[a].queueCount;
         }
@@ -437,19 +551,19 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
   
   
   // compute queues
-  if(osi.settings.vulkan.requestComputeQueues> 0) {
+  if(cfg.queueRequestCompute> 0) {
     /// search for compute-only queues (AMD GPU's do have them it seems)
     found= false;
     for(uint a= 0; a< n; a++)
       if((qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT) && !(qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT)) {
         /// check for extra requested flags
-        if(osi.settings.vulkan.extraFlagBits)
-          if(!(qfp[a].queueFlags& osi.settings.vulkan.extraFlagBits))
+        if(cfg.queueRequestGraphics)
+          if(!(qfp[a].queueFlags& cfg.queueExtraFlagBits))
             continue;
 
         // found
         found= true;
-        requested[a]+= osi.settings.vulkan.requestComputeQueues;
+        requested[a]+= cfg.queueRequestCompute;
         if(requested[a]> qfp[a].queueCount)
           requested[a]= qfp[a].queueCount;
       }
@@ -459,12 +573,12 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
       for(uint a= 0; a< n; a++)
         if(qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT) {
           /// check for extra requested flags
-          if(osi.settings.vulkan.extraFlagBits)
-            if(!(qfp[a].queueFlags& osi.settings.vulkan.extraFlagBits))
+          if(cfg.queueExtraFlagBits)
+            if(!(qfp[a].queueFlags& cfg.queueExtraFlagBits))
               continue;
 
           // found
-          requested[a]+= osi.settings.vulkan.requestComputeQueues;
+          requested[a]+= cfg.queueRequestCompute;
           if(requested[a]> qfp[a].queueCount)
             requested[a]= qfp[a].queueCount;
         }
@@ -473,20 +587,20 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
 
 
   // transfer queues
-  if(osi.settings.vulkan.requestTransferQueues> 0) {
+  if(cfg.queueRequestTransfer> 0) {
     /// search for transfer-only queues first (both AMD and NVIDIA seem to have it nowadays)
     found= false;
 
     for(uint a= 0; a< n; a++)
       if((qfp[a].queueFlags& VK_QUEUE_TRANSFER_BIT) && (!(qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT)) && (!(qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT))) {
         /// check for extra requested flags
-        if(osi.settings.vulkan.extraFlagBits)
-          if(!(qfp[a].queueFlags& osi.settings.vulkan.extraFlagBits))
+        if(cfg.queueExtraFlagBits)
+          if(!(qfp[a].queueFlags& cfg.queueExtraFlagBits))
             continue;
 
         // found
         found= true;
-        requested[a]+= osi.settings.vulkan.requestTransferQueues;
+        requested[a]+= cfg.queueRequestTransfer;
         if(requested[a]> qfp[a].queueCount)
           requested[a]= qfp[a].queueCount;
       }
@@ -496,12 +610,12 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
       for(uint a= 0; a< n; a++)
         if((qfp[a].queueFlags& VK_QUEUE_TRANSFER_BIT) || (qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT)) { // graphics queues have capacity for transfer for sure, and it's not requested to put the transfer bit anymore
           /// check for extra requested flags
-          if(osi.settings.vulkan.extraFlagBits)
-            if(!(qfp[a].queueFlags& osi.settings.vulkan.extraFlagBits))
+          if(cfg.queueExtraFlagBits)
+            if(!(qfp[a].queueFlags& cfg.queueExtraFlagBits))
               continue;
 
           // found
-          requested[a]+= osi.settings.vulkan.requestTransferQueues;
+          requested[a]+= cfg.queueRequestTransfer;
           if(requested[a]> qfp[a].queueCount)
             requested[a]= qfp[a].queueCount;
         }
@@ -513,18 +627,16 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
   /// count how many queues will be created in total
   for(uint a= 0; a< n; a++)
     (*out_nrQueues)+= requested[a];
-  if(*out_nrQueues== 0) { error.detail("found zero vulkan queues that match any requested", __FUNCTION__); goto Error; }
+  if(*out_nrQueues== 0) { errorText= "Found zero vulkan queues that match any requested"; goto Error; }
 
 
   /// queue priorities array - gonna be all 1.0f
   qp= new float[*out_nrQueues];
-  if(qp== null) { error.detail("mem alloc error", __FUNCTION__, __LINE__); goto Error; }
   for(uint a= 0; a< *out_nrQueues; a++)
     qp[a]= 1.0f;
 
   /// osiQueues - the renderer stored queue data
-  *out_osiQueues= new osiVkQueue[*out_nrQueues];
-  if(*out_osiQueues== null) { error.detail("mem alloc error", __FUNCTION__, __LINE__); goto Error; }
+  *out_osiQueues= new VkoQueue[*out_nrQueues];
   
   /// count how many structs will be returned
   for(uint a= 0; a< n; a++)
@@ -533,14 +645,13 @@ bool _getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStructs, VkDev
   
   /// populate the returned structures
   *out_structs= new VkDeviceQueueCreateInfo[*out_nrStructs];
-  if(*out_structs== null) { error.detail("mem alloc error", __FUNCTION__, __LINE__); goto Error; }
 
   /// a= family, b= loop thru out_structs, c= loop thru osiQueues, d= loop thru family
   for(uint a= 0, b= 0, c= 0; a< n; a++)
     if(requested[a]> 0) {
       (*out_structs)[b].sType= VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
       (*out_structs)[b].pNext= null;
-      if(osi.settings.vulkan.extraFlagBits& VK_DEVICE_QUEUE_CREATE_PROTECTED_BIT)
+      if(cfg.queueExtraFlagBits& VK_DEVICE_QUEUE_CREATE_PROTECTED_BIT)
         (*out_structs)[b].flags= VK_DEVICE_QUEUE_CREATE_PROTECTED_BIT;
       else
         (*out_structs)[b].flags= 0;
@@ -579,24 +690,107 @@ Error:
 }
 
 
-void _populateVkQueue(osiVkRenderer *out_r) {
-  if((out_r->vk.GetDeviceQueue== null) || (out_r->nrQueues== 0)) return;
-  for(uint a= 0; a< out_r->nrQueues; a++)
-    out_r->vk.GetDeviceQueue(out_r->vkDevice, out_r->vkQueues[a].family, out_r->vkQueues[a].index, &out_r->vkQueues[a].queue);
+void vkObject::_populateVkQueue() {
+  if((GetDeviceQueue== null) || (nrQueues== 0)) return;
+  for(uint a= 0; a< nrQueues; a++)
+    GetDeviceQueue(device, queue[a].family, queue[a].index, &queue[a].queue);
 }
 
 
-
-
-
-void _addValidationLayer(const char *in_name) {
+void vkObject::_addValidationLayer(const char *in_name) {
   _ValidationLayer *p= new _ValidationLayer;
   p->name= in_name;
   _validationLayers.add(p);
 }
 
 
+void vkObject::_populatePhysicalDeviceInfo() {
+  if(info.physicalDevice) return;     // populate only once
 
+  uint32_t npd= 0;
+  VkPhysicalDevice *pd= null;
+
+  /// number of physical devices on system
+  EnumeratePhysicalDevices(instance, &npd, nullptr);
+  if(npd== 0) return;
+  info.nrPhysicalDevices= npd;
+
+  /// list with all VkPhysicalDevices
+  pd= new VkPhysicalDevice[npd];
+  EnumeratePhysicalDevices(instance, &npd, pd);
+
+  /// populate VkoPhysicalDevices
+  if(npd) {
+    info.physicalDevice= new VkoPhysicalDevice[npd];
+
+    for(uint32_t a= 0; a< npd; a++) {
+      info.physicalDevice[a].physicalDevice= pd[a];
+      GetPhysicalDeviceProperties(pd[a], &info.physicalDevice[a].prop);
+    }
+  }
+
+  if(pd) delete[] pd;
+}
+
+
+
+
+
+
+
+
+///==============///
+// BUILD instance //
+///==============///
+
+bool vkObject::buildInstance() {
+  clearError();
+
+  if(CreateInstance== nullptr) {
+    errorText= "vkObject::buildInstance(): Vulkan Critical funcs not linked (no link to the library?). Aborting";
+    return false;
+  }
+
+  // instance
+
+  if(instance== null) {
+    if(cfg.customInstance)
+      instance= cfg.customInstance;
+    else
+      if(_createInstance()== false)
+        return false;
+  }
+  
+  // aquire all instance functions
+
+  _linkInstanceFuncs(this, instance);
+  _populatePhysicalDeviceInfo();
+
+  #ifdef VKO_USE_GLOBAL_FUNCS
+  _linkInstanceFuncs(&instanceLinked, instance);
+  #endif
+}
+
+
+
+
+
+
+///============///
+// BUILD device //
+///============///
+
+bool vkObject::build() {
+  clearError();
+
+  if(!_createDevice(physicalDevice, &device, &nrQueues, &queue))
+    return false;
+
+
+  #ifdef VKO_USE_GLOBAL_FUNCS
+  _linkDeviceFuncs(&instanceLinked, instance, null);
+  #endif
+}
 
 
 
