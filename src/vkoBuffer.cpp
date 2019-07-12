@@ -7,7 +7,7 @@
 ///======================---------------------///
 
 VkoBufferManager::VkoBufferManager() {
-  _parent= null;
+  _parent= nullptr;
 }
 
 
@@ -33,9 +33,9 @@ VkoBuffer *VkoBufferManager::addBuffer() {
 ///==============------------------///
 
 
-VkoBuffer::VkoBuffer(): buffer(null), _parent(null) {
+VkoBuffer::VkoBuffer(): buffer(nullptr), _parent(nullptr) {
   _createInfo.sType= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  _createInfo.pNext= null;
+  _createInfo.pNext= nullptr;
   _createInfo.flags= 0;
 
   _createInfo.size= 0;
@@ -43,7 +43,7 @@ VkoBuffer::VkoBuffer(): buffer(null), _parent(null) {
   _createInfo.sharingMode= VK_SHARING_MODE_EXCLUSIVE;
 
   _createInfo.queueFamilyIndexCount= 0;
-  _createInfo.pQueueFamilyIndices= null;        // INIT 1
+  _createInfo.pQueueFamilyIndices= nullptr;        // INIT 1
 
   memRequirements.alignment= 0;
   memRequirements.memoryTypeBits= 0;
@@ -60,10 +60,10 @@ VkoBuffer::~VkoBuffer() {
 
 
 void VkoBuffer::destroy() {
-  if(_parent->_parent->device== null) return;
+  if(_parent->_parent->device== nullptr) return;
   if(buffer) {
     _parent->_parent->DestroyBuffer(_parent->_parent->device, buffer, _parent->_parent->memCallback);
-    buffer= null;
+    buffer= nullptr;
   }
 }
 
@@ -93,29 +93,29 @@ void VkoBuffer::setSharingMode(VkSharingMode in_sharing) {
 }
 
 
-void VkoBuffer::addFamily(uint32 in_f) {
-  uint32 oldNr= _createInfo.queueFamilyIndexCount;
-  uint32 *oldFamilies= (uint32 *)_createInfo.pQueueFamilyIndices;
+void VkoBuffer::addFamily(uint32_t in_f) {
+  uint32_t oldNr= _createInfo.queueFamilyIndexCount;
+  uint32_t *oldFamilies= (uint32_t *)_createInfo.pQueueFamilyIndices;
 
   _createInfo.queueFamilyIndexCount++;
-  _createInfo.pQueueFamilyIndices= null;
-  _createInfo.pQueueFamilyIndices= new uint32[_createInfo.queueFamilyIndexCount];
+  _createInfo.pQueueFamilyIndices= nullptr;
+  _createInfo.pQueueFamilyIndices= new uint32_t[_createInfo.queueFamilyIndexCount];
 
-  if(_createInfo.pQueueFamilyIndices== null) {
+  if(_createInfo.pQueueFamilyIndices== nullptr) {
     /// revert
     _createInfo.queueFamilyIndexCount= oldNr;
     _createInfo.pQueueFamilyIndices= oldFamilies;
-    oldFamilies= null;
+    oldFamilies= nullptr;
     goto Exit;
   }
 
   // copy old families
   if(oldNr)
-    for(uint32 a= 0; a< oldNr; a++) // ye, well, code 'analyzer' is utter crap. cannot follow simple var changes
-    //for(uint32 a= 0; a< _createInfo.queueFamilyIndexCount- 1; a++)  // this1 works with no warnings lol
-      ((uint32 *)_createInfo.pQueueFamilyIndices)[a]= oldFamilies[a];
+    for(uint32_t a= 0; a< oldNr; a++) // ye, well, code 'analyzer' is utter crap. cannot follow simple var changes
+    //for(uint32_t a= 0; a< _createInfo.queueFamilyIndexCount- 1; a++)  // this1 works with no warnings lol
+      ((uint32_t *)_createInfo.pQueueFamilyIndices)[a]= oldFamilies[a];
 
-  ((uint32 *)_createInfo.pQueueFamilyIndices)[_createInfo.queueFamilyIndexCount- 1]= in_f;
+  ((uint32_t *)_createInfo.pQueueFamilyIndices)[_createInfo.queueFamilyIndexCount- 1]= in_f;
   
 Exit:
   if(oldFamilies) delete[] oldFamilies;
@@ -124,16 +124,16 @@ Exit:
 
 
 // same as addFamily, but sets all families in one go
-void VkoBuffer::setFamilies(uint32 in_nrFamilies, const uint32 *in_families) {
+void VkoBuffer::setFamilies(uint32_t in_nrFamilies, const uint32_t *in_families) {
   if(_createInfo.pQueueFamilyIndices) {
     delete[] _createInfo.pQueueFamilyIndices;
-    _createInfo.pQueueFamilyIndices= null;
+    _createInfo.pQueueFamilyIndices= nullptr;
   }
   
-  _createInfo.pQueueFamilyIndices= new uint32[in_nrFamilies];
+  _createInfo.pQueueFamilyIndices= new uint32_t[in_nrFamilies];
   _createInfo.queueFamilyIndexCount= in_nrFamilies;
-  for(uint a= 0; a< in_nrFamilies; a++)
-    ((uint32 *)_createInfo.pQueueFamilyIndices)[a]= in_families[a];
+  for(uint32_t a= 0; a< in_nrFamilies; a++)
+    ((uint32_t *)_createInfo.pQueueFamilyIndices)[a]= in_families[a];
 
 }
 
@@ -149,22 +149,10 @@ void VkoBuffer::setFamilies(uint32 in_nrFamilies, const uint32 *in_families) {
 bool VkoBuffer::build() {
   bool ret= false;
 
-
-  VkResult res= _parent->_parent->CreateBuffer(*_parent->_parent, &_createInfo, *_parent->_parent, &buffer);
-
-  if(res!= VK_SUCCESS) {
-    error.detail("Vulkan buffer create failed.", __FUNCTION__);
-    error.vkPrint(res);
+  if(!_parent->_parent->errorCheck(_parent->_parent->CreateBuffer(*_parent->_parent, &_createInfo, *_parent->_parent, &buffer), __FUNCTION__": Vulkan buffer create failed"))
     goto Exit;
-  }
 
   _parent->_parent->GetBufferMemoryRequirements(*_parent->_parent, *this, &memRequirements);
-
-  continue all this.
-    so basically errors are split into errorText and result (for vulkan result)
-    everything should be easy from here on
-
-
 
   ret= true; // success
 

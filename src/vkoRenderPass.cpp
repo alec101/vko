@@ -1,4 +1,4 @@
-#include "vkObject.h"
+#include "../include/vkObject.h"
 
 
 
@@ -9,8 +9,8 @@
 
 
 VkoRenderPass::VkoRenderPass() {
-  _parent= null;
-  renderPass= null;
+  _parent= nullptr;
+  renderPass= nullptr;
 }
 
 
@@ -22,8 +22,8 @@ VkoRenderPass::~VkoRenderPass() {
 void VkoRenderPass::destroy() {
   if(!_parent->device) return;
   if(renderPass) {
-    _parent->vk->DestroyRenderPass(_parent->device, *this, _parent->memCallback);
-    renderPass= null;
+    _parent->DestroyRenderPass(_parent->device, *this, _parent->memCallback);
+    renderPass= nullptr;
   }
 }
 
@@ -33,7 +33,6 @@ void VkoRenderPass::destroy() {
 void VkoRenderPass::addAttachment(const VkAttachmentDescription *in_attDescription) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkAttachmentDescription
   _Attachment *p= new _Attachment;
-  if(!p) { error.alloc(__FUNCTION__); return; }
   p->att= *in_attDescription;
   _attachments.add(p);
 }
@@ -44,7 +43,6 @@ void VkoRenderPass::addAttachment2(VkAttachmentDescriptionFlags in_flags, VkForm
                                    VkAttachmentStoreOp in_stencilStoreOp, VkImageLayout in_initialLayout, VkImageLayout in_finalLayout) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkAttachmentDescription
   _Attachment *p= new _Attachment;
-  if(!p) { error.alloc(__FUNCTION__); return; }
   p->att.flags= in_flags,
   p->att.format= in_format,
   p->att.samples= in_samples,
@@ -61,32 +59,30 @@ void VkoRenderPass::addAttachment2(VkAttachmentDescriptionFlags in_flags, VkForm
 void VkoRenderPass::addSubpass(VkSubpassDescriptionFlags in_flags, VkPipelineBindPoint in_pipelineBindPoint) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkSubpassDescription
   _Subpass *p= new _Subpass;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
   p->flags= in_flags;
   p->pipelineBindPoint= in_pipelineBindPoint;
   _subpasses.add(p);
 }
 
 
-void VkoRenderPass::addSubpassInputAttachment(uint32 in_subpass, uint32_t in_attachment, VkImageLayout in_layout) {
-  if(in_subpass+ 1> (uint32)_subpasses.nrNodes) { error.detail("<in_subpass> parameter out of bounds of current amount of subpassses", __FUNCTION__); return; }
+void VkoRenderPass::addSubpassInputAttachment(uint32_t in_subpass, uint32_t in_attachment, VkImageLayout in_layout) {
+  _parent->clearError();
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _parent->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _AttachmentRef *p= new _AttachmentRef;
-  if(!p) { error.alloc(__FUNCTION__); return; }
   p->attachment= in_attachment;
   p->layout= in_layout;
   s->inputAttachments.add(p);
 }
 
 
-void VkoRenderPass::addSubpassColorAttachment(uint32 in_subpass,       uint32_t in_colorAtt,        VkImageLayout in_colorLayout,
+void VkoRenderPass::addSubpassColorAttachment(uint32_t in_subpass,     uint32_t in_colorAtt,        VkImageLayout in_colorLayout,
                                               bool enableResolve,      uint32_t in_resolveAtt,      VkImageLayout in_resolveLayout,
                                               bool enableDepthStencil, uint32_t in_depthStencilAtt, VkImageLayout in_depthStencilLayout) {
-
-  if(in_subpass+ 1> (uint32)_subpasses.nrNodes) { error.detail("<in_subpass> parameter out of bounds of current amount of subpassses", __FUNCTION__); return; }
+  _parent->clearError();
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _parent->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _ColorAtt *p= new _ColorAtt;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
   p->colorAtt= in_colorAtt;
   p->colorLayout= in_colorLayout;
 
@@ -110,13 +106,13 @@ void VkoRenderPass::addSubpassColorAttachment(uint32 in_subpass,       uint32_t 
 }
 
 
-void VkoRenderPass::addSubpassColorAttachment2(uint32 in_subpass, VkAttachmentReference *in_color, VkAttachmentReference *in_resolve, VkAttachmentReference *in_depthStencil) {
-  if(in_color== null) { error.detail("<in_color> parameter null", __FUNCTION__); return; }
-  if(in_subpass+ 1> (uint32)_subpasses.nrNodes) { error.detail("<in_subpass> parameter out of bounds of current amount of subpassses", __FUNCTION__); return; }
+void VkoRenderPass::addSubpassColorAttachment2(uint32_t in_subpass, VkAttachmentReference *in_color, VkAttachmentReference *in_resolve, VkAttachmentReference *in_depthStencil) {
+  _parent->clearError();
+  if(in_color== nullptr) { _parent->errorText= __FUNCTION__": <in_color> parameter nullptr"; return; }
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _parent->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
 
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _ColorAtt *p= new _ColorAtt;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
 
   p->colorAtt=    in_color->attachment;
   p->colorLayout= in_color->layout;
@@ -146,7 +142,6 @@ void VkoRenderPass::addSubpassDependency(uint32_t             in_srcSubpass,    
                                          VkAccessFlags        in_srcAccessMask, VkAccessFlags        in_dstAccessMask,
                                          VkDependencyFlags    in_dependencyFlags) {
   _Dependency *p= new _Dependency;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
 
   p->dep.srcSubpass=      in_srcSubpass;
   p->dep.dstSubpass=      in_dstSubpass;
@@ -161,30 +156,28 @@ void VkoRenderPass::addSubpassDependency(uint32_t             in_srcSubpass,    
 
 void VkoRenderPass::addSubpassDependency2(const VkSubpassDependency *in_dependency) {
   _Dependency *p= new _Dependency;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
   p->dep= *in_dependency;
   _dependencies.add(p);
 }
 
 
 
-void VkoRenderPass::addSubpassPreserveAttachment(uint32 in_subpass, uint32_t in_attachment) {
+void VkoRenderPass::addSubpassPreserveAttachment(uint32_t in_subpass, uint32_t in_attachment) {
   // attachments that are not used by this subpass, but whose contents must be preserved throughout the subpass.
-  if(in_subpass+ 1> (uint32)_subpasses.nrNodes) { error.detail("<in_subpass> parameter out of bounds of current amount of subpassses", __FUNCTION__); return; }
+  _parent->clearError();
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _parent->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _AttachmentRef *p= new _AttachmentRef;
-  if(!p) { error.alloc(__FUNCTION__); return; }
   p->attachment= in_attachment;
   s->preserveAttachments.add(p);
 }
 
 
-void VkoRenderPass::addInputAttachmentAspect(uint32 in_subpass, uint32_t in_inputAttachmentIndex, VkImageAspectFlags in_aspectMask) {
+void VkoRenderPass::addInputAttachmentAspect(uint32_t in_subpass, uint32_t in_inputAttachmentIndex, VkImageAspectFlags in_aspectMask) {
   // att aspect create info: https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkRenderPassInputAttachmentAspectCreateInfo
   // input attach ref: https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkInputAttachmentAspectReference
-  //if(in_subpass+ 1> (uint32)_subpasses.nrNodes) { error.detail("<in_subpass> parameter out of bounds of current amount of subpassses", __FUNCTION__); return; }
+  //if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { error.detail("<in_subpass> parameter out of bounds of current amount of subpassses", __FUNCTION__); return; }
   _InputAttAspect *p= new _InputAttAspect;
-  if(!p) { error.alloc(__FUNCTION__); return; }
   p->subpass= in_subpass;
   p->inputAttachmentIndex= in_inputAttachmentIndex;
   p->aspectMask= in_aspectMask;
@@ -206,23 +199,23 @@ void VkoRenderPass::addMultiView(uint32_t in_subpassCount,         const uint32_
   _multiView.subpassCount= in_subpassCount;
   if(in_subpassCount) {
     _multiView.pViewMasks= new uint32_t[in_subpassCount];
-    for(uint a= 0; a< in_subpassCount; a++)
-      ((uint32 *)_multiView.pViewMasks)[a]= in_pViewMasks[a];
+    for(uint32_t a= 0; a< in_subpassCount; a++)
+      ((uint32_t *)_multiView.pViewMasks)[a]= in_pViewMasks[a];
   }
   /// Each view offset controls which views in the source subpass the views in the destination subpass depend on
   /// If dependencyCount is zero, each dependency’s view offset is treated as zero
   _multiView.dependencyCount= in_dependencyCount;
   if(in_dependencyCount) {
     _multiView.pViewOffsets= new int32_t[in_dependencyCount];
-    for(uint a= 0; a< in_dependencyCount; a++)
-      ((int32 *)_multiView.pViewOffsets)[a]= in_pViewOffsets[a];
+    for(uint32_t a= 0; a< in_dependencyCount; a++)
+      ((int32_t *)_multiView.pViewOffsets)[a]= in_pViewOffsets[a];
   }
   /// indicates sets of views that may be more efficient to render concurrently.
   _multiView.correlationMaskCount= in_correlationMaskCount;
   if(in_correlationMaskCount) {
     _multiView.pCorrelationMasks= new uint32_t[in_correlationMaskCount];
-    for(uint a= 0; a< in_correlationMaskCount; a++)
-      ((uint32 *)_multiView.pCorrelationMasks)[a]= in_pCorrelationMasks[a];
+    for(uint32_t a= 0; a< in_correlationMaskCount; a++)
+      ((uint32_t *)_multiView.pCorrelationMasks)[a]= in_pCorrelationMasks[a];
   }
 }
 
@@ -249,20 +242,20 @@ bool VkoRenderPass::build() {
   ///    same nr of atachements, same number of subpasses, etc
 
   bool ret= false;
-  uint a, b;
+  uint32_t a, b;
   VkRenderPassCreateInfo renderPassInfo;
   VkRenderPassInputAttachmentAspectCreateInfo aspectInfo;
   VkRenderPassMultiviewCreateInfo multiViewInfo;
 
-  aspectInfo.pAspectReferences= null;       // INIT ALLOC 1
-  renderPassInfo.pAttachments= null;        // INIT ALLOC 2
-  renderPassInfo.pSubpasses= null;          // INIT ALLOC 3
-  renderPassInfo.pDependencies= null;       // INIT ALLOC 9
+  aspectInfo.pAspectReferences= nullptr;       // INIT ALLOC 1
+  renderPassInfo.pAttachments= nullptr;        // INIT ALLOC 2
+  renderPassInfo.pSubpasses= nullptr;          // INIT ALLOC 3
+  renderPassInfo.pDependencies= nullptr;       // INIT ALLOC 9
 
 
   renderPassInfo.sType= VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.flags= 0;            // reserved ATM
-  renderPassInfo.pNext= null;         //  VkRenderPassInputAttachmentAspectCreateInfo or VkRenderPassMultiviewCreateInfo
+  renderPassInfo.pNext= nullptr;         //  VkRenderPassInputAttachmentAspectCreateInfo or VkRenderPassMultiviewCreateInfo
   const void **pNext= &renderPassInfo.pNext;
 
   // input attachment aspect - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkRenderPassInputAttachmentAspectCreateInfo
@@ -272,10 +265,9 @@ bool VkoRenderPass::build() {
   if(_aspectAttachments.nrNodes) {
     *pNext= &aspectInfo;
     aspectInfo.sType= VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO;
-    aspectInfo.pNext= null;
+    aspectInfo.pNext= nullptr;
     aspectInfo.aspectReferenceCount= _aspectAttachments.nrNodes;
     aspectInfo.pAspectReferences= new VkInputAttachmentAspectReference[_aspectAttachments.nrNodes]; // ALLOC 1
-    if(!aspectInfo.pAspectReferences) { error.alloc(__FUNCTION__); goto Exit; }
 
     a= 0;
     for(_InputAttAspect *p= (_InputAttAspect *)_aspectAttachments.first; p; p= (_InputAttAspect *)p->next)
@@ -290,7 +282,7 @@ bool VkoRenderPass::build() {
   if(_multiView.enable) {
     *pNext= &multiViewInfo;
     multiViewInfo.sType= VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
-    multiViewInfo.pNext= null;
+    multiViewInfo.pNext= nullptr;
     multiViewInfo.subpassCount=         _multiView.subpassCount;
     multiViewInfo.pViewMasks=           _multiView.pViewMasks;
     multiViewInfo.dependencyCount=      _multiView.dependencyCount;
@@ -322,7 +314,6 @@ bool VkoRenderPass::build() {
   renderPassInfo.attachmentCount= _attachments.nrNodes;
   if(renderPassInfo.attachmentCount) {
     renderPassInfo.pAttachments= new VkAttachmentDescription[renderPassInfo.attachmentCount]; // ALLOC 2
-    if(!renderPassInfo.pAttachments) { error.alloc(__FUNCTION__); goto Exit; }
     a= 0;
     for(_Attachment *p= (_Attachment *)_attachments.first; p; p= (_Attachment *)p->next)
       ((VkAttachmentDescription *)renderPassInfo.pAttachments)[a++]= p->att;
@@ -332,15 +323,14 @@ bool VkoRenderPass::build() {
   renderPassInfo.subpassCount= _subpasses.nrNodes;
   if(renderPassInfo.subpassCount) {
     renderPassInfo.pSubpasses= new VkSubpassDescription[renderPassInfo.subpassCount];       // ALLOC 3
-    if(!renderPassInfo.pSubpasses) { error.alloc(__FUNCTION__); goto Exit; }
     a= 0;
     for(_Subpass *p= (_Subpass *)_subpasses.first; p; p= (_Subpass *)p->next) {
       VkSubpassDescription *sd= (VkSubpassDescription *)&renderPassInfo.pSubpasses[a];    /// shortcut
-      sd->pInputAttachments= null;        // INIT ALLOC 4
-      sd->pColorAttachments= null;        // INIT ALLOC 5
-      sd->pResolveAttachments= null;      // INIT ALLOC 6
-      sd->pDepthStencilAttachment= null;  // INIT ALLOC 7
-      sd->pPreserveAttachments= null;     // INIT ALLOC 8
+      sd->pInputAttachments= nullptr;        // INIT ALLOC 4
+      sd->pColorAttachments= nullptr;        // INIT ALLOC 5
+      sd->pResolveAttachments= nullptr;      // INIT ALLOC 6
+      sd->pDepthStencilAttachment= nullptr;  // INIT ALLOC 7
+      sd->pPreserveAttachments= nullptr;     // INIT ALLOC 8
 
       sd->flags= p->flags;
       sd->pipelineBindPoint= p->pipelineBindPoint;
@@ -350,7 +340,6 @@ bool VkoRenderPass::build() {
 
       if(sd->inputAttachmentCount) {
         sd->pInputAttachments= new VkAttachmentReference[sd->inputAttachmentCount];         // ALLOC 4
-        if(!sd->pInputAttachments) { error.alloc(__FUNCTION__); goto Exit; }
         b= 0;
         for(_AttachmentRef *ar= (_AttachmentRef *)p->inputAttachments.first; ar; ar= (_AttachmentRef *)ar->next)
           ((VkAttachmentReference *)sd->pInputAttachments)[b].attachment= ar->attachment,
@@ -363,18 +352,15 @@ bool VkoRenderPass::build() {
 
       if(sd->colorAttachmentCount) {
         sd->pColorAttachments= new VkAttachmentReference[sd->colorAttachmentCount];         // ALLOC 5
-        if(!sd->pColorAttachments) { error.alloc(__FUNCTION__); goto Exit; }
         if(p->enableResolve) {
           sd->pResolveAttachments= new VkAttachmentReference[sd->colorAttachmentCount];     // ALLOC 6
-          if(sd->pResolveAttachments== null) { error.alloc(__FUNCTION__); goto Exit; }
         } else
-          sd->pResolveAttachments= null;
+          sd->pResolveAttachments= nullptr;
 
         if(p->enableDepthStencil) {
           sd->pDepthStencilAttachment= new VkAttachmentReference[sd->colorAttachmentCount]; // ALLOC 7
-          if(sd->pDepthStencilAttachment== null) { error.alloc(__FUNCTION__); goto Exit; }
         } else
-          sd->pDepthStencilAttachment= null;
+          sd->pDepthStencilAttachment= nullptr;
 
         b= 0;
         for(_ColorAtt *c= (_ColorAtt *)p->colorAttachments.first; c; c= (_ColorAtt *)c->next, b++) {
@@ -396,11 +382,10 @@ bool VkoRenderPass::build() {
       sd->preserveAttachmentCount= p->preserveAttachments.nrNodes;
 
       if(sd->preserveAttachmentCount) {
-        sd->pPreserveAttachments= new uint32[sd->preserveAttachmentCount];              // ALLOC 8
-        if(sd->pPreserveAttachments== null) { error.alloc(__FUNCTION__); goto Exit; }
+        sd->pPreserveAttachments= new uint32_t[sd->preserveAttachmentCount];              // ALLOC 8
         b= 0;
         for(_AttachmentRef *ar= (_AttachmentRef *)p->preserveAttachments.first; ar; ar= (_AttachmentRef *)p->next, b++)
-          ((uint32 *)sd->pPreserveAttachments)[b]= ar->attachment;
+          ((uint32_t *)sd->pPreserveAttachments)[b]= ar->attachment;
       } /// if there's preserve attachments
     }
   }
@@ -416,18 +401,16 @@ bool VkoRenderPass::build() {
   renderPassInfo.dependencyCount= _dependencies.nrNodes;
   if(renderPassInfo.dependencyCount) {
     renderPassInfo.pDependencies= new VkSubpassDependency[renderPassInfo.dependencyCount];
-    if(renderPassInfo.pDependencies== null) { error.alloc(__FUNCTION__); goto Exit; }
     a= 0;
     for(_Dependency *p= (_Dependency *)_dependencies.first; p; p= (_Dependency *)p->next, a++)
       ((VkSubpassDependency *)renderPassInfo.pDependencies)[a]= p->dep;
   } /// if there are dependencies
 
   
-  
-  if(_parent->vk->CreateRenderPass(_parent->device, &renderPassInfo, _parent->memCallback, &renderPass)!= VK_SUCCESS) {
-    error.detail("Vulkan render pass creation failed", __FUNCTION__, __LINE__);
+  if(!_parent->errorCheck(_parent->CreateRenderPass(_parent->device, &renderPassInfo, _parent->memCallback, &renderPass),
+    __FUNCTION__": Vulkan render pass creation failed"))
     goto Exit;
-  }
+
   ret= true;
 
 Exit:

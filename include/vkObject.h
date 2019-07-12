@@ -73,7 +73,7 @@ class vkObject;
 
 class VkoSemaphore;
 struct VkoQueue;
-
+struct VkoFuncs;
 
 class vkObject: public VkoFuncs {
 public:
@@ -83,16 +83,14 @@ public:
     uint32_t apiVersion; // [def:0] installed vulkan version; if it is 0, vulkan is not present on system. Use VK_VERSION_MAJOR, xx_MINOR, xx_PATCH, to extract
     static uint32_t nrPhysicalDevices;          // nr physical devices on system; populated after buildInstance() is called
     static VkoPhysicalDevice *physicalDevice;   // list with every phyical device on system; populated after buildInstance() is called
-    ~VkoInfo() { if(physicalDevice) delete[] physicalDevice; }
+    ~VkoInfo();
   } info;
 
 
   struct VkoConfiguration {
-    void addValidationLayer(const char *);
 
     // instance / application settings
-
-    static struct { uint32_t major, minor, patch; } versionRequest; // [def: 1, 1, 0] requested vulkan version; if you set appInfo::apiVersion directly, this is ignored
+    struct VkoVer { uint32_t major, minor, patch; } static versionRequest; // [def: 1, 1, 0] requested vulkan version; if you set appInfo::apiVersion directly, this is ignored
     static VkApplicationInfo appInfo;             // instanceInfo.pApplicationInfo points to this. if apiVersion is 0, version struct is used
     static VkInstanceCreateInfo *instanceInfo;    // [def:null] if left null, settings.vulkan.extensions struct is used to create VkInstanceCreateInfo struct, else create it as you wish and point this to it
     static VkInstance customInstance;             // [def:null] if you want to create your own instance, point this to the custom created instance.
@@ -133,9 +131,10 @@ public:
   uint32_t nrQueues;          // number of queues in queue array; gets populated after build() is called
   VkoQueue *queue;            // all requested queues from cfg::queueRequestXX;
 
-  char *errorText;            // if any of the functions fail, this var will hold a description why things failed
+  const char *errorText;      // if any of the functions fail, this var will hold a description why things failed
   VkResult result;            // the success/failure reported by Vulkan. if applicable.
   inline void clearError() { errorText= nullptr, result= VK_SUCCESS; }
+  bool errorCheck(VkResult in_res, const char *in_errorText);
 
   inline operator VkDevice() { return device; }
   inline operator VkAllocationCallbacks*() { return memCallback; }
@@ -204,11 +203,10 @@ public:
   template <class T>
   inline void createShader(T **out_shader) {
     *out_shader= new T;
-    if(*out_shader== null) { error.alloc(__FUNCTION__); return; }
-    ((vkoShader *)(*out_shader))->parent= this;
+    ((VkoShader *)(*out_shader))->parent= this;
     shaders.add(*out_shader);
   }
-  inline void delShader(vkoShader *in_s) { shaders.del(in_s); }
+  inline void delShader(VkoShader *in_s) { shaders.del(in_s); }
 
 
   VkoSemaphore *addSemaphore();
@@ -217,7 +215,7 @@ public:
 private:
   static void *_vulkanLib;           // vulkan library linking
   chainList _VkoSemaphores;
-  friend class VkoSemaphore;
+  
 
   void constructorLevelInit(); // TO BE OR NOT TO BE
 
@@ -237,18 +235,39 @@ private:
   chainList _validationLayers;
   class _ValidationLayer: public chainData {
   public:
-    str8 name;
+    const char *name;
+    _ValidationLayer(): name(nullptr) {}
+    ~_ValidationLayer() { if(name) delete[] name; }
   };
 
   void _populatePhysicalDeviceInfo();
 
+  
+  static void _memcpy(void *dst, const void *src, uint64_t n);  // copies 8 bytes at a time - 2x- 3x slower than Microsoft memcpy
+  
+
+  static uint32_t _strlen8(const char *x);
+  static uint32_t _strlen16(const char16_t *s);
+
+  static void _strcpy8(char *dst, const char *src);
+  static void _strcpy16(char16_t *dst, const char16_t *src);
+
+  static int32_t _strcmp8(const char *, const char *);
+
+  static void _strCopy(char **out_dst, const char *src);        // deletes <dst> if not null, allocates <dst> then copyes <src> into <dst>
+
+
+  friend class VkoSemaphore;
+  friend class VkoShader;
+  friend class VkoMemory;
+  friend struct VkoExtensions;
 }; // vkObject
 
 
 
 
 #include "vkoSemaphore.h"
-inline void VkoSwapchain::queueShow(uint32 in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) { _showInfo.pWaitSemaphores= &in_finishDrawing, _showInfo.pImageIndices= &in_surfaceIndex; _parent->QueuePresentKHR(in_queue, &_showInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
+inline void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) { _showInfo.pWaitSemaphores= &in_finishDrawing, _showInfo.pImageIndices= &in_surfaceIndex; _parent->QueuePresentKHR(in_queue, &_showInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
 
 
 
@@ -264,6 +283,8 @@ inline void VkoSwapchain::queueShow(uint32 in_surfaceIndex, VkQueue in_queue, Vk
     VkPhysicalDeviceProperties prop;
   };
 
+
+#include "vkoGlbFuncs.hpp"
 
 
 

@@ -10,27 +10,27 @@
 
 
 // osiVkExt _osiVkExtensionsRaw[];
-extern _osiVkExtensionsRawClass _osiVkExtensionsRaw;
+//extern _osiVkExtensionsRawClass _osiVkExtensionsRaw;
 //osiVkExt *_osiVkExtensionsRaw= _osiVkExtensionsRawC._ext;
 
 bool VkoExtensions::populateAvailabilityInstance() {
   uint32_t n;
-  VkExtensionProperties *ext= null;
+  VkExtensionProperties *ext= nullptr;
   bool ret= true;
   #ifdef VKO_BE_CHATTY
   bool chatty= true;
   #endif
 
-  if(_vko->EnumerateInstanceExtensionProperties== null) return false;
+  if(_vko->EnumerateInstanceExtensionProperties== nullptr) return false;
 
   /// get the number of instance extensions avaible
-  if(_vko->EnumerateInstanceExtensionProperties(null, &n, null)!= VK_SUCCESS)
+  if(_vko->EnumerateInstanceExtensionProperties(nullptr, &n, nullptr)!= VK_SUCCESS)
     return false;
   if(n== 0) return false;
 
   /// grab all extensions
   ext= new VkExtensionProperties[n];
-  if(_vko->EnumerateInstanceExtensionProperties(null, &n, ext)!= VK_SUCCESS) { ret= false; goto Exit; }
+  if(_vko->EnumerateInstanceExtensionProperties(nullptr, &n, ext)!= VK_SUCCESS) { ret= false; goto Exit; }
 
   // populate the availability of known extensions
   
@@ -38,7 +38,7 @@ bool VkoExtensions::populateAvailabilityInstance() {
   if(chatty) printf("\npopulating instance extensions...\n");
   #endif
 
-  for(uint32 a= 0; a< n; a++) {
+  for(uint32_t a= 0; a< n; a++) {
     VkoExt *e= getInstanceExt(ext[a].extensionName);
     if(e) {
       e->isAvaible= true;
@@ -63,31 +63,31 @@ Exit:
 
 
 bool VkoExtensions::populateAvailabilityDevice(VkPhysicalDevice in_gpu) {
-  if(in_gpu== null) return false;
-  if(_vko->EnumerateDeviceExtensionProperties== null) return false;
+  if(in_gpu== nullptr) return false;
+  if(_vko->EnumerateDeviceExtensionProperties== nullptr) return false;
 
   #ifdef VKO_BE_CHATTY
   bool chatty= true;
   #endif
 
   uint32_t n;
-  VkExtensionProperties *ext= null;
+  VkExtensionProperties *ext= nullptr;
   bool ret= true;
   
   /// get the number of instance extensions avaible
-  if(_vko.EnumerateDeviceExtensionProperties(in_gpu, null, &n, null)!= VK_SUCCESS)
+  if(_vko->EnumerateDeviceExtensionProperties(in_gpu, nullptr, &n, nullptr)!= VK_SUCCESS)
     return false;
   if(n== 0) return false;
 
   /// grab all extensions
   ext= new VkExtensionProperties[n];
-  if(_vko->EnumerateDeviceExtensionProperties(in_gpu, null, &n, ext)!= VK_SUCCESS) { ret= false; goto Exit; }
+  if(_vko->EnumerateDeviceExtensionProperties(in_gpu, nullptr, &n, ext)!= VK_SUCCESS) { ret= false; goto Exit; }
 
   // populate the availability of known extensions
 
   if(chatty) printf("\npopulating device extensions...\n");
 
-  for(uint32 a= 0; a< n; a++) {
+  for(uint32_t a= 0; a< n; a++) {
     VkoExt *e= getDeviceExt(ext[a].extensionName);
     if(e) {
       e->isAvaible= true;
@@ -113,34 +113,34 @@ Exit:
 
 
 VkoExt *VkoExtensions::getInstanceExt(const char *in_name) {
-  for(VkoExt *p= instance.raw; p->name!= null; p++)
-    if(Str::strcmp8(p->name, in_name)== 0)
+  for(VkoExt *p= instance.raw; p->name!= nullptr; p++)
+    if(vkObject::_strcmp8(p->name, in_name)== 0)
       return p;
 
-  for(VkoExt *p= instanceDeprecated.raw; p->name!= null; p++)
-    if(Str::strcmp8(p->name, in_name)== 0)
+  for(VkoExt *p= instanceDeprecated.raw; p->name!= nullptr; p++)
+    if(vkObject::_strcmp8(p->name, in_name)== 0)
       return p;
 
-  return null;
+  return nullptr;
 }
 
 
 VkoExt *VkoExtensions::getDeviceExt(const char *in_name) {
-  for(VkoExt *p= device.raw; p->name!= null; p++)
-    if(Str::strcmp8(p->name, in_name)== 0)
+  for(VkoExt *p= device.raw; p->name!= nullptr; p++)
+    if(vkObject::_strcmp8(p->name, in_name)== 0)
       return p;
 
-  for(VkoExt *p= deviceDeprecated.raw; p->name!= null; p++)
-    if(Str::strcmp8(p->name, in_name)== 0)
+  for(VkoExt *p= deviceDeprecated.raw; p->name!= nullptr; p++)
+    if(vkObject::_strcmp8(p->name, in_name)== 0)
       return p;
 
-  return null;
+  return nullptr;
 }
 
 
 VkoExt *VkoExtensions::getExtension(const char *in_name) {
   VkoExt *ret= getInstanceExt(in_name);
-  if(ret== null)
+  if(ret== nullptr)
     ret= getDeviceExt(in_name);
   return ret;
 }
@@ -148,26 +148,26 @@ VkoExt *VkoExtensions::getExtension(const char *in_name) {
 
 
 VkoExt *VkoExtensions::getInstanceExtByNumber(int32_t in_n) {
-  for(VkoExt *p= instance.raw; p->name!= null; p++)
+  for(VkoExt *p= instance.raw; p->name!= nullptr; p++)
     if(p->regNr== in_n)
       return p;
 
-  for(VkoExt *p= instanceDeprecated.raw; p->name!= null; p++)
+  for(VkoExt *p= instanceDeprecated.raw; p->name!= nullptr; p++)
     if(p->regNr== in_n)
       return p;
-  return null;
+  return nullptr;
 }
 
 VkoExt *VkoExtensions::getDeviceExtByNumber(int32_t in_n) {
-  for(VkoExt *p= device.raw; p->name!= null; p++)
+  for(VkoExt *p= device.raw; p->name!= nullptr; p++)
     if(p->regNr== in_n)
       return p;
 
-  for(VkoExt *p= deviceDeprecated.raw; p->name!= null; p++)
+  for(VkoExt *p= deviceDeprecated.raw; p->name!= nullptr; p++)
     if(p->regNr== in_n)
       return p;
 
-  return null;
+  return nullptr;
 }
 
 
@@ -175,7 +175,7 @@ VkoExt *VkoExtensions::getDeviceExtByNumber(int32_t in_n) {
 
 VkoExt *VkoExtensions::getExtensionByNumber(int32_t in_n) {
   VkoExt *ret= getInstanceExtByNumber(in_n);
-  if(ret== null)
+  if(ret== nullptr)
     ret= getDeviceExtByNumber(in_n);
   return ret;
 }
@@ -183,7 +183,7 @@ VkoExt *VkoExtensions::getExtensionByNumber(int32_t in_n) {
 
 bool VkoExtensions::enableExtension(const char *in_name) {
   VkoExt *p= getExtension(in_name);
-  if(p== null) return false;
+  if(p== nullptr) return false;
 
   p->enable= true;
   return true;
@@ -192,7 +192,7 @@ bool VkoExtensions::enableExtension(const char *in_name) {
 
 bool VkoExtensions::isExtensionAvaible(const char *in_name) {
   VkoExt *p= getExtension(in_name);
-  if(p== null) return false;
+  if(p== nullptr) return false;
   return p->isAvaible;
 }
 
@@ -200,34 +200,74 @@ bool VkoExtensions::isExtensionAvaible(const char *in_name) {
 
 
 void VkoExtensions::_createExtStr(int8_t type, char ***out_s, uint32_t *out_nrext) {
-  if(out_s== null) return;
-  uint32 nrext= 0;   /// will hold the number of extensions to enable
-  int8 *s8;
-  uint a= 0;
+  if(out_s== nullptr) return;
+  uint32_t nrext= 0;   /// will hold the number of extensions to enable
+  int8_t *s8;
+  uint32_t a= 0;
 
   // loop thru all extensions to find how many are enabled
 
-  for(VkoExt *p= _osiVkExtensionsRaw._ext; p->name!= null; p++)
+  // ORIGINAL
+  //for(VkoExt *p= _osiVkExtensionsRaw._ext; p->name!= nullptr; p++)
+  //  if((p->type== type) && (p->enable== true))
+  //    nrext++;
+
+  for(VkoExt *p= instance.raw; p->name!= nullptr; p++)
+    if((p->type== type) && (p->enable== true))
+      nrext++;
+  for(VkoExt *p= instanceDeprecated.raw; p->name!= nullptr; p++)
+    if((p->type== type) && (p->enable== true))
+      nrext++;
+  for(VkoExt *p= device.raw; p->name!= nullptr; p++)
+    if((p->type== type) && (p->enable== true))
+      nrext++;
+  for(VkoExt *p= deviceDeprecated.raw; p->name!= nullptr; p++)
     if((p->type== type) && (p->enable== true))
       nrext++;
 
 
-
   if(out_nrext) *out_nrext= nrext;
   if(nrext== 0) {
-    *out_s= null;
+    *out_s= nullptr;
     return;
   }
 
   *out_s= new char *[nrext];
 
   // loop thru all extensions to create the big string array
-  for(VkoExt *p= _osiVkExtensionsRaw._ext; p->name!= null; p++)
+
+  // ORIGINAL
+  //for(VkoExt *p= _osiVkExtensionsRaw._ext; p->name!= nullptr; p++)
+  //  if((p->type== type) && (p->enable== true)) {
+  //    s8= new int8_t[vkObject::_strlen8(p->name)];
+  //    vkObject::_strcpy8((char *)s8, p->name);
+  //    (*out_s)[a++]= (char *)s8;
+  //  }
+  for(VkoExt *p= instance.raw; p->name!= nullptr; p++)
     if((p->type== type) && (p->enable== true)) {
-      s8= new int8[Str::strlen8(p->name)];
-      Str::strcpy8((char *)s8, p->name);
+      s8= new int8_t[vkObject::_strlen8(p->name)];
+      vkObject::_strcpy8((char *)s8, p->name);
       (*out_s)[a++]= (char *)s8;
     }
+  for(VkoExt *p= instanceDeprecated.raw; p->name!= nullptr; p++)
+    if((p->type== type) && (p->enable== true)) {
+      s8= new int8_t[vkObject::_strlen8(p->name)];
+      vkObject::_strcpy8((char *)s8, p->name);
+      (*out_s)[a++]= (char *)s8;
+    }
+  for(VkoExt *p= device.raw; p->name!= nullptr; p++)
+    if((p->type== type) && (p->enable== true)) {
+      s8= new int8_t[vkObject::_strlen8(p->name)];
+      vkObject::_strcpy8((char *)s8, p->name);
+      (*out_s)[a++]= (char *)s8;
+    }
+  for(VkoExt *p= deviceDeprecated.raw; p->name!= nullptr; p++)
+    if((p->type== type) && (p->enable== true)) {
+      s8= new int8_t[vkObject::_strlen8(p->name)];
+      vkObject::_strcpy8((char *)s8, p->name);
+      (*out_s)[a++]= (char *)s8;
+    }
+
 }
 
 
@@ -249,7 +289,7 @@ void VkoExtensions::_createExtStr(int8_t type, char ***out_s, uint32_t *out_nrex
 
 VkoExtensions::VkoExtensions() {
   // instance extensions
-  uint a= 0; 
+  uint32_t a= 0; 
   instance.raw[a++]= {"VK_KHR_android_surface",                 9, 0, 0, 0}; // [android surface] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_KHR_android_surface
   instance.raw[a++]= {"VK_KHR_display",                         3, 0, 0, 0}; // [enumerate displays and available modes on a given device (it has some create stuff too)] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_KHR_display
   instance.raw[a++]= {"VK_KHR_get_display_properties2",       122, 0, 0, 0}; // [extra device display properties and capabilities] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_KHR_get_display_properties2
@@ -269,7 +309,7 @@ VkoExtensions::VkoExtensions() {
   instance.raw[a++]= {"VK_MVK_ios_surface",                   123, 0, 0, 0}; // [surface to UIView (iOS)] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_MVK_ios_surface
   instance.raw[a++]= {"VK_MVK_macos_surface",                 124, 0, 0, 0}; // [surface to NSView (MAC)] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_MVK_macos_surface
   instance.raw[a++]= {"VK_NN_vi_surface",                      63, 0, 0, 0}; // [surface to nn::vi::Layer] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_NN_vi_surface
-  instance.raw[a++]= { null, 0, 0, 0, 0}; // terminator
+  instance.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
 
   // instance extensions DEPRECATED - stop using them
   a= 0;
@@ -280,7 +320,7 @@ VkoExtensions::VkoExtensions() {
   instanceDeprecated.raw[a++]= {"VK_KHR_get_physical_device_properties2",  60, 0, 0, 0}; // [Promoted to Vulkan 1.1] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_KHR_get_physical_device_properties2
   instanceDeprecated.raw[a++]= {"VK_EXT_debug_report",                     12, 0, 0, 0}; // [Deprecated by VK_EXT_debug_utils] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_EXT_debug_report
   instanceDeprecated.raw[a++]= {"VK_NV_external_memory_capabilities",      56, 0, 0, 0}; // [Deprecated by VK_KHR_external_memory_capabilities that was promoted to Vulkan 1.1] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_NV_external_memory_capabilities
-  instanceDeprecated.raw[a++]= { null, 0, 0, 0, 0}; // terminator
+  instanceDeprecated.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
 
   // device extensions
   a= 0;
@@ -376,7 +416,7 @@ VkoExtensions::VkoExtensions() {
   device.raw[a++]= {"VK_NV_viewport_swizzle",                   99, 1, 0, 0}; // [] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_NV_viewport_swizzle
   // PROVISIONAL
   device.raw[a++]= {"VK_KHR_vulkan_memory_model",            212, 1, 0, 0}; // [PROVISIONAL sync memory accessed by multiple shaders] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_KHR_vulkan_memory_model
-  device.raw[a++]= { null, 0, 0, 0, 0}; // terminator
+  device.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
 
   // device extensions - DEPRECATED 
   a= 0;
@@ -406,13 +446,13 @@ VkoExtensions::VkoExtensions() {
   deviceDeprecated.raw[a++]= {"VK_NV_external_memory_win32",            58, 1, 0, 0}; // [Deprecated by VK_KHR_external_memory_win32] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_NV_external_memory_win32
   deviceDeprecated.raw[a++]= {"VK_NV_glsl_shader",                      13, 1, 0, 0}; // [Deprecated (ABANDONED!!!)] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_NV_glsl_shader
   deviceDeprecated.raw[a++]= {"VK_NV_win32_keyed_mutex",                59, 1, 0, 0}; // [Promoted to VK_KHR_win32_keyed_mutex] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_NV_win32_keyed_mutex
-  deviceDeprecated.raw[a++]= { null, 0, 0, 0, 0}; // terminator
+  deviceDeprecated.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
 
   // NEW EXTENSIONS SHOULD BE ADDED AT THE BACK OF EACH LIST
 
   //{"", 000, 0/1, 0, 0}; // [dev/inst] [description] https://location
 
-  //{null, 0, 1, 0, 0}    // terminator, do not remove, must be last
+  //{nullptr, 0, 1, 0, 0}    // terminator, do not remove, must be last
 }
 
 

@@ -1,4 +1,4 @@
-#include "vkObject.h"
+#include "../include/vkObject.h"
 
 /*
 
@@ -98,12 +98,12 @@ DESIGNING STUFF, MEMORY FRAGMENTATION, MEMORY ALOCATION THINKING
 
 
 
-///===============///
-// VkoMEMORY class //
-///===============///
+///======================///
+// VkoMEMORYMANAGER class //
+///======================///
 
 VkoMemoryManager::VkoMemoryManager() {
-  _parent= null;
+  _parent= nullptr;
   memProp.memoryHeapCount= 0;
   memProp.memoryTypeCount= 0;
 
@@ -123,7 +123,7 @@ void VkoMemoryManager::init() {
 
   // device memory https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#memory-device
   
-  _parent->vk->GetPhysicalDeviceMemoryProperties(_parent->vkr->vkGPU, &memProp);
+  _parent->GetPhysicalDeviceMemoryProperties(*_parent, &memProp);
 }
 
 
@@ -158,9 +158,9 @@ int32_t findProperties(const VkPhysicalDeviceMemoryProperties* pMemoryProperties
 }
 */
 
-uint32 VkoMemoryManager::findMemory(uint32_t in_memTypeBits, VkMemoryPropertyFlags in_prop) {
+uint32_t VkoMemoryManager::findMemory(uint32_t in_memTypeBits, VkMemoryPropertyFlags in_prop) {
   // mem type https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
-  for(uint32 a= 0; a< memProp.memoryTypeCount; a++)
+  for(uint32_t a= 0; a< memProp.memoryTypeCount; a++)
     if((in_memTypeBits& (1 << a)) && ((memProp.memoryTypes[a].propertyFlags& in_prop)== in_prop))
       return a;
 
@@ -169,14 +169,25 @@ uint32 VkoMemoryManager::findMemory(uint32_t in_memTypeBits, VkMemoryPropertyFla
 
 
 VkoMemory *VkoMemoryManager::addMemoryBlock() {
-  VkoMemory *p= null;
+  VkoMemory *p= nullptr;
   p= new VkoMemory;
-  if(p== null) { error.alloc(__FUNCTION__); return null; } 
   p->_parent= this;
+  p->_vko= _parent;
   memoryBlocks.add(p);
   return p;
 }
 
+
+
+
+
+
+
+
+
+///===============///
+// vkoMEMORY class //
+///===============///
 
 VkoMemory::VkoMemory() {
   _parent= nullptr;
@@ -220,14 +231,13 @@ VkoMemory::~VkoMemory() {
 // VkoMemory CONFIGURATION
 
 
-bool VkoMemory::configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_required, VkMemoryPropertyFlags in_prefered, uint32 in_typeBits) {
-  if(_parent==null) { error.detail("parent of this class was not set for some reason.", __FUNCTION__); return false; }
-  
-  uint32 found= _parent->findMemory(in_typeBits, in_required| in_prefered);
+bool VkoMemory::configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_required, VkMemoryPropertyFlags in_prefered, uint32_t in_typeBits) {
+  _vko->clearError();
+  uint32_t found= _parent->findMemory(in_typeBits, in_required| in_prefered);
   if(found== ~0u)
     found= _parent->findMemory(in_typeBits, in_required);
 
-  if(found== ~0u) { error.detail("Could not find required Vulkan physical device memory", __FUNCTION__); return false; }
+  if(found== ~0u) { _vko->errorText= __FUNCTION__": Could not find required Vulkan physical device memory"; return false; }
 
   // found
 
@@ -262,8 +272,8 @@ void VkoMemory::addVkExportMemoryWin32HandleInfoKHR(const SECURITY_ATTRIBUTES* p
   ((SECURITY_ATTRIBUTES *)_exportWin32->pAttributes)->nLength= pAttributes->nLength;
 
   _exportWin32->dwAccess= dwAccess;
-  _exportWin32->name= (LPCWSTR)new uint8[Str::strlen16((char16 *)name)];
-  Str::strcpy16((char16 *)_exportWin32->name, (char16 *)name);
+  _exportWin32->name= (LPCWSTR)new uint8_t[vkObject::_strlen16((char16_t *)name)];
+  vkObject::_strcpy16((char16_t *)_exportWin32->name, (char16_t *)name);
 }
 
 
@@ -286,8 +296,8 @@ void VkoMemory::addVkImportMemoryWin32HandleInfoKHR(VkExternalMemoryHandleTypeFl
   _importWin32->handleType= handleType;
   _importWin32->handle= handle;
 
-  _importWin32->name= (LPCWSTR)new uint8[Str::strlen16((char16 *)name)];
-  Str::strcpy16((char16 *)_importWin32->name, (char16 *)name);
+  _importWin32->name= (LPCWSTR)new uint8_t[vkObject::_strlen16((char16_t *)name)];
+  vkObject::_strcpy16((char16_t *)_importWin32->name, (char16_t *)name);
 }
 
 
@@ -327,60 +337,57 @@ bool VkoMemory::build() {
   
   VkMemoryAllocateInfo allocInfo;   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryAllocateInfo
   allocInfo.sType= VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  allocInfo.pNext= null;
+  allocInfo.pNext= nullptr;
   const void **pNext= &allocInfo.pNext;
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryAllocateInfo
   if(_exportInfo!= nullptr) {
     *pNext= _exportInfo;
-    _exportInfo->pNext= null;
+    _exportInfo->pNext= nullptr;
     pNext= &_exportInfo->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryWin32HandleInfoKHR
   if(_exportWin32!= nullptr) {
     *pNext= _exportWin32;
-    _exportWin32->pNext= null;
+    _exportWin32->pNext= nullptr;
     pNext= &_exportWin32->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryFdInfoKHR
   if(_importFd!= nullptr) {
     *pNext= _importFd;
-    _importFd->pNext= null;
+    _importFd->pNext= nullptr;
     pNext= &_importFd->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryWin32HandleInfoKHR
   if(_importWin32!= nullptr) {
     *pNext= _importWin32;
-    _importWin32->pNext= null;
+    _importWin32->pNext= nullptr;
     pNext= &_importWin32->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryAllocateFlagsInfo
   if(_flagsInfo!= nullptr) {
     *pNext= _flagsInfo;
-    _flagsInfo->pNext= null;
+    _flagsInfo->pNext= nullptr;
     pNext= &_flagsInfo->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryDedicatedAllocateInfo
   if(_dedicatedInfo!= nullptr) {
     *pNext= _dedicatedInfo;
-    _dedicatedInfo->pNext= null;
+    _dedicatedInfo->pNext= nullptr;
     pNext= &_dedicatedInfo->pNext;
   }
 
   allocInfo.allocationSize= size;
   allocInfo.memoryTypeIndex= typeIndex;
   
-  VkResult res= _parent->_parent->vk->AllocateMemory(*_parent->_parent, &allocInfo, *_parent->_parent, &memory);
-  if(res!= VK_SUCCESS) {
-    error.detail("Failed to build Vulkan memory block.", __FUNCTION__);
-    error.vkPrint(res);
+  if(!_vko->errorCheck(_vko->AllocateMemory(*_parent->_parent, &allocInfo, *_parent->_parent, &memory),
+    __FUNCTION__": Failed to build Vulkan memory block."))
     goto Exit;
-  }
 
   // success
   ret= true;

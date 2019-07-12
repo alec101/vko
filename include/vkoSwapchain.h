@@ -14,20 +14,20 @@ public:
   VkSwapchainKHR swapchain; // [init:null] vulkan object - gets populated when build() is called
   inline operator VkSwapchainKHR() const { return swapchain; }
 
-  uint32 nrImages;          // [init:0] number of images (buffers). Gets populated after calling build() func
+  uint32_t nrImages;          // [init:0] number of images (buffers). Gets populated after calling build() func
   VkImage *images;          // [init:null] array with all images (buffers). Gets populated after calling build() func
-  uint32 currentIndex;      // after calling aquire(), this will hold the index of the image currently aquired and can be drawn upon
-  uint32 dx, dy;            // swapchain's dimensions, after it is built
+  uint32_t currentIndex;      // after calling aquire(), this will hold the index of the image currently aquired and can be drawn upon
+  uint32_t dx, dy;            // swapchain's dimensions, after it is built
 
   // all configuration vars / funcs:
   struct SwapchainSettings {
-    //uint32 nrSemaphorePairs;
-    //uint32 nrFencePairs;
+    //uint32_t nrSemaphorePairs;
+    //uint32_t nrFencePairs;
 
 
     VkSwapchainCreateFlagsKHR flags;  // [def:0] https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkSwapchainCreateFlagBitsKHR
-    VkSurfaceKHR surface;             // [def:null] using osiWindow's surface if left null. Optionally, use a custom built one, and pass it here.
-    uint32 minBuffers;                // [def:2] number of images (buffers) to create for the swapchain
+    VkSurfaceKHR surface;             // [def:null] MUST specify a surface to use.
+    uint32_t minBuffers;                // [def:2] number of images (buffers) to create for the swapchain
     VkFormat imageFormat;             // [def:VK_FORMAT_B8G8R8A8_UNORM] the image format the buffers will be created with
     VkColorSpaceKHR colorSpace;       // [def:VK_COLOR_SPACE_SRGB_NONLINEAR_KHR] - this is weird, cuz there's only one option here, and you can't even make it undefined
     VkExtent2D imageSize;             // [def:0] if left 0, image size will be taken from the surface. Optionally you can specify the image buffers size in here(window size)
@@ -36,7 +36,7 @@ public:
 
     // this func will turn VK_SHARING_MODE_CONCURRENT on, for VkSharingMode
     // else, the sharing more will be VK_SHARING_MODE_EXCLUSIVE
-    void addShareBetwenQueueFamily(uint32 familyIndex);
+    void addShareBetwenQueueFamily(uint32_t familyIndex);
     VkSharingMode imageSharingMode; // [def: VK_SHARING_MODE_EXCLUSIVE]; call addShareBetwenQueueFamily() multiple times to activate VK_SHARING_MODE_CONCURRENT, and set what queue families will use this swapchain
 
     VkSurfaceTransformFlagBitsKHR preTransform; // [def:VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR] identity means unchanged; you can rotate and do other transforms to the images https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkSurfaceTransformFlagBitsKHR
@@ -73,8 +73,8 @@ public:
   bool check();
   void destroy();
 
-  bool aquire(VkSemaphore in_finishPresenting, VkFence in_finishPresentingFence= null, uint64 timeout= ~0, uint32 *out_index= null);     //
-  inline void queueShow(uint32 in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing);// { _showInfo.pWaitSemaphores= &in_finishDrawing, _showInfo.pImageIndices= &in_surfaceIndex; _parent->vk->QueuePresentKHR(in_queue, &_showInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
+  bool aquire(VkSemaphore in_finishPresenting, VkFence in_finishPresentingFence= nullptr, uint64_t timeout= ~0, uint32_t *out_index= nullptr);     //
+  inline void queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing);// { _showInfo.pWaitSemaphores= &in_finishDrawing, _showInfo.pImageIndices= &in_surfaceIndex; _parent->vk->QueuePresentKHR(in_queue, &_showInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
   inline void queueShowCurrent(VkQueue in_queue, VkSemaphore in_finishDrawing) { queueShow(currentIndex, in_queue, in_finishDrawing); }
 
     
@@ -86,13 +86,13 @@ private:
   VkPresentInfoKHR _showInfo;
   VkSwapchainKHR _oldSwapchain;
 
-  uint32 _nformats;
+  uint32_t _nformats;
   VkSurfaceFormatKHR *_formats;
   bool _isFormatOk(VkSurfaceKHR in_surface, VkFormat in_format, VkColorSpaceKHR in_colorSpace);
 
 
-  uint32 _index;    // index of the image currently being drawn by the app
-  class _Share:  public chainData { public: uint32 queueFamilyIndex; };
+  uint32_t _index;    // index of the image currently being drawn by the app
+  class _Share:  public chainData { public: uint32_t queueFamilyIndex; };
   class _Format: public chainData { public: VkFormat format; };
   vkObject *_parent;
   friend class vkObject;

@@ -1,4 +1,4 @@
-#include "vkObject.h"
+#include "../include/vkObject.h"
 
 
 ///=========================///
@@ -6,10 +6,10 @@
 ///=========================///
 
 VkoFramebuffer::VkoFramebuffer() {
-  _parent= null;
-  framebuffer= null;
-  renderPass= null;
-  imageView= null;
+  _parent= nullptr;
+  framebuffer= nullptr;
+  renderPass= nullptr;
+  imageView= nullptr;
   nrImageViews= 0;
   dx= dy= layers= 0;
 }
@@ -23,21 +23,20 @@ VkoFramebuffer::~VkoFramebuffer() {
 void VkoFramebuffer::destroy() {
   if(_parent->device) {
     if(framebuffer) {
-      _parent->vk->DestroyFramebuffer(_parent->device, *this, _parent->memCallback);
-      framebuffer= null;
+      _parent->DestroyFramebuffer(_parent->device, *this, _parent->memCallback);
+      framebuffer= nullptr;
     }
     if(imageView)
-      for(uint a= 0; a< nrImageViews; a++)
-        _parent->vk->DestroyImageView(_parent->device, imageView[a], _parent->memCallback);
+      for(uint32_t a= 0; a< nrImageViews; a++)
+        _parent->DestroyImageView(_parent->device, imageView[a], _parent->memCallback);
   }
   nrImageViews= 0;
-  if(imageView) { delete[] imageView; imageView= null; }
+  if(imageView) { delete[] imageView; imageView= nullptr; }
 }
 
 
-void VkoFramebuffer::addAttachment(VkImage in_image, VkFormat in_imageFormat, VkImageAspectFlags in_aspect, uint32 in_baseLayer, uint32 in_nrLayers) {
+void VkoFramebuffer::addAttachment(VkImage in_image, VkFormat in_imageFormat, VkImageAspectFlags in_aspect, uint32_t in_baseLayer, uint32_t in_nrLayers) {
   _Attachment *p= new _Attachment;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
   p->image= in_image;
   p->imageFormat= in_imageFormat;
   p->aspect= in_aspect;
@@ -48,7 +47,7 @@ void VkoFramebuffer::addAttachment(VkImage in_image, VkFormat in_imageFormat, Vk
 }
 
 
-void VkoFramebuffer::changeAttachment(uint32 in_index, VkImage in_image, VkFormat in_imageFormat, VkImageAspectFlags in_aspect, uint32 in_baseLayer, uint32 in_nrLayers) {
+void VkoFramebuffer::changeAttachment(uint32_t in_index, VkImage in_image, VkFormat in_imageFormat, VkImageAspectFlags in_aspect, uint32_t in_baseLayer, uint32_t in_nrLayers) {
   _Attachment *p= (_Attachment *)_attachments.get(in_index);
   p->image= in_image;
   p->imageFormat= in_imageFormat;
@@ -85,7 +84,7 @@ bool VkoFramebuffer::build() {
   VkImageViewCreateInfo viewInfo; // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap11.html#resources-image-views
 
   viewInfo.sType= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  viewInfo.pNext= null;
+  viewInfo.pNext= nullptr;
   viewInfo.flags= 0;
   viewInfo.viewType= VK_IMAGE_VIEW_TYPE_2D;
   ///viewInfo.format= VK_FORMAT_R8G8B8A8_UINT;
@@ -103,10 +102,9 @@ bool VkoFramebuffer::build() {
   if(_attachments.nrNodes) {
     nrImageViews= _attachments.nrNodes;
     imageView= new VkImageView[_attachments.nrNodes];
-    if(imageView== null) { error.alloc(__FUNCTION__); goto Exit; }
     
 
-    uint a= 0;
+    uint32_t a= 0;
     for(_Attachment *p= (_Attachment *)_attachments.first; p; p= (_Attachment *)p->next, a++) {
       viewInfo.image= p->image;
       viewInfo.format= p->imageFormat;
@@ -114,7 +112,7 @@ bool VkoFramebuffer::build() {
       viewInfo.subresourceRange.baseArrayLayer= p->baseLayer;
       viewInfo.subresourceRange.layerCount= p->nrLayers;
       
-      if(!error.vkCheck(_parent->vk->CreateImageView(_parent->device, &viewInfo, _parent->memCallback, &imageView[a]), "Vulkan frame buffer image view creation failed")) {
+      if(!_parent->errorCheck(_parent->CreateImageView(_parent->device, &viewInfo, _parent->memCallback, &imageView[a]), __FUNCTION__": Vulkan frame buffer image view creation failed")) {
         goto Exit;
       }
     }
@@ -124,7 +122,7 @@ bool VkoFramebuffer::build() {
   // start populating fbInfo
 
   fbInfo.sType= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  fbInfo.pNext= null;
+  fbInfo.pNext= nullptr;
   fbInfo.flags= 0;
   fbInfo.attachmentCount= _attachments.nrNodes;
   fbInfo.pAttachments= imageView;
@@ -133,7 +131,7 @@ bool VkoFramebuffer::build() {
   fbInfo.layers= layers;
   fbInfo.renderPass= renderPass;
 
-  if(!error.vkCheck(_parent->vk->CreateFramebuffer(_parent->device, &fbInfo, _parent->memCallback, &framebuffer), "Vulkan Framebuffer creation failed"))
+  if(!_parent->errorCheck(_parent->CreateFramebuffer(_parent->device, &fbInfo, _parent->memCallback, &framebuffer), __FUNCTION__": Vulkan Framebuffer creation failed"))
     goto Exit;
 
   ret= true; // success
@@ -141,7 +139,7 @@ bool VkoFramebuffer::build() {
 Exit:
   if(ret== false) {
     if(imageView) delete[] imageView;
-    imageView= null;
+    imageView= nullptr;
   }
   return ret;
 }

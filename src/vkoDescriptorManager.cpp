@@ -1,4 +1,4 @@
-#include "vkObject.h"
+#include "vko/include/vkObject.h"
 
 
 ///==========================---------------------///
@@ -6,11 +6,11 @@
 ///==========================---------------------///
 
 VkoDescriptorManager::VkoDescriptorManager() {
-  descriptorPool= null;
+  descriptorPool= nullptr;
   flags= 0;
 
   _maxSets= 0;
-  _parent= null;
+  _parent= nullptr;
 }
 
 
@@ -19,8 +19,8 @@ void VkoDescriptorManager::destroy() {
   // all allocated sets are destroyed with the pool.
   if(_parent->device) {
     if(descriptorPool) {
-      _parent->vk->DestroyDescriptorPool(*_parent, *this, _parent->memCallback);
-      descriptorPool= null;
+      _parent->DestroyDescriptorPool(*_parent, *this, _parent->memCallback);
+      descriptorPool= nullptr;
     }
   }
 }
@@ -29,12 +29,12 @@ void VkoDescriptorManager::destroy() {
 
 // set funcs
 
-VkoSet *VkoDescriptorManager::getSet(uint32 in_i) {
+VkoSet *VkoDescriptorManager::getSet(uint32_t in_i) {
   VkoSet *p= (VkoSet *)sets.first;
-  for(uint32 a= 0; p; p= (VkoSet *)p->next, a++)
+  for(uint32_t a= 0; p; p= (VkoSet *)p->next, a++)
     if(a== in_i) return p;
 
-  return null;
+  return nullptr;
 }
 
 /*
@@ -42,13 +42,12 @@ VkoSet *VkoDescriptorManager::getDescriptorSet(VkoDescriptor *in_p) {
   for(VkoSet *p= (VkoSet *)sets.first; p; p= (VkoSet *)p->next)
     if(p->index== in_p->set)
       return p;
-  return null;
+  return nullptr;
 }
 */
 
-VkoSet *VkoDescriptorManager::addDescriptorSet(uint32 in_i) {
+VkoSet *VkoDescriptorManager::addDescriptorSet(uint32_t in_i) {
   VkoSet *p= new VkoSet;
-  if(p== null) { error.alloc(__FUNCTION__); return null; }
   p->index= in_i;
   p->parent= this;
   sets.add(p);
@@ -56,10 +55,11 @@ VkoSet *VkoDescriptorManager::addDescriptorSet(uint32 in_i) {
 }
 
 
-void VkoDescriptorManager::setDescriptorSetFlags(uint32 in_set, VkDescriptorSetLayoutCreateFlags in_flags) {
+void VkoDescriptorManager::setDescriptorSetFlags(uint32_t in_set, VkDescriptorSetLayoutCreateFlags in_flags) {
+  _parent->clearError();
   VkoSet *p= getSet(in_set);
-  if(p== null) {
-    error.detail("<in_set> not found", __FUNCTION__);
+  if(p== nullptr) {
+    _parent->errorText= __FUNCTION__": <in_set> not found";
     return;
   }
 
@@ -68,11 +68,12 @@ void VkoDescriptorManager::setDescriptorSetFlags(uint32 in_set, VkDescriptorSetL
 
 
 
-VkoDescriptor *VkoDescriptorManager::addDescriptor(uint32 in_set, uint32 in_binding, VkDescriptorType in_type, uint32 in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler) {
+VkoDescriptor *VkoDescriptorManager::addDescriptor(uint32_t in_set, uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler) {
+  _parent->clearError();
   VkoSet *p= getSet(in_set);
-  if(p== null) {
-    error.detail("<in_set> not found", __FUNCTION__);
-    return null;
+  if(p== nullptr) {
+    _parent->errorText= __FUNCTION__": <in_set> not found";
+    return nullptr;
   }
   return p->addDescriptor(in_binding, in_type, in_count, in_stages, in_pImutableSampler);
 }
@@ -82,13 +83,12 @@ VkoDescriptorManager::_DescriptorMax *VkoDescriptorManager::_getDescMaxForType(V
   for(_DescriptorMax *p= (_DescriptorMax *)_maxDescriptors.first; p; p= (_DescriptorMax *)p->next)
     if(p->type= in_type)
       return p;
-  return null;
+  return nullptr;
 }
 
 
 VkoDescriptorManager::_DescriptorMax *VkoDescriptorManager::_addDescMax(VkDescriptorType in_type) {
   _DescriptorMax *p= new _DescriptorMax;
-  if(p== null) { error.alloc(__FUNCTION__); return null; }
   p->type= in_type;
   p->descriptorCount= 0;
   _maxDescriptors.add(p);
@@ -113,7 +113,7 @@ void VkoDescriptorManager::_computeMaxPoolNumbers() {
     for(VkoSet *s= (VkoSet *)sets.first; s; s= (VkoSet *)s->next) {
       for(VkoDescriptor *d= (VkoDescriptor *)s->descriptors.first; d; d= (VkoDescriptor *)d->next) {
         _DescriptorMax *dm= _getDescMaxForType(d->type);
-        if(dm== null)
+        if(dm== nullptr)
           dm= _addDescMax(d->type);
         dm->descriptorCount++;
       } /// for each descriptor
@@ -122,9 +122,9 @@ void VkoDescriptorManager::_computeMaxPoolNumbers() {
 }
 
 
-void VkoDescriptorManager::setPoolMaxDescriptorType(VkDescriptorType in_type, uint32 in_maxDescriptors) {
+void VkoDescriptorManager::setPoolMaxDescriptorType(VkDescriptorType in_type, uint32_t in_maxDescriptors) {
   _DescriptorMax *dm= _getDescMaxForType(in_type);
-  if(dm== null)
+  if(dm== nullptr)
     dm= _addDescMax(in_type);
   if(dm)
     dm->descriptorCount= in_maxDescriptors;
@@ -161,16 +161,15 @@ bool VkoDescriptorManager::build() {
 
 
   // POOL creation ===---------
-
   bool ret= false;
   VkDescriptorPoolCreateInfo descInfo;
-  descInfo.pPoolSizes= null;              // INIT 1
+  descInfo.pPoolSizes= nullptr;              // INIT 1
 
   _computeMaxPoolNumbers();
 
   /// populate descriptor info
   descInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  descInfo.pNext= null;
+  descInfo.pNext= nullptr;
 
   descInfo.flags= flags;
   descInfo.maxSets= _maxSets;
@@ -178,15 +177,14 @@ bool VkoDescriptorManager::build() {
 
   if(_maxDescriptors.nrNodes) {
     descInfo.pPoolSizes= new VkDescriptorPoolSize[_maxDescriptors.nrNodes];  // ALLOC 1
-    if(descInfo.pPoolSizes== null) { error.alloc(__FUNCTION__); goto Exit; }
-    uint a= 0;
+    uint32_t a= 0;
     for(_DescriptorMax *p= (_DescriptorMax *)_maxDescriptors.first; p; p= (_DescriptorMax *)p->next, a++)
       ((VkDescriptorPoolSize *)descInfo.pPoolSizes)[a].type= p->type,
       ((VkDescriptorPoolSize *)descInfo.pPoolSizes)[a].descriptorCount= p->descriptorCount;
   }
 
   // create
-  if(!error.vkCheck(_parent->vk->CreateDescriptorPool(*_parent, &descInfo, _parent->memCallback, &descriptorPool), "Vulkan Descriptor Pool create falied."))
+  if(!_parent->errorCheck(_parent->CreateDescriptorPool(*_parent, &descInfo, _parent->memCallback, &descriptorPool), __FUNCTION__": Vulkan Descriptor Pool create falied."))
     goto Exit;
 
   // build all sets (create layouts, VkDescriptorSet objects, allocate them)
@@ -203,28 +201,28 @@ bool VkoDescriptorManager::build() {
 
 
 
-bool VkoDescriptorManager::buildSet(uint32 in_index) {
+bool VkoDescriptorManager::buildSet(uint32_t in_index) {
   // descriptor sets https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#descriptorsets-sets
-  
+  _parent->clearError();
   VkDescriptorSetAllocateInfo dsInfo; // alloc info struct https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#VkDescriptorSetAllocateInfo
   bool ret= false;      /// return value
 
   VkoSet *s= getSet(in_index);
-  if(s== null) { error.detail("Set index not found. No descriptor added with that set number?", __FUNCTION__); goto Exit; }
+  if(s== nullptr) { _parent->errorText= __FUNCTION__": Set not found"; goto Exit; }
 
   s->buildLayout();
 
   // allocate + create the set 
 
   dsInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  dsInfo.pNext= null;
+  dsInfo.pNext= nullptr;
 
   dsInfo.descriptorPool= descriptorPool;
 
   dsInfo.descriptorSetCount= 1;
   dsInfo.pSetLayouts= &s->layout;
 
-  if(!error.vkCheck(_parent->vk->AllocateDescriptorSets(*_parent, &dsInfo, &s->set), "Vulkan Descriptor Set alloc failed"))
+  if(!_parent->errorCheck(_parent->AllocateDescriptorSets(*_parent, &dsInfo, &s->set), __FUNCTION__": Vulkan Descriptor Set alloc failed"))
     goto Exit;
 
   ret= true;  // success
@@ -245,16 +243,18 @@ bool VkoDescriptorManager::buildAllSets() {
 
 
 void VkoDescriptorManager::resetPool() {
-  error.vkCheck(_parent->vk->ResetDescriptorPool(*_parent, descriptorPool, 0), "Reset descriptor pool failed");
+  _parent->errorCheck(_parent->ResetDescriptorPool(*_parent, descriptorPool, 0), __FUNCTION__": Reset descriptor pool failed");
   sets.delData();
 }
 
 
-void VkoDescriptorManager::freeSet(uint32 in_i) {
+void VkoDescriptorManager::freeSet(uint32_t in_i) {
+  _parent->clearError();
   VkoSet *p= getSet(in_i);
-  if(p== null) { error.detail("Free set failed: descriptor index not found. aborting.", __FUNCTION__); return; }
-  _parent->vk->FreeDescriptorSets(*_parent, descriptorPool, 1, &p->set);
-  p->set= null;
+  if(p== nullptr) { _parent->errorText= "VkoDescriptorManager::freeSet(): index not found. aborting."; return; }
+
+  _parent->errorCheck(_parent->FreeDescriptorSets(*_parent, descriptorPool, 1, &p->set), __FUNCTION__": vkFreeDescriptorSets() failed");
+  p->set= nullptr;
   
   /// all descriptors will be destroyed too, fromt he p->descriptors chainList
   sets.del(p);

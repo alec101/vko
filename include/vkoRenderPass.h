@@ -7,7 +7,7 @@
 
 class VkoRenderPass: public chainData {
 public:
-  //uint32 index;             // render pass index (starts from 0, each render pass adds 1)
+  //uint32_t index;             // render pass index (starts from 0, each render pass adds 1)
   VkRenderPass renderPass;    // vulkan render pass instance
   inline operator VkRenderPass() { return renderPass; }
 
@@ -30,29 +30,29 @@ public:
   // <in_subpass>:    index of the subpass that will add the imput atachment
   // <in_attachment>: attachment index
   // <in_layout>:     image layout of the attachment
-  void addSubpassInputAttachment(uint32 in_subpass, uint32_t in_attachment, VkImageLayout in_layout);
+  void addSubpassInputAttachment(uint32_t in_subpass, uint32_t in_attachment, VkImageLayout in_layout);
 
   // fragment shader Location=X <-> pColorAtachements[x]
   // <in_subpass>:     index of the subpass that will add the color attachment
   // <in_colorAtt>:    attachment index
   // <in_colorLayout>: color attachment layout
   // <enableResolve> & <enableDepthStencil> will toggle usage of <in_resolveAtt>/<in_resolveLayout> and <in_depthStencilAtt>/<in_depthStencilLayout>
-  // if all color attachments have resolve disabled, their array will be passed to Vulkan as null, same with depth/stencil.
+  // if all color attachments have resolve disabled, their array will be passed to Vulkan as nullptr, same with depth/stencil.
   // if one of the color attachments have resolve enabled, but the rest don't, the ones that don't, will be flagged as VK_ATTACHMENT_UNUSED 
-  void addSubpassColorAttachment(uint32 in_subpass, uint32_t in_colorAtt, VkImageLayout in_colorLayout,
+  void addSubpassColorAttachment(uint32_t in_subpass, uint32_t in_colorAtt, VkImageLayout in_colorLayout,
                                   bool enableResolve,      uint32_t in_resolveAtt,      VkImageLayout in_resolveLayout,
                                   bool enableDepthStencil, uint32_t in_depthStencilAtt, VkImageLayout in_depthStencilLayout);
   // <in_subpass>:    index of the subpass that will add the color attachment
   // <in_color>:      color attachment
-  // <in_resolve>/<in_depthStencil>: resolve and depth/stencil attachments; if left null, the color attachment won't use them
-  // if all color attachments have resolve disabled, their array will be passed to Vulkan as null, same with depth/stencil.
+  // <in_resolve>/<in_depthStencil>: resolve and depth/stencil attachments; if left nullptr, the color attachment won't use them
+  // if all color attachments have resolve disabled, their array will be passed to Vulkan as nullptr, same with depth/stencil.
   // if one of the color attachments have resolve enabled, but the rest don't, the ones that don't, will be flagged as VK_ATTACHMENT_UNUSED 
-  void addSubpassColorAttachment2(uint32 in_subpass, VkAttachmentReference *in_color, VkAttachmentReference *in_resolve= null, VkAttachmentReference *in_depthStencil= null);
+  void addSubpassColorAttachment2(uint32_t in_subpass, VkAttachmentReference *in_color, VkAttachmentReference *in_resolve= nullptr, VkAttachmentReference *in_depthStencil= nullptr);
 
   // preserve attachments will remain untouched thruout the subpass, they're not used
   // <in_subpass>: index of the subpass that will add the preserve attachment
   // <in_attachment>: attachment index
-  void addSubpassPreserveAttachment(uint32 in_subpass, uint32_t in_attachment);
+  void addSubpassPreserveAttachment(uint32_t in_subpass, uint32_t in_attachment);
 
   // subpass dependencies - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkSubpassDependency
   // !!! Care should be taken to avoid a data race here;
@@ -70,7 +70,7 @@ public:
   // <in_subpass>: the subpass of the atachment
   // <in_inputAttachmentIndex>: index of the input attachment
   // <in_aspectMask>: VkImageAspectFlagBits: https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap11.html#VkImageAspectFlagBits
-  void addInputAttachmentAspect(uint32 in_subpass, uint32_t in_inputAttachmentIndex, VkImageAspectFlags in_aspectMask);
+  void addInputAttachmentAspect(uint32_t in_subpass, uint32_t in_inputAttachmentIndex, VkImageAspectFlags in_aspectMask);
 
   // enable render pass multiview. https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkRenderPassMultiviewCreateInfo
   // there is not much info on all of this.
@@ -151,11 +151,11 @@ private:
     const int32_t   *pViewOffsets;
     uint32_t        correlationMaskCount;
     const uint32_t  *pCorrelationMasks;
-    _MultiView(): pViewMasks(null), pViewOffsets(null), pCorrelationMasks(null) { delData(); }
+    _MultiView(): pViewMasks(nullptr), pViewOffsets(nullptr), pCorrelationMasks(nullptr) { delData(); }
     void delData() { enable= false; subpassCount= dependencyCount= correlationMaskCount= 0;
-                      if(pViewMasks) delete[] pViewMasks; pViewMasks= null;
-                      if(pViewOffsets) delete[] pViewOffsets; pViewOffsets= null;
-                      if(pCorrelationMasks) delete[] pCorrelationMasks; pCorrelationMasks= null; }
+                      if(pViewMasks)        delete[] pViewMasks;        pViewMasks= nullptr;
+                      if(pViewOffsets)      delete[] pViewOffsets;      pViewOffsets= nullptr;
+                      if(pCorrelationMasks) delete[] pCorrelationMasks; pCorrelationMasks= nullptr; }
     ~_MultiView() { delData(); }
   } _multiView;
   vkObject *_parent;

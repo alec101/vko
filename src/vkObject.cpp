@@ -82,29 +82,37 @@
 
 
 
-//VkoFuncs *vkoGlb= null;
+//VkoFuncs *vkoGlb= nullptr;
 
 VkInstance vkObject::instance= nullptr;
 
 VkInstance            vkObject::VkoConfiguration::customInstance= nullptr;
 VkInstanceCreateInfo *vkObject::VkoConfiguration::instanceInfo= nullptr;
-VkApplicationInfo     vkObject::VkoConfiguration::appInfo= { VK_STRUCTURE_TYPE_APPLICATION_INFO, null, 0, null, 0, 0 };
+VkApplicationInfo     vkObject::VkoConfiguration::appInfo= { VK_STRUCTURE_TYPE_APPLICATION_INFO, nullptr, 0, 0, 0, 0 };
 
 uint32_t           vkObject::VkoInfo::nrPhysicalDevices= 0;
 VkoPhysicalDevice *vkObject::VkoInfo::physicalDevice=    nullptr;
 
+vkObject::VkoConfiguration::VkoVer vkObject::VkoConfiguration::versionRequest= {1, 1, 0 };
+void *vkObject::_vulkanLib= nullptr;
+
+#ifdef VKO_USE_GLOBAL_FUNCS
+VkoFuncs vkObject::instanceLinked; // global instance-linked vulkan funcs. they have higher CPU usage
+VkoFuncs *vkObject::glb= &vkObject::instanceLinked;  // pointer to the instance-linked vulkan funcs. This can be changed to point to specific device-linked funcs.
+#endif
+
 
 vkObject::vkObject(): VkoFuncs() {
-  //vkr= null;
-  //vk= null;
+  //vkr= nullptr;
+  //vk= nullptr;
 
   //vkObject::instance= nullptr;
 
-  memCallback= null;
-  device= null;
+  memCallback= nullptr;
+  device= nullptr;
 
   nrQueues= 0;
-  queue= null;              // INIT 1 - NOT DEALOCATED <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  queue= nullptr;              // INIT 1 - NOT DEALOCATED <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
   memory._parent= this;
   buffers._parent= this;
@@ -112,20 +120,17 @@ vkObject::vkObject(): VkoFuncs() {
 
   cfg.parent= this;
   cfg.extensions._vko= this;
-  #ifdef VKO_USE_GLOBAL_FUNCS
-  glb= &instanceLinked;
-  #endif
 
-  //cfg.customInstance= null;
+  //cfg.customInstance= nullptr;
 
   // vulkan app info
   /*
   cfg.appInfo.sType= VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  cfg.appInfo.pNext= null;
+  cfg.appInfo.pNext= nullptr;
   cfg.appInfo.apiVersion= 0;
-  cfg.appInfo.pApplicationName= null;
+  cfg.appInfo.pApplicationName= nullptr;
   cfg.appInfo.applicationVersion= 0;
-  cfg.appInfo.pEngineName= null;
+  cfg.appInfo.pEngineName= nullptr;
   cfg.appInfo.engineVersion= 0;
   */
 
@@ -159,8 +164,12 @@ void vkObject::init(const osiRenderer *in_r) {
 */
 
 
+vkObject::~vkObject() {
+}
+
+
 void vkObject::destroy() {
-  if(device== null) return;
+  if(device== nullptr) return;
 
   // SHADERS >>> parent->shaders.delData();
 
@@ -179,6 +188,12 @@ void vkObject::destroy() {
 }
 
 
+vkObject::VkoInfo::~VkoInfo() {
+  if(physicalDevice)
+    delete[] physicalDevice;
+  physicalDevice= nullptr;
+  nrPhysicalDevices= 0; 
+}
 
 
 
@@ -212,7 +227,7 @@ VkoRenderPass *vkObject::addRenderPass() {
 
 void vkObject::delRenderPasses() {
   for(VkoRenderPass *p= (VkoRenderPass *)renderPassList.first; p; p= (VkoRenderPass *)p->next)
-    if(p->renderPass!= null)
+    if(p->renderPass!= nullptr)
       p->destroy();
 }
 
@@ -229,7 +244,7 @@ VkoFramebuffer *vkObject::addFramebuffer() {
 
 void vkObject::delFramebuffers() {
   for(VkoFramebuffer *p= (VkoFramebuffer *)framebuffersList.first; p; p= (VkoFramebuffer *)p->next)
-    if(p->framebuffer!= null)
+    if(p->framebuffer!= nullptr)
       p->destroy();
 }
 
@@ -314,24 +329,24 @@ bool vkObject::_createInstance() {
   if(cfg.instanceInfo== nullptr) {
 
     instInfo.sType= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instInfo.pNext= null;
+    instInfo.pNext= nullptr;
     instInfo.flags= 0;
     instInfo.pApplicationInfo= &cfg.appInfo;
 
     /// enable requested layers
     instInfo.enabledLayerCount= _validationLayers.nrNodes;
-    instInfo.ppEnabledLayerNames= null;
+    instInfo.ppEnabledLayerNames= nullptr;
 
     if(_validationLayers.nrNodes) {
       instInfo.ppEnabledLayerNames= new const char *[_validationLayers.nrNodes];
-      uint a= 0;
+      uint32_t a= 0;
       for(_ValidationLayer *p= (_ValidationLayer *)_validationLayers.first; p; p= (_ValidationLayer *)p->next, a++)
-        ((char **)instInfo.ppEnabledLayerNames)[a]= p->name.d;
+        ((char **)instInfo.ppEnabledLayerNames)[a]= (char *)p->name;
     }
 
     /// populate extension list
     instInfo.enabledExtensionCount= 0;
-    instInfo.ppEnabledExtensionNames= null;
+    instInfo.ppEnabledExtensionNames= nullptr;
     cfg.extensions.createInstanceExtensionsStringArray((char ***)&instInfo.ppEnabledExtensionNames, &instInfo.enabledExtensionCount);
 
     iiToUse= &instInfo;
@@ -355,7 +370,7 @@ bool vkObject::_createInstance() {
 Exit:
   if(allocated) {
     if(instInfo.ppEnabledExtensionNames) {
-      for(uint32 a= 0; a< instInfo.enabledExtensionCount; a++)
+      for(uint32_t a= 0; a< instInfo.enabledExtensionCount; a++)
         if(instInfo.ppEnabledExtensionNames[a])
           delete[] instInfo.ppEnabledExtensionNames[a];
       delete[] instInfo.ppEnabledExtensionNames;
@@ -374,7 +389,7 @@ Exit:
 
 
 bool vkObject::_createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_t *out_nrQueues, VkoQueue **out_osiQueues) {
-  if(instance== null) { errorText= "vkObject::_createDevice(): vkInstance is null. no instance created? aborting."; return false; }
+  if(instance== nullptr) { errorText= "vkObject::_createDevice(): vkInstance is nullptr. no instance created? aborting."; return false; }
   bool ret= false;
   errorText= nullptr;
 
@@ -386,12 +401,12 @@ bool vkObject::_createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_
   cfg.extensions.populateAvailabilityDevice(physicalDevice);
 
   // custom deviceInfo would be best, if not osi will create an automatic one enabling everything
-  if(cfg.deviceInfo== null) {
+  if(cfg.deviceInfo== nullptr) {
     dci.sType= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     dci.pNext= NULL;
     dci.flags= 0;
     dci.enabledLayerCount= 0;
-    dci.ppEnabledLayerNames= null;
+    dci.ppEnabledLayerNames= nullptr;
   
     // enable custom GPU features - THIS IS A MUST, enabling all can create unnecesary lag
     if(cfg.gpuFeatures)
@@ -442,22 +457,22 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
   #endif
 
   bool found;
-  uint32 n;
+  uint32_t n;
 
   /// mem allocated tmp vars
-  VkQueueFamilyProperties *qfp= null;   // 1 delete here
-  uint32 *requested= null;              // 2 delete here
+  VkQueueFamilyProperties *qfp= nullptr;   // 1 delete here
+  uint32_t *requested= nullptr;              // 2 delete here
 
-  float *qp= null;                      // 1 delete in _createDevice (or here if error)
+  float *qp= nullptr;                      // 1 delete in _createDevice (or here if error)
                             // out_structs 2 delete in _createDevice
                             // out_osiQueues is handled by osiVkRenderer, deleted in destructor
   *out_nrStructs= 0;
-  *out_structs= null;
+  *out_structs= nullptr;
   *out_nrQueues= 0;
-  *out_osiQueues= null;
+  *out_osiQueues= nullptr;
   
   /// get the number of queue families
-  GetPhysicalDeviceQueueFamilyProperties(in_GPU, &n, null);
+  GetPhysicalDeviceQueueFamilyProperties(in_GPU, &n, nullptr);
   if(n== 0) { errorText= "vkObject::_getRequestedQueues(): Vulkan returns no queues"; goto Error; }
 
   qfp= new VkQueueFamilyProperties[n];
@@ -468,7 +483,7 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
   #ifdef VKO_BE_CHATTY
   if(chatty) {
     printf("Found %u Vulkan Queue families\n", n);
-    for(uint a= 0; a< n; a++) {
+    for(uint32_t a= 0; a< n; a++) {
       printf(" -Family %u\n", a);
       printf("  %u queues\n", qfp[a].queueCount);
       printf("  Type: ");
@@ -488,16 +503,16 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
   #endif
 
   /// create requested struct. it will count how many queues are requested from each queue family, if any (requested from osi.settings)
-  requested= new uint32[n];
+  requested= new uint32_t[n];
   
-  for(uint a= 0; a< n; a++)
+  for(uint32_t a= 0; a< n; a++)
     requested[a]= 0;
 
 
   // universal queues (compute/graphics/transfer)
   if(cfg.queueRequestUniversal> 0) {
 
-    for(uint a= 0; a< n; a++)
+    for(uint32_t a= 0; a< n; a++)
       if((qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT) && (qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT)) {
         /// check for extra requested flags
         if(cfg.queueExtraFlagBits)
@@ -518,7 +533,7 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
 
     // search for graphics only queues (atm there's no such thing in the current drivers, but who knows)
     found= false;
-    for(uint a= 0; a< n; a++)
+    for(uint32_t a= 0; a< n; a++)
       if((qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT) && !(qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT)) {
         /// check for extra requested flags
         if(cfg.queueExtraFlagBits)
@@ -534,7 +549,7 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
 
     // search for graphics& compute queues (universal)
     if(!found) {
-      for(uint a= 0; a< n; a++)
+      for(uint32_t a= 0; a< n; a++)
         if(qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT) {
           /// check for extra requested flags
           if(cfg.queueExtraFlagBits)
@@ -554,7 +569,7 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
   if(cfg.queueRequestCompute> 0) {
     /// search for compute-only queues (AMD GPU's do have them it seems)
     found= false;
-    for(uint a= 0; a< n; a++)
+    for(uint32_t a= 0; a< n; a++)
       if((qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT) && !(qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT)) {
         /// check for extra requested flags
         if(cfg.queueRequestGraphics)
@@ -570,7 +585,7 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
 
     /// search for graphics& compute queues (universal)
     if(!found) {
-      for(uint a= 0; a< n; a++)
+      for(uint32_t a= 0; a< n; a++)
         if(qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT) {
           /// check for extra requested flags
           if(cfg.queueExtraFlagBits)
@@ -591,7 +606,7 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
     /// search for transfer-only queues first (both AMD and NVIDIA seem to have it nowadays)
     found= false;
 
-    for(uint a= 0; a< n; a++)
+    for(uint32_t a= 0; a< n; a++)
       if((qfp[a].queueFlags& VK_QUEUE_TRANSFER_BIT) && (!(qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT)) && (!(qfp[a].queueFlags& VK_QUEUE_COMPUTE_BIT))) {
         /// check for extra requested flags
         if(cfg.queueExtraFlagBits)
@@ -607,7 +622,7 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
 
     /// search for universal queues
     if(!found) {
-      for(uint a= 0; a< n; a++)
+      for(uint32_t a= 0; a< n; a++)
         if((qfp[a].queueFlags& VK_QUEUE_TRANSFER_BIT) || (qfp[a].queueFlags& VK_QUEUE_GRAPHICS_BIT)) { // graphics queues have capacity for transfer for sure, and it's not requested to put the transfer bit anymore
           /// check for extra requested flags
           if(cfg.queueExtraFlagBits)
@@ -625,21 +640,21 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
 
 
   /// count how many queues will be created in total
-  for(uint a= 0; a< n; a++)
+  for(uint32_t a= 0; a< n; a++)
     (*out_nrQueues)+= requested[a];
   if(*out_nrQueues== 0) { errorText= "Found zero vulkan queues that match any requested"; goto Error; }
 
 
   /// queue priorities array - gonna be all 1.0f
   qp= new float[*out_nrQueues];
-  for(uint a= 0; a< *out_nrQueues; a++)
+  for(uint32_t a= 0; a< *out_nrQueues; a++)
     qp[a]= 1.0f;
 
   /// osiQueues - the renderer stored queue data
   *out_osiQueues= new VkoQueue[*out_nrQueues];
   
   /// count how many structs will be returned
-  for(uint a= 0; a< n; a++)
+  for(uint32_t a= 0; a< n; a++)
     if(requested[a]> 0)
       (*out_nrStructs)++;
   
@@ -647,10 +662,10 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
   *out_structs= new VkDeviceQueueCreateInfo[*out_nrStructs];
 
   /// a= family, b= loop thru out_structs, c= loop thru osiQueues, d= loop thru family
-  for(uint a= 0, b= 0, c= 0; a< n; a++)
+  for(uint32_t a= 0, b= 0, c= 0; a< n; a++)
     if(requested[a]> 0) {
       (*out_structs)[b].sType= VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-      (*out_structs)[b].pNext= null;
+      (*out_structs)[b].pNext= nullptr;
       if(cfg.queueExtraFlagBits& VK_DEVICE_QUEUE_CREATE_PROTECTED_BIT)
         (*out_structs)[b].flags= VK_DEVICE_QUEUE_CREATE_PROTECTED_BIT;
       else
@@ -661,11 +676,11 @@ bool vkObject::_getRequestedQueues(VkPhysicalDevice in_GPU, uint32_t *out_nrStru
       b++;
 
       /// populate out_osiQueues
-      for(uint d= 0; d< requested[a]; d++) {
+      for(uint32_t d= 0; d< requested[a]; d++) {
         (*out_osiQueues)[c].family= a;
         (*out_osiQueues)[c].index= d;
         (*out_osiQueues)[c].typeFlags= qfp[a].queueFlags;
-        (*out_osiQueues)[c].queue= null;
+        (*out_osiQueues)[c].queue= nullptr;
         c++;
       } /// loop thru family
     } /// requested in this family
@@ -691,15 +706,15 @@ Error:
 
 
 void vkObject::_populateVkQueue() {
-  if((GetDeviceQueue== null) || (nrQueues== 0)) return;
-  for(uint a= 0; a< nrQueues; a++)
+  if((GetDeviceQueue== nullptr) || (nrQueues== 0)) return;
+  for(uint32_t a= 0; a< nrQueues; a++)
     GetDeviceQueue(device, queue[a].family, queue[a].index, &queue[a].queue);
 }
 
 
 void vkObject::_addValidationLayer(const char *in_name) {
   _ValidationLayer *p= new _ValidationLayer;
-  p->name= in_name;
+  _strCopy((char **)&p->name, in_name);
   _validationLayers.add(p);
 }
 
@@ -708,7 +723,7 @@ void vkObject::_populatePhysicalDeviceInfo() {
   if(info.physicalDevice) return;     // populate only once
 
   uint32_t npd= 0;
-  VkPhysicalDevice *pd= null;
+  VkPhysicalDevice *pd= nullptr;
 
   /// number of physical devices on system
   EnumeratePhysicalDevices(instance, &npd, nullptr);
@@ -753,7 +768,7 @@ bool vkObject::buildInstance() {
 
   // instance
 
-  if(instance== null) {
+  if(instance== nullptr) {
     if(cfg.customInstance)
       instance= cfg.customInstance;
     else
@@ -769,6 +784,8 @@ bool vkObject::buildInstance() {
   #ifdef VKO_USE_GLOBAL_FUNCS
   _linkInstanceFuncs(&instanceLinked, instance);
   #endif
+
+  return true;    // success
 }
 
 
@@ -786,11 +803,136 @@ bool vkObject::build() {
   if(!_createDevice(physicalDevice, &device, &nrQueues, &queue))
     return false;
 
+  _linkDeviceFuncs(this, instance, *this);
+  memory.init();
+  _populateVkQueue();
 
   #ifdef VKO_USE_GLOBAL_FUNCS
-  _linkDeviceFuncs(&instanceLinked, instance, null);
+  _linkDeviceFuncs(&instanceLinked, instance, nullptr);
   #endif
+  return true; // success
 }
+
+
+
+
+
+
+
+
+
+
+bool vkObject::errorCheck(VkResult in_res, const char *in_text) {
+  result= in_res;
+  if(in_res!= VK_SUCCESS) {
+    errorText= in_text;
+    return false;
+  }
+  errorText= nullptr;
+  return true;
+}
+
+
+
+
+// util funcs
+
+void vkObject::_memcpy(void *dst, const void *src, uint64_t n) {
+  if(dst< src) {
+      
+    uint64_t *p1= (uint64_t *)dst, *p2= (uint64_t *)src;
+    while(n>= 8)                /// 8 bytes at a time copy
+      *p1++= *p2++, n-= 8;
+
+    uint8_t *p3= (uint8_t *)p1, *p4= (uint8_t *)p2;
+    while(n)                    /// rest of bytes 1 by 1 (max 7)
+      *p3++= *p4++, n--;
+
+  } else {
+    uint64_t *p1= (uint64_t *)((uint8_t *)dst+ n), *p2= (uint64_t *)((uint8_t *)src+ n);
+    while(n>= 8)                /// 8 bytes at a time copy
+      *--p1= *--p2, n-= 8;
+
+    uint8_t *p3= (uint8_t *)p1, *p4= (uint8_t *)p2;
+    while(n)                    /// rest of bytes 1 by 1 (max 7)
+      *--p3= *--p4, n--;
+  }
+}
+
+/// returns utf-8 string length in BYTES (includes str terminator)
+uint32_t vkObject::_strlen8(const char *s) {
+  if(!s) return 0;
+  uint8_t *p= (uint8_t *)s;
+  while(*p++);
+  return (int32_t)(p- (uint8_t *)s);
+}
+
+
+/// returns utf-16 string length in BYTES (includes str terminator)
+uint32_t vkObject::_strlen16(const char16_t *s) {
+  if(!s) return 0;
+  uint16_t *p= (uint16_t *)s;
+  while(*p++);
+  return (int32_t)((uint8_t *)p- (uint8_t *)s);
+}
+
+
+
+/// copies src to dest (both utf-8 array strings
+void vkObject::_strcpy8(char *dst, const char *src) {
+  uint8_t *p1= (uint8_t *)dst, *p2= (uint8_t *)src;
+
+  while(*p2)
+    *p1++= *p2++;
+
+  *p1= 0;
+}
+
+
+void vkObject::_strcpy16(char16_t *dst, const char16_t *src) {
+  uint16_t *p1= (uint16_t *)dst, *p2= (uint16_t *)src;
+  while(*p2)
+    *p1++= *p2++;
+  *p1= 0;  /// terminator
+}
+
+
+int32_t vkObject::_strcmp8(const char *s1, const char *s2) {
+  /// if both are NULL, then there's no difference
+  if(s2== nullptr) {
+    if(s1== nullptr) return 0;
+    else             return 1;
+  }
+  if(s1== nullptr) return -1;
+
+  uint8_t *p1= (uint8_t *)s1, *p2= (uint8_t *)s2;
+
+  /// pass thru each character to check for differences
+  while(*p1 && *p2)
+    if(*p1 != *p2)
+      return -1;
+    else p1++, p2++;
+
+  if(*p1) return 1;   /// still stuff in str1, strings not the same
+  if(*p2) return -1;  /// still stuff in str2, strings not the same
+
+  return 0;           // reached this point, there is no difference
+}
+
+
+// deletes <dst> if not nullptr, allocates <dst> then copyes <src> into <dst>
+void vkObject::_strCopy(char **out_dst, const char *in_src) {
+  if(*out_dst)
+    delete[] *out_dst;
+  *out_dst= nullptr;
+
+  if(in_src== nullptr)
+    return;
+
+  *out_dst= (char *)new uint8_t[_strlen8(in_src)];
+  _strcpy8(*out_dst, in_src);
+}
+
 
 
 

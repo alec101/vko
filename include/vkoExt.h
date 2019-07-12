@@ -3,7 +3,6 @@
 
 
 
-
 // Vulkan EXTENSIONS
 
 struct VkoExt {
@@ -15,7 +14,6 @@ struct VkoExt {
   //osiVkExt():name(NULL), enable(false), isAvaible(false) {}
   //VkoExt(const char *in_name, int32_t in_n, int8_t in_t, bool in_enable, bool in_avaible): name(in_name), regNr(in_n), type(in_t), enable(in_enable), isAvaible(in_avaible) {}
 };
-
 
 
 
@@ -224,20 +222,20 @@ struct VkoExtensions {
 
   private:
   void _createExtStr(int8_t type, char ***out_stringArray, uint32_t *out_nrExtensions);
-  vkObject _vko;
+  vkObject *_vko;
   friend class vkObject;
 };
 
 
 
 
-
+/*
 class _osiVkExtensionsRawClass {
 public:
   _osiVkExtensionsRawClass();
   VkoExt *_ext;
 };
-
+*/
 
 
 

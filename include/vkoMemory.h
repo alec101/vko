@@ -6,7 +6,7 @@ public:
 
   VkPhysicalDeviceMemoryProperties memProp;   // memory properties struct, gets populated in init()
 
-  uint32 findMemory(uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties); //  https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
+  uint32_t findMemory(uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties); //  https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
 
   
   VkoMemory *addMemoryBlock();
@@ -52,8 +52,8 @@ public:
   // <in_typeBits>: [def:~0] specific memory index. if left ~0, only the flags will be used in search
   // return value: true - the type of memory requested exists on the system
   //               false- the type of memory requested does not exist on the system
-  //bool configure(VkDeviceSize in_size, VkMemoryPropertyFlagBits in_required, VkMemoryPropertyFlagBits in_prefered, uint32 in_typeBits= ~0u);
-  bool configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_required, VkMemoryPropertyFlags in_prefered, uint32 in_typeBits= ~0u);
+  //bool configure(VkDeviceSize in_size, VkMemoryPropertyFlagBits in_required, VkMemoryPropertyFlagBits in_prefered, uint32_t in_typeBits= ~0u);
+  bool configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_required, VkMemoryPropertyFlags in_prefered, uint32_t in_typeBits= ~0u);
 
   // inport / export / extensions (vulkan 1.1, KHR only)
   
@@ -81,6 +81,7 @@ private:
   VkMemoryDedicatedAllocateInfo    *_dedicatedInfo;
 
   VkoMemoryManager *_parent;
+  vkObject *_vko;
 
   friend class vkObject;
   friend class VkoMemoryManager;

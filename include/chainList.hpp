@@ -85,7 +85,7 @@ struct chainList {
 // must alloc from code, then call this func.
 ///------------------------------------------
 
-void chainList::add(chainData *p2) {		
+inline void chainList::add(chainData *p2) {		
   if(last) {              /// list has members
     last->next= p2;
     p2->prev= last;
@@ -101,7 +101,7 @@ void chainList::add(chainData *p2) {
 }
 
 
-void chainList::addFirst(chainData *p2) {
+inline void chainList::addFirst(chainData *p2) {
   if(first) {             // list has members
     first->prev= p2;
     p2->next= first;
@@ -117,7 +117,7 @@ void chainList::addFirst(chainData *p2) {
 }
 
 
-void chainList::addAfter(chainData *p, chainData *afterPoint) {
+inline void chainList::addAfter(chainData *p, chainData *afterPoint) {
   #ifdef CHAINLIST_SAFECHECKS
   if((!p) || (!afterPoint)) return;
   #endif
@@ -131,7 +131,7 @@ void chainList::addAfter(chainData *p, chainData *afterPoint) {
 }
 
 
-void chainList::addBefore(chainData *p, chainData *beforePoint) {
+inline void chainList::addBefore(chainData *p, chainData *beforePoint) {
   #ifdef CHAINLIST_SAFECHECKS
   if((!p) || (!beforePoint)) return;
   #endif
@@ -145,7 +145,7 @@ void chainList::addBefore(chainData *p, chainData *beforePoint) {
 }
 
 
-void chainList::addi(chainData *p, uint32_t n) {
+inline void chainList::addi(chainData *p, uint32_t n) {
   #ifdef CHAINLIST_SAFECHECKS
   if((n> nrNodes) || (!p)) return;
   #endif
@@ -161,7 +161,7 @@ void chainList::addi(chainData *p, uint32_t n) {
 
 
 // fast - few instructions - NO SEARCHES / PASSTHRUs
-void chainList::del(chainData *p) {
+inline void chainList::del(chainData *p) {
   #ifdef CHAINLIST_SAFECHECKS
   if((!nrNodes) || (!p)) {
     //AfxMessageBox("strange error in chainList::delNode(chainData *)");
@@ -191,7 +191,7 @@ inline void chainList::deli(uint32_t nr) {
 
 
 // [FAST] releases object from the chainList, doesn't delete the object from memory - NO searches involved
-void chainList::release(chainData *p) {
+inline void chainList::release(chainData *p) {
   #ifdef CHAINLIST_SAFECHECKS
   if((!nrNodes) || (!p))
     return;
@@ -223,7 +223,7 @@ inline void chainList::releasei(uint32_t nr) {
 ///---------------------------------------------------------------///
 
 // get must be used rarely: if there's a for() {get()} it will pass n*n times thru list. if the list is 100000 items long... do the math... MANY zeroes of instructions...
-chainData *chainList::get(uint32_t nr) {
+inline chainData *chainList::get(uint32_t nr) {
   #ifdef CHAINLIST_SAFECHECKS
   if(!nrNodes) return null;
   if(nr> nrNodes) return null;
@@ -237,7 +237,7 @@ chainData *chainList::get(uint32_t nr) {
 }
 
 // same as get, use RARELY
-uint32_t chainList::search(chainData *e) {
+inline uint32_t chainList::search(chainData *e) {
   chainData *p= first;
   for(uint32_t a= 0; a< nrNodes; a++, p= p->next)  // <<< SLOW PART >>>
     if(p== e) return a;
@@ -246,7 +246,7 @@ uint32_t chainList::search(chainData *e) {
 }
 
 
-bool chainList::isMember(chainData *in_p) {
+inline bool chainList::isMember(chainData *in_p) {
   for(chainData *c= first; c; c= c->next)
     if(c== in_p)
       return true;

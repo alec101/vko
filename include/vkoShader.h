@@ -1,8 +1,8 @@
 #pragma once
-#include "util/typeShortcuts.h"
-#include "util/str8.h"
-#include "util/chainList.h"
-#include "util/mlib.hpp"
+//#include "util/typeShortcuts.h"
+//#include "util/str8.h"
+#include "chainList.hpp"
+//#include "util/mlib.hpp"
 //#include "ix/util/common.hpp"
 
 #define VKO_SHADER_SAMPLE_MASK_MAX_SIZE 2
@@ -12,24 +12,24 @@
 class VkoSet;
 class vkObject;
 
-using namespace mlib;
+//using namespace mlib;
 
 
 
-class vkoShader: public chainData {
+class VkoShader: public chainData {
 public:
 
   VkShaderModule vert, tesc, tese, geom, frag, comp;    // all shader modules; they're null if not used/loaded; will be dealocated once the shader is built/functional
-  str8 vertFile, tescFile, teseFile, geomFile, fragFile, compFile; // all shader modules filenames; these will remain thruout the life of the shader
+  const char *vertFile, *tescFile, *teseFile, *geomFile, *fragFile, *compFile; // all shader modules filenames; these will remain thruout the life of the shader
   VkPipeline pipeline;    //   the shader pipeline
 
   // SCRAPED VV THERE IS VKOMANAGER OBJECT THAT HANDLES ALL THE SETS. WOULD A LIST OF USED SETS HAVE ANY USE HERE?
   //VkDescriptorSetLayout *descriptorsLayout; // array of descriptor sets (if more than one). descriptorsLayout[0] is set 0, describing all bindings
-  //uint32 nrDescriptorSets;
+  //uint32_t nrDescriptorSets;
   VkPipelineLayout pipelineLayout;
 
-  inline void setSubpass(uint32 in_subpassNr) { subpass= in_subpassNr; }
-  uint32 subpass; // [def:0] subpass that will be used <<<< IS THIS OK?
+  inline void setSubpass(uint32_t in_subpassNr) { subpass= in_subpassNr; }
+  uint32_t subpass; // [def:0] subpass that will be used <<<< IS THIS OK?
   VkRenderPass renderPass; // renderPass that will work on this shader (i am guessing all compatible renderpasses with this1 will work)
 
 
@@ -44,7 +44,7 @@ public:
   // <in_count>:   accessed in a shader as an array, when multiple. Can be 0, so it's reserved, and never accessed
   // <in_stages>:  shader stages that will use this descriptor https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap9.html#VkShaderStageFlagBits
   // <in_imutableSampler>: imutable / constant samplers, but i'd just not change them -.- imhho this ext is extra stuff that could be avoided. i think there's an extension for these
-  void addDescriptor(uint32 in_set, uint32 in_binding, VkDescriptorType in_type, uint32 in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler= null);
+  void addDescriptor(uint32_t in_set, uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler= null);
   void addDescriptor(const VkoDescriptor *in_descriptor);
   void addUniformBlock();     // [shortcut] this basically creates a descriptor for set 0, binding 0, to be used as the main uniform variables block
 
@@ -52,7 +52,7 @@ public:
   //  VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR - specifies that descriptor sets must not be allocated using this layout,
   //  and descriptors are instead pushed by vkCmdPushDescriptorSetKHR
   // In specs, it says there should be only one set with dynamic push, in an array of sets that are to be used
-  void setDescriptorSetFlags(uint32 in_set, VkDescriptorSetLayoutCreateFlags in_flags);
+  void setDescriptorSetFlags(uint32_t in_set, VkDescriptorSetLayoutCreateFlags in_flags);
   */
 
 
@@ -75,7 +75,7 @@ public:
   //               this offset will indicate where to start this range of constants, in this block.
   //               the simplest and best way to define push constants, would be to just offset:0 and nrBytes:sizeof(all combined push consts that will be used)
   // <in_stages>:  shader stages that will use this range of push constants https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap9.html#VkShaderStageFlagBits
-  void addPushConsts(uint32 in_nrBytes, uint32 in_offset, VkShaderStageFlags in_stages);
+  void addPushConsts(uint32_t in_nrBytes, uint32_t in_offset, VkShaderStageFlags in_stages);
 
   // specialization constants are true constants (c/c++ meaning) in the shader.
   // shader code ex:  "layout (constant_id = 0) const int NUM_SAMPLES = 64;"
@@ -91,9 +91,9 @@ public:
   // DEL ^^^
   
   // <in_value>: the spec const initialization value
-  void addSpecializationConst(uint32 in_ID, VkShaderStageFlags in_stage, uint32 in_size, void *in_value);
-  void addSpecConstf(uint32 in_ID, VkShaderStageFlags in_stage, float in_val) { addSpecializationConst(in_ID, in_stage, sizeof(float), &in_val); }
-  void addSpecConsti(uint32 in_ID, VkShaderStageFlags in_stage, int32 in_val) { addSpecializationConst(in_ID, in_stage, sizeof(int32), &in_val); }
+  void addSpecializationConst(uint32_t in_ID, VkShaderStageFlags in_stage, uint32_t in_size, void *in_value);
+  void addSpecConstf(uint32_t in_ID, VkShaderStageFlags in_stage, float in_val) { addSpecializationConst(in_ID, in_stage, sizeof(float), &in_val); }
+  void addSpecConsti(uint32_t in_ID, VkShaderStageFlags in_stage, int32_t in_val) { addSpecializationConst(in_ID, in_stage, sizeof(int32_t), &in_val); }
   
 
   // vertex binding & attrib
@@ -103,7 +103,7 @@ public:
   // <in_binding>: the binding number - ID of the buffer basically, if there's more than one, starting from 0
   // <in_stride>:  It specifies the number of bytes between data entries
   // <in_rate>:    move to the next data entry after each vertex or after each instance (VK_VERTEX_INPUT_RATE_VERTEX/VK_VERTEX_INPUT_RATE_INSTANCE)
-  void addVertexBinding(uint32 in_binding, uint32 in_stride, VkVertexInputRate in_rate);
+  void addVertexBinding(uint32_t in_binding, uint32_t in_stride, VkVertexInputRate in_rate);
 
   // describes the vertex attribute in the shader
   // <in_location>: location of the vertex atribute (location:x)
@@ -113,7 +113,7 @@ public:
   //                                    vec3: VK_FORMAT_R32G32B32_SFLOAT
   //                                    vec4: VK_FORMAT_R32G32B32A32_SFLOAT  etc)
   // <in_offset>:   specifies the number of bytes since the start of the per-vertex data to read from
-  void addVertexAttribute(uint32 in_location, uint32 in_binding, VkFormat in_format, uint32 in_offset);
+  void addVertexAttribute(uint32_t in_location, uint32_t in_binding, VkFormat in_format, uint32_t in_offset);
 
   // input assembly https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap19.html#VkPipelineInputAssemblyStateCreateInfo
   ///==============
@@ -126,7 +126,7 @@ public:
 
   // teselation control points, if teselation is enabled [def:1]
   // patchControlPoints must be greater than zero and less than or equal to VkPhysicalDeviceLimits::maxTessellationPatchSize
-  inline void setTeselationControlPoints(uint32 in_nrControlPoints) { _teseControlPoints= in_nrControlPoints; }
+  inline void setTeselationControlPoints(uint32_t in_nrControlPoints) { _teseControlPoints= in_nrControlPoints; }
 
   // the default is top-left
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap21.html#VkTessellationDomainOrigin
@@ -140,7 +140,7 @@ public:
 
   // constant viewports are automatically setup in the command buffers
   // - for example, if an OS window that uses vulkan to draw things resizes, the pipeline would have to be rebuilt, to change the constant viewport(s)
-  // - you can add multiple viewports by calling the func multiple time. All of them will be added to the pipeline, in order.
+  // - you can add multiple viewports by calling the func multiple times. All of them will be added to the pipeline, in order.
   // - i cannot find anywhere if they are faster or the same as the dynamic ones, but the constant viewports could be faster
   void setConstantViewport(const VkViewport *in_viewPort, const VkRect2D *in_scissor);
   void setConstantViewport2(float x0, float y0, float dx, float dy, float minDepth, float maxDepth, float scissorX0, float scissorY0, float scissorDx, float scissorDy);
@@ -151,7 +151,7 @@ public:
   //   therefore, in theory, even fullscreen windows could use the dynamic viewports
   // - enables VK_DYNAMIC_STATE_VIEWPORT and VK_DYNAMIC_STATE_SCISSOR
   // <in_nrViewports>: how many viewports will be used in the pipeline
-  inline void setDynamicViewports(uint32 in_nrViewports) { _dynamicViewports= in_nrViewports; addDynamicState(VK_DYNAMIC_STATE_VIEWPORT); addDynamicState(VK_DYNAMIC_STATE_SCISSOR); }
+  inline void setDynamicViewports(uint32_t in_nrViewports) { _dynamicViewports= in_nrViewports; addDynamicState(VK_DYNAMIC_STATE_VIEWPORT); addDynamicState(VK_DYNAMIC_STATE_SCISSOR); }
 
 
   // rasterization state
@@ -198,7 +198,7 @@ public:
 
   // [def:0/not used] bitmask of static coverage information that is ANDed with the coverage information generated during rasterization,
   //                  as described in Sample Mask. https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap25.html#fragops-samplemask
-  inline void setSampleMask(uint32 in_mask[VKO_SHADER_SAMPLE_MASK_MAX_SIZE]) { for(uint a= 0; a< VKO_SHADER_SAMPLE_MASK_MAX_SIZE; a++) _sampleMaskData[a]= in_mask[a]; _sampleMask= _sampleMaskData; }
+  inline void setSampleMask(uint32_t in_mask[VKO_SHADER_SAMPLE_MASK_MAX_SIZE]) { for(uint32_t a= 0; a< VKO_SHADER_SAMPLE_MASK_MAX_SIZE; a++) _sampleMaskData[a]= in_mask[a]; _sampleMask= _sampleMaskData; }
 
   // [def:false] controls whether a temporary coverage value is generated based on the alpha component of the fragment’s first color output as specified in the Multisample Coverage section.
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap25.html#fragops-covg
@@ -228,7 +228,7 @@ public:
 
   // <in_stencilTestEnable>: [def:false] enable/disable stencil test https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap25.html#fragops-stencil
   // <in_front> / <in_back>: optional direct VkStencilOpState structs. If left null, use setStencilFrontOp()/ setStencilBackOp() funcs, optionally
-  inline void setStencilTest(bool in_stencilTestEnable, VkStencilOpState *in_front= null, VkStencilOpState *in_back= null) { _stencilTestEnable= in_stencilTestEnable;}
+  inline void setStencilTest(bool in_stencilTestEnable, VkStencilOpState *in_front= nullptr, VkStencilOpState *in_back= nullptr) { _stencilTestEnable= in_stencilTestEnable;}
 
   // <failOp> is a VkStencilOp value specifying the action performed on samples that fail the stencil test.
   // <passOp> is a VkStencilOp value specifying the action performed on samples that pass both the depth and stencil tests.
@@ -246,7 +246,7 @@ public:
   // <in_enableLogicOp>: [def:false] enable/disable color blending
   // <in_logicOp>: [def:VK_LOGIC_OP_COPY] the logical operation to perform for the blending
   // <in_constColor>: [def:0,0,0,0] the constant color, if used, in the logical operations
-  void setColorBlend(bool in_enableLogicOp, VkLogicOp in_logicOp, const float *in_constColor= null/*= &vec4(0.0f, 0.0f, 0.0f, 0.0f)*/);
+  void setColorBlend(bool in_enableLogicOp, VkLogicOp in_logicOp, const float *in_constColor= nullptr/*= &vec4(0.0f, 0.0f, 0.0f, 0.0f)*/);
 
   // the number of attachements must equal the colorAttachmentCount for the subpass in which this shader pipeline is used.
   // all func parameters match VkPipelineColorBlendAttachmentState struct https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap26.html#VkPipelineColorBlendAttachmentState
@@ -269,15 +269,15 @@ public:
   // loads shaer's modules from files; any stage that is not present, must be marked by null;
   // or, load each module that will be used with "loadModuleXXXX(..)" funcs
   // if comp is loaded, the shader will be created with a compute pipeline, else it's a graphics pipeline
-  bool loadModules(cchar *in_vert, cchar *in_tesc, cchar *in_tese, cchar *in_geom, cchar *in_frag, cchar *in_comp);
-  inline bool loadModuleVert(cchar *in_vert) { if(loadModule(in_vert, &vert)) { vertFile= in_vert; return true; } else return false; }
-  inline bool loadModuleFrag(cchar *in_frag) { if(loadModule(in_frag, &frag)) { fragFile= in_frag; return true; } else return false; }
-  inline bool loadModuleTesc(cchar *in_tesc) { if(loadModule(in_tesc, &tese)) { tescFile= in_tesc; return true; } else return false; }
-  inline bool loadModuleTese(cchar *in_tese) { if(loadModule(in_tese, &tese)) { teseFile= in_tese; return true; } else return false; }
-  inline bool loadModuleGeom(cchar *in_geom) { if(loadModule(in_geom, &geom)) { geomFile= in_geom; return true; } else return false; }
-  inline bool loadModuleComp(cchar *in_comp) { if(loadModule(in_comp, &comp)) { compFile= in_comp; return true; } else return false; }
+  bool loadModules(const char *in_vert, const char *in_tesc, const char *in_tese, const char *in_geom, const char *in_frag, const char *in_comp);
+  bool loadModuleVert(const char *in_vert);
+  bool loadModuleFrag(const char *in_frag);
+  bool loadModuleTesc(const char *in_tesc);
+  bool loadModuleTese(const char *in_tese);
+  bool loadModuleGeom(const char *in_geom);
+  bool loadModuleComp(const char *in_comp);
 
-  bool loadModule(cchar *in_file, VkShaderModule *out_module);    // loads a shader module
+  bool loadModule(const char *in_file, VkShaderModule *out_module);    // loads a shader module
   void destroyModules();            // modules can/should be destroyed after the shader is completed/operational
 
   // after setting all the data, adding all the descriptors, call this func to create the pipeline, descriptors, layouts, etc.
@@ -292,8 +292,8 @@ public:
 
   // constructor/destructor
 
-  vkoShader();
-  virtual ~vkoShader();
+  VkoShader();
+  virtual ~VkoShader();
   //virtual void delData();
 
   //Ix *ix;                           // parent ix engine this shader belongs to
@@ -311,10 +311,10 @@ private:
   VkPrimitiveTopology _topology; // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap19.html#VkPrimitiveTopology
   bool _primitiveRestartEnable;  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap19.html#VkPipelineInputAssemblyStateCreateInfo
 
-  uint32 _teseControlPoints;
+  uint32_t _teseControlPoints;
   VkTessellationDomainOrigin _teseDomainOrigin;
 
-  uint32 _dynamicViewports;
+  uint32_t _dynamicViewports;
   chainList _constViewports;
 
   bool _depthClampEnable;
@@ -331,8 +331,8 @@ private:
   VkSampleCountFlagBits _nrMultisamples;   // [def:VK_SAMPLE_COUNT_1_BIT / disabled] antialiasing samples 
   bool _sampleShadingEnable;               // can be used to enable Sample Shading. https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap24.html#primsrast-sampleshading
   float _minSampleShading;                 // specifies a minimum fraction of sample shading if sampleShadingEnable is set to VK_TRUE.
-  uint32 *_sampleMask;                     // bitmask of static coverage information that is ANDed with the coverage information generated during rasterization, as described in Sample Mask.
-  uint32 _sampleMaskData[VKO_SHADER_SAMPLE_MASK_MAX_SIZE];
+  uint32_t *_sampleMask;                     // bitmask of static coverage information that is ANDed with the coverage information generated during rasterization, as described in Sample Mask.
+  uint32_t _sampleMaskData[VKO_SHADER_SAMPLE_MASK_MAX_SIZE];
   bool _alphaToCoverageEnable; // controls whether a temporary coverage value is generated based on the alpha component of the fragment’s first color output as specified in the Multisample Coverage section.
   bool _alphaToOneEnable;      // controls whether the alpha component of the fragment’s first color output is replaced with one as described in Multisample Coverage.
 
@@ -349,7 +349,7 @@ private:
 
   bool _colorBlendLogicOpEnable;      // controls whether to apply Logical Operations.
   VkLogicOp _colorBlendLogicOp;       // selects which logical operation to apply.
-  vec4 _colorBlendConstColor;         // R, G, B, and A components of the blend constant that are used in blending, depending on the blend factor.
+  float _colorBlendConstColor[4];     // R, G, B, and A components of the blend constant that are used in blending, depending on the blend factor.
   chainList _colorBlendAttachements;  // color blend attachements. The number of attachements must be equal to colorAttachmentCount for the subpass in wich this pipeline is used
 
   chainList _dynamicStates;
@@ -361,24 +361,24 @@ private:
 
   class _PushConsts: public chainData {
   public:
-    uint32 nrBytes;
-    uint32 offset;
+    uint32_t nrBytes;
+    uint32_t offset;
     VkShaderStageFlags shaderStages;
   };
 
   /*
   class _Descriptor: public chainData {
   public:
-    uint32 set, binding;
+    uint32_t set, binding;
     VkDescriptorType type;
-    uint32 count;
+    uint32_t count;
     VkShaderStageFlags shaderStages;
     VkSampler *pImutableSamplers;
   };
 
   class _DescriptorSetFlags: public chainData {
   public:
-    uint32 set;
+    uint32_t set;
     VkDescriptorSetLayoutCreateFlags flags;
   };
   */
@@ -390,28 +390,28 @@ private:
 
   class _SpecConst: public chainData {
   public:
-    uint32 id;                // ID of the constant
+    uint32_t id;                // ID of the constant
     VkShaderStageFlags stage; // shader stage
-    uint32 size;              // in bytes;
-    uint32 offset;            // in bytes; (starting point in the specialization constants data buffer)
+    uint32_t size;              // in bytes;
+    uint32_t offset;            // in bytes; (starting point in the specialization constants data buffer)
     void *value;              // the actual value of the constant, whatever type and size it is
-    _SpecConst(): value(null) {}
+    _SpecConst(): value(nullptr) {}
     ~_SpecConst() { if(value) delete[] value; } 
   };
 
   class _VertBinding: public chainData {
   public:
-    uint32 binding;
-    uint32 stride;
+    uint32_t binding;
+    uint32_t stride;
     VkVertexInputRate rate;
   };
 
   class _VertAttribs: public chainData {
   public:
-    uint32 location;
-    uint32 binding;
+    uint32_t location;
+    uint32_t binding;
     VkFormat format;
-    uint32 offset;
+    uint32_t offset;
   };
 
   class _ConstViewport: public chainData {

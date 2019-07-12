@@ -28,8 +28,8 @@
 #define VKO_LINK_INSTANCE_FUNC(instance, func) in_f->func= (PFN_vk##func)in_f->GetInstanceProcAddr(instance, "vk"#func)
 
 
-#define VKO_LINK_DEVICE_FUNC(func) if(in_d== null) in_f->func= (PFN_vk##func)in_f->GetInstanceProcAddr(in_i, "vk"#func); \
-                                              else in_f->func= (PFN_vk##func)in_f->GetDeviceProcAddr(in_d, "vk"#func)
+#define VKO_LINK_DEVICE_FUNC(func) if(in_d== nullptr) in_f->func= (PFN_vk##func)in_f->GetInstanceProcAddr(in_i, "vk"#func); \
+                                                 else in_f->func= (PFN_vk##func)in_f->GetDeviceProcAddr(in_d, "vk"#func)
 
 
 
@@ -46,12 +46,19 @@ VkoFuncs::VkoFuncs() {
 // FUNCTIONS LINKING //
 ///=================///
 
+#ifdef UNICODE
+#define VKO_STR2WIN(x) L##x
+#else
+#define VKO_STR2WIN(x) x
+#endif
+
 void vkObject::_linkLib() {
   #ifdef VK_VERSION_1_0
   // link to Vulkan library
-  if(_vulkanLib== null) {
+  if(_vulkanLib== nullptr) {
     #if defined(OS_WIN)
-    _vulkanLib= LoadLibrary(str8("vulkan-1.dll"));
+    //_vulkanLib= LoadLibrary(str8("vulkan-1.dll"));
+    _vulkanLib= LoadLibrary(VKO_STR2WIN("vulkan-1.dll"));
     #elif defined(OS_LINUX) || defined(OS_MAC)
 
     
@@ -81,8 +88,9 @@ void vkObject::_linkLib() {
 
 
 
-  if(_vulkanLib== null) { errorText= "Couldn't open vulkan library"; return; }
+  if(_vulkanLib== nullptr) { errorText= "Couldn't open vulkan library"; return; }
 }
+#undef VKO_STR2WIN
 
 /*
 // this is called by vko constructor, imediatly linking to the library and getting global-critical functions
@@ -90,7 +98,7 @@ void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
   bool chatty= true;
   #ifdef VK_VERSION_1_0
   // link to Vulkan library
-  if(_vulkanLib== null) {
+  if(_vulkanLib== nullptr) {
     #if defined(OS_WIN)
     _vulkanLib= LoadLibrary(str8("vulkan-1.dll"));
     #elif defined(OS_LINUX) || defined(OS_MAC)
@@ -119,26 +127,26 @@ void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
   }
 
 
-  if(_vulkanLib== null) { errorText= "Couldn't open vulkan library"; return; }
+  if(_vulkanLib== nullptr) { errorText= "Couldn't open vulkan library"; return; }
 
   // instance/global function grabber
-  in_f->GetInstanceProcAddr= null;
+  in_f->GetInstanceProcAddr= nullptr;
   #if defined(OS_WIN)
   in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)GetProcAddress((HMODULE)_vulkanLib, "vkGetInstanceProcAddr");
   #elif defined(OS_LINUX) || defined(OS_MAC)
   in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)dlsym(_vulkanLib, "vkGetInstanceProcAddr");
   #endif
-  if(in_f->GetInstanceProcAddr== null)
+  if(in_f->GetInstanceProcAddr== nullptr)
     return;
   
   // global functions that will work without a created instance
-  VKO_LINK_INSTANCE_FUNC(null, CreateInstance);
-  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceExtensionProperties);
-  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceLayerProperties);
+  VKO_LINK_INSTANCE_FUNC(nullptr, CreateInstance);
+  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceExtensionProperties);
+  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceLayerProperties);
   #endif  /// vulkan 1.0
 
   #ifdef VK_VERSION_1_1   // vulkan 1.1
-  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceVersion);
+  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceVersion);
   #endif
   
   // installed api version on the system, instance level
@@ -165,27 +173,27 @@ void vkObject::_linkCriticalFuncs(VkoFuncs *in_f) {
 
   #ifdef VK_VERSION_1_0
   // instance/global function grabber
-  in_f->GetInstanceProcAddr= null;                      // vulkan 1.0
+  in_f->GetInstanceProcAddr= nullptr;                      // vulkan 1.0
   #if defined(OS_WIN)
   in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)GetProcAddress((HMODULE)_vulkanLib, "vkGetInstanceProcAddr");
   #elif defined(OS_LINUX) || defined(OS_MAC)
   in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)dlsym(_vulkanLib, "vkGetInstanceProcAddr");
   #endif
-  if(in_f->GetInstanceProcAddr== null) { errorText= "could not link critical function GetInstanceProcAddr"; return; }
+  if(in_f->GetInstanceProcAddr== nullptr) { errorText= "could not link critical function GetInstanceProcAddr"; return; }
 
   // global functions that will work without a created instance
-  VKO_LINK_INSTANCE_FUNC(null, CreateInstance);
-  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceExtensionProperties);
-  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceLayerProperties);
+  VKO_LINK_INSTANCE_FUNC(nullptr, CreateInstance);
+  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceExtensionProperties);
+  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceLayerProperties);
   #endif /// vulkan 1.0
 
   #ifdef VK_VERSION_1_1   // vulkan 1.1
-  VKO_LINK_INSTANCE_FUNC(null, EnumerateInstanceVersion);
+  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceVersion);
   #endif
   
   // installed api version on the system, instance level
   if(in_f->CreateInstance) {                             // if not even vkCreateInstance is avaible, the api version will stay 0.0.0
-    if(in_f->EnumerateInstanceVersion== null)                  // if EnumerateInstanceVersion is not on the system, it's vulkan 1.0
+    if(in_f->EnumerateInstanceVersion== nullptr)                  // if EnumerateInstanceVersion is not on the system, it's vulkan 1.0
       info.apiVersion= VK_MAKE_VERSION(1, 0, 0);
     else
       in_f->EnumerateInstanceVersion(&info.apiVersion); // grab the vulkan version
@@ -445,24 +453,24 @@ void vkObject::_linkInstanceFuncs(VkoFuncs *in_f, VkInstance in_i) {
 
 
 
-// call it with device=null and the funcs will be linked with the instance (more driver overhead, the global funcs work with this)
+// call it with device=nullptr and the funcs will be linked with the instance (more driver overhead, the global funcs work with this)
 void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) {
   /// abort if already linked
   if(in_f->devInit)
     return;
 
-  errorText= null;
+  errorText= nullptr;
 
   #ifdef VK_VERSION_1_0
 
   // get the instance-level GetDeviceProcAddr
   in_f->GetDeviceProcAddr= (PFN_vkGetDeviceProcAddr)in_f->GetInstanceProcAddr(instance, "vkGetDeviceProcAddr");
-  if(in_f->GetDeviceProcAddr== null) { errorText= "Could not aquire instance-level vkGetDeviceProcAddr. aborting"; return; }
+  if(in_f->GetDeviceProcAddr== nullptr) { errorText= "Could not aquire instance-level vkGetDeviceProcAddr. aborting"; return; }
 
   // get the device-level GetDeviceProcAddr - IS THIS RIGHT? PROBLY IT'S THE SAME THING BUT, WHO THE HECK KNOWS
   if(in_d) {
     in_f->GetDeviceProcAddr= (PFN_vkGetDeviceProcAddr)in_f->GetDeviceProcAddr(in_d, "vkGetDeviceProcAddr");
-    if(in_f->GetDeviceProcAddr== null) { errorText= "Could not aquire device-level vkGetDeviceProcAddr. aborting"; return; }
+    if(in_f->GetDeviceProcAddr== nullptr) { errorText= "Could not aquire device-level vkGetDeviceProcAddr. aborting"; return; }
   }
   
 

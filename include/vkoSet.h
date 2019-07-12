@@ -7,7 +7,7 @@ class VkoDescriptor;
 
 class VkoSet: public chainData {
 public:
-  uint32 index;                           // set number
+  uint32_t index;                           // set number
   chainList descriptors;                  // [VkoDescriptor: chainData] all descriptors in this set
 
   VkDescriptorSetLayoutCreateFlags flags; // descriptor set flags
@@ -34,14 +34,14 @@ public:
   // <in_stages>:  shader stages that will use this descriptor https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap9.html#VkShaderStageFlagBits
   // <in_imutableSampler>: imutable / constant samplers, but i'd just not change them -.- imhho this ext is extra stuff that could be avoided. i think there's an extension for these
   // returns the created VkoDescriptor object.
-  VkoDescriptor *addDescriptor(uint32 in_binding, VkDescriptorType in_type, uint32 in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler= null);
+  VkoDescriptor *addDescriptor(uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler= nullptr);
 
 
 
   bool buildLayout();
   void destroyLayout();
 
-  VkoSet(): index(~0), flags(0), layout(null), set(null), parent(null) {}
+  VkoSet(): index(~0), flags(0), layout(nullptr), set(nullptr), parent(nullptr) {}
   ~VkoSet();
 };
 

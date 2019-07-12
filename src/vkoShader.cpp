@@ -1,10 +1,15 @@
-#include "osinteraction.h"
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+
+#include "../include/vkObject.h"
+//#include "osinteraction.h"
 //#include "ix/util/common.hpp"
-#include "util/mlib.hpp"
-#include "ix/vko/vkObject.h"
-#include "ix/vko/vkoShader.h"
-#include "util/str8.h"
-#include "util/errorHandling.h"
+//#include "util/mlib.hpp"
+//#include "ix/vko/vkObject.h"
+//#include "ix/vko/VkoShader.h"
+//#include "util/str8.h"
+//#include "util/errorHandling.h"
 
 // online shader compiler & preview http://shdr.bkcore.com
 
@@ -65,25 +70,26 @@ Inputs that could be interpolated can be decorated by at most one of the followi
 
 
 ///====================================///
-// -----===== vkoShader class =====----- //
+// -----===== VkoShader class =====----- //
 ///====================================///
 
 
 
 
-vkoShader::vkoShader() {
-  parent= null;
+VkoShader::VkoShader() {
+  parent= nullptr;
 
   //nrDescriptorSets= 0;      SCRAPED
-  //descriptorsLayout= null;
+  //descriptorsLayout= nullptr;
   
-  pipelineLayout= null;
-  renderPass= null;
+  pipelineLayout= nullptr;
+  renderPass= nullptr;
 
-  vert= tesc= tese= geom= frag= comp= null;
+  vert= tesc= tese= geom= frag= comp= nullptr;
+  vertFile= tescFile= teseFile= geomFile= fragFile= compFile= nullptr;
 
   subpass= 0;
-  pipeline= null;
+  pipeline= nullptr;
 
   /// input assembly
   _topology= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -114,8 +120,8 @@ vkoShader::vkoShader() {
   _nrMultisamples= VK_SAMPLE_COUNT_1_BIT;  // in vulkan, setting it to 1 sample, basically disables it
   _sampleShadingEnable= false;             // can be used to enable Sample Shading. https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap24.html#primsrast-sampleshading
   _minSampleShading= 1.0f;                 // specifies a minimum fraction of sample shading if sampleShadingEnable is set to VK_TRUE.
-  _sampleMask= null;
-  for(uint a= 0; a< VKO_SHADER_SAMPLE_MASK_MAX_SIZE; a++)
+  _sampleMask= nullptr;
+  for(uint32_t a= 0; a< VKO_SHADER_SAMPLE_MASK_MAX_SIZE; a++)
     _sampleMaskData[a]= 0;
 
   _alphaToCoverageEnable= false;
@@ -135,40 +141,50 @@ vkoShader::vkoShader() {
   // color blend
   _colorBlendLogicOpEnable= false;
   _colorBlendLogicOp= VK_LOGIC_OP_COPY;
-  _colorBlendConstColor= vec4(0.0f, 0.0f, 0.0f, 0.0f);
   
+  _colorBlendConstColor[0]= 0.0f,
+  _colorBlendConstColor[1]= 0.0f,
+  _colorBlendConstColor[2]= 0.0f,
+  _colorBlendConstColor[3]= 0.0f;
 }
 
 
-vkoShader::~vkoShader() {
+VkoShader::~VkoShader() {
   destroy();
+  if(vertFile) delete[] vertFile;
+  if(tescFile) delete[] tescFile;
+  if(teseFile) delete[] teseFile;
+  if(geomFile) delete[] geomFile;
+  if(fragFile) delete[] fragFile;
+  if(compFile) delete[] compFile;
+
 }
 
 
-void vkoShader::destroy() {
+void VkoShader::destroy() {
   if(parent)
     if(parent->device) {
 
       /* SCRAPED
     if(descriptorsLayout) {
-      for(uint a= 0; a< nrDescriptorSets; a++)
+      for(uint32_t a= 0; a< nrDescriptorSets; a++)
         if(descriptorsLayout[a])
           parent->vk->DestroyDescriptorSetLayout(*parent, descriptorsLayout[a], *parent);
       delete[] descriptorsLayout;
-      descriptorsLayout= null;
+      descriptorsLayout= nullptr;
       nrDescriptorSets= 0;
     }
     */
-    if(pipelineLayout) { parent->vk->DestroyPipelineLayout(*parent, pipelineLayout, *parent); pipelineLayout= null; }
+    if(pipelineLayout) { parent->DestroyPipelineLayout(*parent, pipelineLayout, *parent); pipelineLayout= nullptr; }
   }
 }
 
 
 
 /*
-void vkoShader::addDescriptor(uint32 in_set, uint32 in_binding, VkDescriptorType in_type, uint32 in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler) {
+void VkoShader::addDescriptor(uint32_t in_set, uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler) {
   _Descriptor *p= new _Descriptor;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
+  if(p== nullptr) { error.alloc(__FUNCTION__); return; }
 
   p->set= in_set;
   p->binding= in_binding;
@@ -180,9 +196,9 @@ void vkoShader::addDescriptor(uint32 in_set, uint32 in_binding, VkDescriptorType
 }
 
 
-void vkoShader::addDescriptor(const VkoDescriptor *in_desc) {
+void VkoShader::addDescriptor(const VkoDescriptor *in_desc) {
   _Descriptor *p= new _Descriptor;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
+  if(p== nullptr) { error.alloc(__FUNCTION__); return; }
 
   p->set= in_desc->set;
   p->binding= in_desc->binding;
@@ -196,14 +212,14 @@ void vkoShader::addDescriptor(const VkoDescriptor *in_desc) {
 
 
 
-void vkoShader::addUniformBlock() {
+void VkoShader::addUniformBlock() {
   addDescriptor(0, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL);
 }
 
 
 
-void vkoShader::setDescriptorSetFlags(uint32 in_set, VkDescriptorSetLayoutCreateFlags in_flags) {
-  _DescriptorSetFlags *p= null;
+void VkoShader::setDescriptorSetFlags(uint32_t in_set, VkDescriptorSetLayoutCreateFlags in_flags) {
+  _DescriptorSetFlags *p= nullptr;
   /// search maybe there are flags already for this set
   for(p= (_DescriptorSetFlags *)_descriptorSetFlags.first; p; p= (_DescriptorSetFlags *)p->next)
     if(p->set== in_set)
@@ -224,14 +240,14 @@ void vkoShader::setDescriptorSetFlags(uint32 in_set, VkDescriptorSetLayoutCreate
 */
 
 
-void vkoShader::addDescriptorSet(const VkoSet *in_set) {
+void VkoShader::addDescriptorSet(const VkoSet *in_set) {
   _SetLayout *p= new _SetLayout;
   p->layout= in_set->layout;
   _setLayouts.add(p);
 }
 
 
-void vkoShader::addDescriptorSet(const VkDescriptorSetLayout in_layout) {
+void VkoShader::addDescriptorSet(const VkDescriptorSetLayout in_layout) {
   _SetLayout *p= new _SetLayout;
   p->layout= in_layout;
   _setLayouts.add(p);
@@ -240,7 +256,7 @@ void vkoShader::addDescriptorSet(const VkDescriptorSetLayout in_layout) {
 
 
 
-void vkoShader::addPushConsts(uint32 in_nrBytes, uint32 in_offset, VkShaderStageFlags in_stages) {
+void VkoShader::addPushConsts(uint32_t in_nrBytes, uint32_t in_offset, VkShaderStageFlags in_stages) {
   _PushConsts *p= new _PushConsts;
 
   p->nrBytes= in_nrBytes;
@@ -251,10 +267,10 @@ void vkoShader::addPushConsts(uint32 in_nrBytes, uint32 in_offset, VkShaderStage
 }
 
 
-void vkoShader::addSpecializationConst(uint32 in_ID, VkShaderStageFlags in_stage, uint32 in_size, void *in_value) {
+void VkoShader::addSpecializationConst(uint32_t in_ID, VkShaderStageFlags in_stage, uint32_t in_size, void *in_value) {
   _SpecConst *c= new _SpecConst;      // c will be the created _SpecConst
   /// p will point to the last spec const in that shader stage (used to compute the offset)
-  _SpecConst *p= null;
+  _SpecConst *p= nullptr;
   for(_SpecConst *s= (_SpecConst *)_specConsts.first; s; s= (_SpecConst *)s->next)
     if(s->stage== in_stage)
       p= s;
@@ -265,8 +281,8 @@ void vkoShader::addSpecializationConst(uint32 in_ID, VkShaderStageFlags in_stage
 
   c->offset= (p? p->offset+ p->size: 0);
   
-  c->value= new uint8[in_size];
-  Str::memcpy(c->value, in_value, in_size);
+  c->value= new uint8_t[in_size];
+  vkObject::_memcpy(c->value, in_value, in_size);
   
   _specConsts.add(c);
 }
@@ -274,7 +290,7 @@ void vkoShader::addSpecializationConst(uint32 in_ID, VkShaderStageFlags in_stage
 
 
 
-void vkoShader::addVertexBinding(uint32 in_binding, uint32 in_stride, VkVertexInputRate in_rate) {
+void VkoShader::addVertexBinding(uint32_t in_binding, uint32_t in_stride, VkVertexInputRate in_rate) {
   _VertBinding *v= new _VertBinding;
   v->binding= in_binding;
   v->stride= in_stride;
@@ -283,7 +299,7 @@ void vkoShader::addVertexBinding(uint32 in_binding, uint32 in_stride, VkVertexIn
 }
 
 
-void vkoShader::addVertexAttribute(uint32 in_location, uint32 in_binding, VkFormat in_format, uint32 in_offset) {
+void VkoShader::addVertexAttribute(uint32_t in_location, uint32_t in_binding, VkFormat in_format, uint32_t in_offset) {
   _VertAttribs *v= new _VertAttribs;
   v->location= in_location;
   v->binding= in_binding;
@@ -294,7 +310,7 @@ void vkoShader::addVertexAttribute(uint32 in_location, uint32 in_binding, VkForm
 
 
 
-void vkoShader::setConstantViewport(const VkViewport *in_v, const VkRect2D *in_scissor) {
+void VkoShader::setConstantViewport(const VkViewport *in_v, const VkRect2D *in_scissor) {
   _ConstViewport *c= new _ConstViewport;
   c->view= *in_v;
   c->scissor= *in_scissor;
@@ -303,7 +319,7 @@ void vkoShader::setConstantViewport(const VkViewport *in_v, const VkRect2D *in_s
 }
 
 
-void vkoShader::setConstantViewport2(float x0, float y0, float dx, float dy, float minDepth, float maxDepth, float scissorX0, float scissorY0, float scissorDx, float scissorDy) {
+void VkoShader::setConstantViewport2(float x0, float y0, float dx, float dy, float minDepth, float maxDepth, float scissorX0, float scissorY0, float scissorDx, float scissorDy) {
   _ConstViewport *c= new _ConstViewport;
   c->view.x= x0;
   c->view.y= y0;
@@ -311,10 +327,10 @@ void vkoShader::setConstantViewport2(float x0, float y0, float dx, float dy, flo
   c->view.height= dy;
   c->view.minDepth= minDepth;
   c->view.maxDepth= maxDepth;
-  c->scissor.offset.x= scissorX0;
-  c->scissor.offset.y= scissorY0;
-  c->scissor.extent.width= scissorDx;
-  c->scissor.extent.height= scissorDy;
+  c->scissor.offset.x= (int32_t)scissorX0;
+  c->scissor.offset.y= (int32_t)scissorY0;
+  c->scissor.extent.width= (uint32_t)scissorDx;
+  c->scissor.extent.height= (uint32_t)scissorDy;
   _constViewports.add(c);
   //dynamicViewports= false;
 }
@@ -322,7 +338,7 @@ void vkoShader::setConstantViewport2(float x0, float y0, float dx, float dy, flo
 
 
 
-void vkoShader::setDepthTest(bool in_enableDT, bool in_enableDW, VkCompareOp in_depthOp, bool in_enableDB, float in_min, float in_max) {
+void VkoShader::setDepthTest(bool in_enableDT, bool in_enableDW, VkCompareOp in_depthOp, bool in_enableDB, float in_min, float in_max) {
   _depthTestEnable= in_enableDT;
   _depthTestWrite= in_enableDW;
   _depthTestOp= in_depthOp;
@@ -332,7 +348,7 @@ void vkoShader::setDepthTest(bool in_enableDT, bool in_enableDW, VkCompareOp in_
 }
 
 
-void vkoShader::setStencilTestFrontOp(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference) {
+void VkoShader::setStencilTestFrontOp(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference) {
   _stencilTestOpFront.failOp= failOp;
   _stencilTestOpFront.passOp= passOp;
   _stencilTestOpFront.depthFailOp= depthFailOp;
@@ -343,7 +359,7 @@ void vkoShader::setStencilTestFrontOp(VkStencilOp failOp, VkStencilOp passOp, Vk
 }
 
 
-void vkoShader::setStencilTestBackOp(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference) {
+void VkoShader::setStencilTestBackOp(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference) {
   _stencilTestOpBack.failOp= failOp;
   _stencilTestOpBack.passOp= passOp;
   _stencilTestOpBack.depthFailOp= depthFailOp;
@@ -354,18 +370,18 @@ void vkoShader::setStencilTestBackOp(VkStencilOp failOp, VkStencilOp passOp, VkS
 }
 
 
-void vkoShader::setColorBlend(bool in_enableLogicOp, VkLogicOp in_logicOp, const float *in_constColor) {
+void VkoShader::setColorBlend(bool in_enableLogicOp, VkLogicOp in_logicOp, const float *in_constColor) {
   _colorBlendLogicOpEnable= in_enableLogicOp;
   _colorBlendLogicOp= in_logicOp;
   if(in_constColor)
-    _colorBlendConstColor.r= in_constColor[0],
-    _colorBlendConstColor.g= in_constColor[1],
-    _colorBlendConstColor.b= in_constColor[2],
-    _colorBlendConstColor.a= in_constColor[3];
+    _colorBlendConstColor[0]= in_constColor[0],
+    _colorBlendConstColor[1]= in_constColor[1],
+    _colorBlendConstColor[2]= in_constColor[2],
+    _colorBlendConstColor[3]= in_constColor[3];
 }
 
 
-void vkoShader::addColorBlendAttachement(bool blendEnable, VkBlendFactor srcBlendFactor, VkBlendFactor dstBlendFactor, VkBlendOp blendOp, VkBlendFactor srcAlphaBlendFactor, VkBlendFactor dstAlphaBlendFactor, VkBlendOp alphaBlendOp, VkColorComponentFlags colorWriteMask) {
+void VkoShader::addColorBlendAttachement(bool blendEnable, VkBlendFactor srcBlendFactor, VkBlendFactor dstBlendFactor, VkBlendOp blendOp, VkBlendFactor srcAlphaBlendFactor, VkBlendFactor dstAlphaBlendFactor, VkBlendOp alphaBlendOp, VkColorComponentFlags colorWriteMask) {
   _ColorBlendAttachment *p= new _ColorBlendAttachment;
   p->att.blendEnable= blendEnable;
   p->att.srcColorBlendFactor= srcBlendFactor;
@@ -379,14 +395,14 @@ void vkoShader::addColorBlendAttachement(bool blendEnable, VkBlendFactor srcBlen
 }
 
 
-void vkoShader::addColorBlendAttachement2(const VkPipelineColorBlendAttachmentState *in_att) {
+void VkoShader::addColorBlendAttachement2(const VkPipelineColorBlendAttachmentState *in_att) {
   _ColorBlendAttachment *p= new _ColorBlendAttachment;
   p->att= *in_att;
   _colorBlendAttachements.add(p);
 }
 
 
-void vkoShader::addDynamicState(VkDynamicState in_dyn) {
+void VkoShader::addDynamicState(VkDynamicState in_dyn) {
   /// search to see if already added
   for(_DynamicState *f= (_DynamicState *)_dynamicStates.first; f; f= (_DynamicState *)f->next)
     if(f->dyn== in_dyn)
@@ -398,7 +414,7 @@ void vkoShader::addDynamicState(VkDynamicState in_dyn) {
 
 
 /*
-void vkoShader::_vkCreateDescriptorsLayout() {
+void VkoShader::_vkCreateDescriptorsLayout() {
   /// https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#descriptorsets-sets
 
   // from the specs:
@@ -407,9 +423,9 @@ void vkoShader::_vkCreateDescriptorsLayout() {
   // can be multiple sets, each set can have muliple bindings
   // the layout will find the maximum existing bindings, from what i am digging thru these hieroglyphs
 
-  _Descriptor *p= null;
-  uint32 nrSets= 0, nrBindings;
-  VkDescriptorSetLayoutBinding *bindings= null;
+  _Descriptor *p= nullptr;
+  uint32_t nrSets= 0, nrBindings;
+  VkDescriptorSetLayoutBinding *bindings= nullptr;
 
 
   /// find out how many sets there are
@@ -420,10 +436,10 @@ void vkoShader::_vkCreateDescriptorsLayout() {
   nrDescriptorSets= nrSets;
 
   descriptorsLayout= new VkDescriptorSetLayout[nrSets];
-  if(descriptorsLayout== null) { error.detail("descriptorsLayout mem alloc failed. aborting.", __FUNCTION__); goto Exit; }
+  if(descriptorsLayout== nullptr) { error.detail("descriptorsLayout mem alloc failed. aborting.", __FUNCTION__); goto Exit; }
 
   /// loop thru all sets
-  for(uint32 a= 0; a< nrSets; a++) {
+  for(uint32_t a= 0; a< nrSets; a++) {
     /// find out how many bindings are in this set (set:a)
     nrBindings= 0;
     for(p= (_Descriptor *)_descriptors.first; p; p= (_Descriptor *)p->next)
@@ -433,16 +449,16 @@ void vkoShader::_vkCreateDescriptorsLayout() {
     if(nrBindings== 0) { error.detail("nr bindings found, is zero. aborting.", __FUNCTION__); goto Exit; }
 
     bindings= new VkDescriptorSetLayoutBinding[nrBindings];
-    if(bindings== null) { error.detail("mem alloc error (bindings)", __FUNCTION__); goto Exit; }
+    if(bindings== nullptr) { error.detail("mem alloc error (bindings)", __FUNCTION__); goto Exit; }
 
     /// loop thru all bindings in this set
-    for(uint32 b= 0; b< nrBindings; b++) {
+    for(uint32_t b= 0; b< nrBindings; b++) {
       /// find descritor with set:a and binding:b
       for(p= (_Descriptor *)_descriptors.first; p; p= (_Descriptor *)p->next)
         if(p->set== a && p->binding== b)
           break;
 
-      if(p== null) { error.detail("binding not found. list is not complete and gap-less?. aborting.", __FUNCTION__); goto Exit; }
+      if(p== nullptr) { error.detail("binding not found. list is not complete and gap-less?. aborting.", __FUNCTION__); goto Exit; }
 
       bindings[b].binding=            p->binding;
       bindings[b].descriptorCount=    p->count;
@@ -461,18 +477,18 @@ void vkoShader::_vkCreateDescriptorsLayout() {
     // create the descriptor set
     VkDescriptorSetLayoutCreateInfo setInfo;
     setInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    setInfo.pNext= null;
+    setInfo.pNext= nullptr;
     setInfo.flags= flags; // VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR - specifies that descriptor sets must not be allocated using this layout, and descriptors are instead pushed by vkCmdPushDescriptorSetKHR
     setInfo.bindingCount= nrBindings;
     setInfo.pBindings= bindings;
     
     if(parent->vk->CreateDescriptorSetLayout(*parent, &setInfo, *parent, &descriptorsLayout[a])!= VK_SUCCESS) {
       error.detail(str8().f("Vulkan descriptor set[%d] layout create failed", a), __FUNCTION__, __LINE__);
-      descriptorsLayout[a]= null;
+      descriptorsLayout[a]= nullptr;
     }
 
     if(bindings) delete[] bindings;
-    bindings= null;
+    bindings= nullptr;
   }
 
 Exit:
@@ -481,7 +497,7 @@ Exit:
 */
 
 
-void vkoShader::_vkCreatePipelineLayout() {
+void VkoShader::_vkCreatePipelineLayout() {
 
   // push constants will be defined here
 
@@ -490,15 +506,15 @@ void vkoShader::_vkCreatePipelineLayout() {
   // (INITIALLY I THOUT THEY'RE HIGHER UNIFORMS FOR THE WHOLE PIPELINE, NOT TIED TO ANY SHADER, TO BE CHECKED BUT I THINK IT'S WRONG)
   // these ranges are basically tied to the shader TYPES, you must not have 2 ranges that are on the same stage flag, even if combined with another
 
-  VkPushConstantRange *pcRange= null;               // INIT 1
-  VkDescriptorSetLayout *setLayout= null;           // INIT 2
+  VkPushConstantRange *pcRange= nullptr;               // INIT 1
+  VkDescriptorSetLayout *setLayout= nullptr;           // INIT 2
 
   /// populate all push consts ranges
   if(_pushConsts.nrNodes) {
     pcRange= new VkPushConstantRange[_pushConsts.nrNodes];
 
     _PushConsts *p= (_PushConsts *)_pushConsts.first;           // ALLOC 1
-    for(uint a= 0; p; p= (_PushConsts *)p->next, a++)
+    for(uint32_t a= 0; p; p= (_PushConsts *)p->next, a++)
       pcRange[a].stageFlags= p->shaderStages,
       pcRange[a].size= p->nrBytes,
       pcRange[a].offset= p->offset;
@@ -509,21 +525,22 @@ void vkoShader::_vkCreatePipelineLayout() {
     setLayout= new VkDescriptorSetLayout[_setLayouts.nrNodes];  // ALLOC 2
 
     _SetLayout *p= (_SetLayout *)_setLayouts.first;
-    for(uint a= 0; p; p= (_SetLayout *)p->next, a++)
+    for(uint32_t a= 0; p; p= (_SetLayout *)p->next, a++)
       setLayout[a]= p->layout;
   }
 
   /// populate create info struct
   VkPipelineLayoutCreateInfo plci;    // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#VkPipelineLayoutCreateInfo
   plci.sType= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  plci.pNext= null;
+  plci.pNext= nullptr;
   plci.flags= 0;
   plci.setLayoutCount= _setLayouts.nrNodes;
   plci.pSetLayouts= setLayout;
   plci.pushConstantRangeCount= _pushConsts.nrNodes;
   plci.pPushConstantRanges= pcRange;
 
-  error.vkCheck(parent->vk->CreatePipelineLayout(*parent, &plci, *parent, &pipelineLayout), "Shader Pipeline layout creation failed.");
+  parent->errorCheck(parent->CreatePipelineLayout(*parent, &plci, *parent, &pipelineLayout),
+    __FUNCTION__": Shader Pipeline layout creation failed.");
 
   if(pcRange)   delete[] pcRange;     // DEALLOC 1
   if(setLayout) delete[] setLayout;   // DEALLOC 2
@@ -532,50 +549,55 @@ void vkoShader::_vkCreatePipelineLayout() {
 
 
 
-bool vkoShader::loadModule(cchar *in_file, VkShaderModule *out_module) {
+bool VkoShader::loadModule(const char *in_file, VkShaderModule *out_module) {
+  #ifdef VKO_BE_CHATTY
   bool chatty= true;
-  *out_module= null;
+  #endif
+
+  *out_module= nullptr;
+  parent->clearError();
 
   /// tmp vars
-  uint8 *buf= null;
-  int64 fs= 0;
-  int64 pos;
-  FILE *f= null;
+  uint8_t *buf= nullptr;
+  int64_t fs= 0;
+  int64_t pos;
+  FILE *f= nullptr;
   bool ret= false;
 
   // file open & read into mem
   f= fopen(in_file, "rb");
-  if(f== null) { error.detail("file not found. aborting.", __FUNCTION__); goto Exit; }
+  if(f== nullptr) { parent->errorText= __FUNCTION__": file not found. aborting."; goto Exit; }
 
   /// file size
-  pos= osi.ftell64(f);
-  osi.fseek64(f, 0, SEEK_END);
-  fs= osi.ftell64(f);
-  osi.fseek64(f, pos, SEEK_SET);
+  pos= ftell(f);
+  fseek(f, 0, SEEK_END);
+  fs= ftell(f);
+  fseek(f, pos, SEEK_SET);
 
-  if(chatty) printf("opening file[%s] [%d]bytes\n", in_file, fs);
+  #ifdef VKO_BE_CHATTY
+  if(chatty) printf("opening file[%s] [%lld]bytes\n", in_file, fs);
+  #endif
 
-  if(fs<= 0) { error.detail("filesize is <= 0. aborting.", __FUNCTION__); goto Exit; }
-  if((fs% 4) != 0) { error.detail("shader filesize is not divisible by 4. aborting.", __FUNCTION__); goto Exit; }
+  if(fs<= 0) { parent->errorText= __FUNCTION__": filesize is <= 0. aborting."; goto Exit; }
+  if((fs% 4) != 0) { parent->errorText= __FUNCTION__": shader filesize is not divisible by 4. aborting."; goto Exit; }
 
-  buf= new uint8[fs];
-  if(buf== null) { error.detail("buffer allocation failed", __FUNCTION__); goto Exit; }
-  if(fread(buf, 1, fs, f)!= fs) { error.detail("file read error. aborting", __FUNCTION__); goto Exit; }
+  buf= new uint8_t[fs];
+  if(buf== nullptr) { parent->errorText= __FUNCTION__": buffer allocation failed"; goto Exit; }
+  if(fread(buf, 1, fs, f)!= fs) { parent->errorText= __FUNCTION__": file read error. aborting"; goto Exit; }
 
-  fclose(f); f= null;
+  fclose(f); f= nullptr;
 
   // vulkan shader module creation
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap8.html#shader-modules
   VkShaderModuleCreateInfo smci;
   smci.sType= VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  smci.pNext= null;
+  smci.pNext= nullptr;
   smci.flags= 0;
-  smci.pCode= (const uint32 *)buf;
+  smci.pCode= (const uint32_t *)buf;
   smci.codeSize= fs;                // <<< must be divisible by 4
 
-  if(parent->vk->CreateShaderModule(*parent, &smci, *parent, out_module)!= VK_SUCCESS) {
-    error.detail("Shader module create failed", __FUNCTION__); 
-    *out_module= null;
+  if(!parent->errorCheck(parent->CreateShaderModule(*parent, &smci, *parent, out_module), __FUNCTION__": Shader module create failed")) {
+    *out_module= nullptr;
     goto Exit;
   }
 
@@ -588,7 +610,7 @@ bool vkoShader::loadModule(cchar *in_file, VkShaderModule *out_module) {
 }
 
 
-bool vkoShader::loadModules(cchar *in_vert, cchar *in_tesc, cchar *in_tese, cchar *in_geom, cchar *in_frag, cchar *in_comp) {
+bool VkoShader::loadModules(const char *in_vert, const char *in_tesc, const char *in_tese, const char *in_geom, const char *in_frag, const char *in_comp) {
   if(in_vert) if(!loadModuleVert(in_vert)) return false;
   if(in_tesc) if(!loadModuleTesc(in_tesc)) return false;
   if(in_tese) if(!loadModuleTese(in_tese)) return false;
@@ -599,14 +621,64 @@ bool vkoShader::loadModules(cchar *in_vert, cchar *in_tesc, cchar *in_tese, ccha
   return true;
 }
 
-void vkoShader::destroyModules() {
-  if(parent->device== null) return;
-  if(vert) { parent->vk->DestroyShaderModule(*parent, vert, *parent); vert= null; }
-  if(tesc) { parent->vk->DestroyShaderModule(*parent, tesc, *parent); tesc= null; }
-  if(tese) { parent->vk->DestroyShaderModule(*parent, tese, *parent); tese= null; }
-  if(geom) { parent->vk->DestroyShaderModule(*parent, geom, *parent); geom= null; }
-  if(frag) { parent->vk->DestroyShaderModule(*parent, frag, *parent); frag= null; }
-  if(comp) { parent->vk->DestroyShaderModule(*parent, comp, *parent); comp= null; }
+
+inline bool VkoShader::loadModuleVert(const char *in_vert) {
+  if(loadModule(in_vert, &vert)) {
+    vkObject::_strCopy((char **)&vertFile, in_vert);
+    return true; }
+  else
+    return false;
+}
+
+inline bool VkoShader::loadModuleFrag(const char *in_frag) {
+  if(loadModule(in_frag, &frag)) {
+    vkObject::_strCopy((char **)&fragFile, in_frag);
+    return true;
+  } else
+    return false;
+}
+
+inline bool VkoShader::loadModuleTesc(const char *in_tesc) {
+  if(loadModule(in_tesc, &tese)) {
+    vkObject::_strCopy((char **)&tescFile, in_tesc);
+    return true;
+  } else
+    return false;
+}
+
+inline bool VkoShader::loadModuleTese(const char *in_tese) {
+  if(loadModule(in_tese, &tese)) {
+    vkObject::_strCopy((char **)&teseFile, in_tese);
+    return true;
+  } else
+    return false;
+}
+
+inline bool VkoShader::loadModuleGeom(const char *in_geom) {
+  if(loadModule(in_geom, &geom)) {
+    vkObject::_strCopy((char **)&geomFile, in_geom);
+    return true;
+  } else
+    return false;
+}
+
+inline bool VkoShader::loadModuleComp(const char *in_comp) {
+  if(loadModule(in_comp, &comp)) {
+    vkObject::_strCopy((char **)&compFile, in_comp);
+    return true;
+  } else
+    return false;
+}
+
+
+void VkoShader::destroyModules() {
+  if(parent->device== nullptr) return;
+  if(vert) { parent->DestroyShaderModule(*parent, vert, *parent); vert= nullptr; }
+  if(tesc) { parent->DestroyShaderModule(*parent, tesc, *parent); tesc= nullptr; }
+  if(tese) { parent->DestroyShaderModule(*parent, tese, *parent); tese= nullptr; }
+  if(geom) { parent->DestroyShaderModule(*parent, geom, *parent); geom= nullptr; }
+  if(frag) { parent->DestroyShaderModule(*parent, frag, *parent); frag= nullptr; }
+  if(comp) { parent->DestroyShaderModule(*parent, comp, *parent); comp= nullptr; }
 }
 
 
@@ -615,7 +687,7 @@ void vkoShader::destroyModules() {
 
 
 
-void vkoShader::_vkPopulateSpecConsts(VkShaderStageFlags in_stage, VkSpecializationInfo *out_sConst) {
+void VkoShader::_vkPopulateSpecConsts(VkShaderStageFlags in_stage, VkSpecializationInfo *out_sConst) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap9.html#pipelines-specialization-constants
   /// count the number of spec consts for this shader stage + the data size of the buffer that will be sent
   out_sConst->dataSize= 0;
@@ -629,16 +701,16 @@ void vkoShader::_vkPopulateSpecConsts(VkShaderStageFlags in_stage, VkSpecializat
   if(out_sConst->mapEntryCount)
     out_sConst->pMapEntries= new VkSpecializationMapEntry[out_sConst->mapEntryCount];  // ALLOC 1 <<<<<<<<<<<<
   if(out_sConst->dataSize)
-    out_sConst->pData= new uint8[out_sConst->dataSize];                                // ALLOC 2 <<<<<<<<<<<<
+    out_sConst->pData= new uint8_t[out_sConst->dataSize];                                // ALLOC 2 <<<<<<<<<<<<
 
   // populate map entries + actual values of the spec consts
-  uint a= 0;
+  uint32_t a= 0;
   for(_SpecConst *p= (_SpecConst *)_specConsts.first; p; p= (_SpecConst *)p->next)
     if(p->stage== in_stage) {
       ((VkSpecializationMapEntry *)out_sConst->pMapEntries)[a].constantID= p->id;
       ((VkSpecializationMapEntry *)out_sConst->pMapEntries)[a].offset=     p->offset;
       ((VkSpecializationMapEntry *)out_sConst->pMapEntries)[a].size=       p->size;
-      Str::memcpy(((uint8 *)out_sConst->pData)+ p->offset, p->value, p->size);
+      vkObject::_memcpy(((uint8_t *)out_sConst->pData)+ p->offset, p->value, p->size);
       a++;
     }
 }
@@ -647,12 +719,13 @@ void vkoShader::_vkPopulateSpecConsts(VkShaderStageFlags in_stage, VkSpecializat
 
 
 
-bool vkoShader::build() {
+bool VkoShader::build() {
   #define IX_MAX_SHADER_STAGES 6    // vert+tesc+tese+geom+frag+comp = 6; more can just be added
+  parent->clearError();
   bool ret= false;
   VkPipelineShaderStageCreateInfo ssInfo[IX_MAX_SHADER_STAGES];
   VkSpecializationInfo sConsts[IX_MAX_SHADER_STAGES];
-  uint nrStages= 0;
+  uint32_t nrStages= 0;
   VkVertexInputAttributeDescription     *vertAttribs;           /// vertex attribs
   VkVertexInputBindingDescription       *vertBindings;          /// vertex bindings
   VkPipelineTessellationDomainOriginStateCreateInfo teseOrigin; /// tesselation origin
@@ -661,19 +734,19 @@ bool vkoShader::build() {
   VkPipelineMultisampleStateCreateInfo   msAntiAlias;           /// multisample state
   VkPipelineDepthStencilStateCreateInfo  depthStencil;          /// depth / stencil tests
   VkPipelineColorBlendStateCreateInfo    colorBlend;            /// color blend
-  VkPipelineColorBlendAttachmentState   *colorBlendAtt= null;   /// color blend attachements
+  VkPipelineColorBlendAttachmentState   *colorBlendAtt= nullptr;   /// color blend attachements
   VkPipelineDynamicStateCreateInfo       dynStates;             /// dynamic parts of the pipeline
 
-  /// setting all allocation pointers to null, to know if they are to be deallocated
-  for(uint a= 0; a< IX_MAX_SHADER_STAGES; a++)
-    sConsts[a].pData= null,             // INIT 1
-    sConsts[a].pMapEntries= null;       // INIT 2
-  viewports.pViewports= null;           // INIT 3
-  viewports.pScissors= null;            // INIT 4
-  colorBlendAtt= null;                  // INIT 5
-  dynStates.pDynamicStates= null;       // INIT 6
-  vertAttribs= null;                    // INIT 7
-  vertBindings= null;                   // INIT 8
+  /// setting all allocation pointers to nullptr, to know if they are to be deallocated
+  for(uint32_t a= 0; a< IX_MAX_SHADER_STAGES; a++)
+    sConsts[a].pData= nullptr,             // INIT 1
+    sConsts[a].pMapEntries= nullptr;       // INIT 2
+  viewports.pViewports= nullptr;           // INIT 3
+  viewports.pScissors= nullptr;            // INIT 4
+  colorBlendAtt= nullptr;                  // INIT 5
+  dynStates.pDynamicStates= nullptr;       // INIT 6
+  vertAttribs= nullptr;                    // INIT 7
+  vertBindings= nullptr;                   // INIT 8
 
 
   /// find out the number of stages that will be used
@@ -709,10 +782,10 @@ bool vkoShader::build() {
     
     VkGraphicsPipelineCreateInfo graphInfo;
     graphInfo.sType= VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    graphInfo.pNext= null;                         /// or an extension, atm none i think
+    graphInfo.pNext= nullptr;                         /// or an extension, atm none i think
     graphInfo.flags= 0;                            // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap9.html#VkPipelineCreateFlagBits
 
-    if(renderPass== null) { error.detail("Vulkan renderpass not set. aborting.", __FUNCTION__); goto Exit; }
+    if(renderPass== nullptr) { parent->errorText= __FUNCTION__": Vulkan renderpass not set. aborting."; goto Exit; }
     graphInfo.renderPass= renderPass;              // the renderpass
     graphInfo.subpass= subpass;                    // index of the subpass
 
@@ -730,10 +803,10 @@ bool vkoShader::build() {
   
     if(nrStages) {
       /// common data shared thru all
-      uint a;
+      uint32_t a;
       for(a= 0; a< nrStages; a++)
         ssInfo[a].sType= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        ssInfo[a].pNext= null,
+        ssInfo[a].pNext= nullptr,
         ssInfo[a].flags= 0;
 
       /// per stage specific data
@@ -800,13 +873,13 @@ bool vkoShader::build() {
     // pipeline vertex input https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap20.html#VkPipelineVertexInputStateCreateInfo
     VkPipelineVertexInputStateCreateInfo pvisci;
     pvisci.sType= VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    pvisci.pNext= null;
+    pvisci.pNext= nullptr;
     pvisci.flags= 0;
 
     /// vertex bindings
     if(_vertAttribs.nrNodes) {
       vertAttribs= new VkVertexInputAttributeDescription[_vertAttribs.nrNodes];         // ALLOC 7
-      uint n= 0;
+      uint32_t n= 0;
       for(_VertAttribs *v= (_VertAttribs *)_vertAttribs.first; v; v= (_VertAttribs *)v->next, n++)
         vertAttribs[n].binding=  v->binding,
         vertAttribs[n].format=   v->format,
@@ -820,7 +893,7 @@ bool vkoShader::build() {
     /// vertex attributes
     if(_vertBindings.nrNodes) {
       vertBindings= new VkVertexInputBindingDescription[_vertBindings.nrNodes];         // ALLOC 8
-      uint n= 0;
+      uint32_t n= 0;
       for(_VertBinding *v= (_VertBinding *)_vertBindings.first; v; v= (_VertBinding *)v->next, n++)
         vertBindings[n].binding= v->binding,
         vertBindings[n].stride= v->stride,
@@ -836,7 +909,7 @@ bool vkoShader::build() {
     // pipeline input asembly https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap19.html#VkPipelineInputAssemblyStateCreateInfo
     VkPipelineInputAssemblyStateCreateInfo piasci;
     piasci.sType= VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    piasci.pNext= null;
+    piasci.pNext= nullptr;
     piasci.flags= 0;
     piasci.primitiveRestartEnable= _primitiveRestartEnable;
     piasci.topology= _topology;
@@ -852,11 +925,11 @@ bool vkoShader::build() {
     if(_teseDomainOrigin!= VK_TESSELLATION_DOMAIN_ORIGIN_UPPER_LEFT) {
       // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap21.html#VkPipelineTessellationDomainOriginStateCreateInfo
       teseOrigin.sType= VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_DOMAIN_ORIGIN_STATE_CREATE_INFO;
-      teseOrigin.pNext= null;
+      teseOrigin.pNext= nullptr;
       teseOrigin.domainOrigin= _teseDomainOrigin;
       ptsci.pNext= &teseOrigin;
     } else 
-      ptsci.pNext= null;
+      ptsci.pNext= nullptr;
     ptsci.patchControlPoints= _teseControlPoints;
 
     graphInfo.pTessellationState= &ptsci;
@@ -864,11 +937,11 @@ bool vkoShader::build() {
     // pipeline viewport - ignored if rasterization is disabled
     // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap23.html#VkPipelineViewportStateCreateInfo
     viewports.sType= VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewports.pNext= null;
+    viewports.pNext= nullptr;
     viewports.flags= 0;
 
     // TO THINK ABOUT: MULTIPLE VIEWPORTS? WOULD SETTING THESE TO CONSTANT IN HERE BE BETTER?
-    /// -when using dynamic state for the viewports (resizing windows, etc), the pointers are ignored, therefore null
+    /// -when using dynamic state for the viewports (resizing windows, etc), the pointers are ignored, therefore nullptr
     ///  graphInfo.pDynamicState is the way to define dynamic viewports
     /// -if the viewports are static, maybe a fullscreen view, these can be populated.
     /// -i cannot find anywhere any impact on speed
@@ -876,14 +949,14 @@ bool vkoShader::build() {
     /// constant viewports
     if(_dynamicViewports== 0) {
       if(_constViewports.nrNodes== 0) {
-        error.detail("Shader pipeline creation failed: no constant or dynamic viewports were defined (use setDynamicViewport()/setConstViewport())", __FUNCTION__, __LINE__);
+        parent->errorText= __FUNCTION__": Shader pipeline creation failed: no constant or dynamic viewports were defined (use setDynamicViewport()/setConstViewport())";
         goto Exit;
       }
       viewports.viewportCount= _constViewports.nrNodes;
       viewports.scissorCount= _constViewports.nrNodes;
       viewports.pViewports= new VkViewport[viewports.viewportCount];      // ALLOC 3
       viewports.pScissors= new VkRect2D[viewports.scissorCount];          // ALLOC 4
-      uint a= 0;
+      uint32_t a= 0;
       for(_ConstViewport *p= (_ConstViewport *)_constViewports.first; p; p= (_ConstViewport *)p->next)
         ((VkViewport *)viewports.pViewports)[a]= p->view,
         ((VkRect2D *)  viewports.pScissors)[a]=  p->scissor,
@@ -898,7 +971,7 @@ bool vkoShader::build() {
 
     // pipeline rasterization state - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap24.html#VkPipelineRasterizationStateCreateInfo
     raster.sType= VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    raster.pNext= null;                  /// extension (none atm)
+    raster.pNext= nullptr;                  /// extension (none atm)
     raster.flags= 0;                     /// reserved
     raster.depthClampEnable=        _depthClampEnable;        // "controls whether to clamp the fragment’s depth values as described in Depth Test. Enabling depth clamp will also disable clipping primitives to the z planes of the frustrum as described in Primitive Clipping."
     raster.rasterizerDiscardEnable= _rasterizerDiscardEnable; // "controls whether primitives are discarded immediately before the rasterization stage."
@@ -916,7 +989,7 @@ bool vkoShader::build() {
     // pipeline multisample - ignored if rasterization is disabled
     // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap24.html#VkPipelineMultisampleStateCreateInfo
     msAntiAlias.sType= VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    msAntiAlias.pNext= null;
+    msAntiAlias.pNext= nullptr;
     msAntiAlias.flags= 0;
     msAntiAlias.rasterizationSamples=  _nrMultisamples;
     msAntiAlias.sampleShadingEnable=   _sampleShadingEnable;
@@ -932,7 +1005,7 @@ bool vkoShader::build() {
     // depth / stencil - ignored if rasterization is disabled OR renderpass has no depth/stencil atachement
     // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap25.html#VkPipelineDepthStencilStateCreateInfo
     depthStencil.sType= VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.pNext= null;
+    depthStencil.pNext= nullptr;
     depthStencil.flags= 0;
     depthStencil.depthTestEnable=       _depthTestEnable;
     depthStencil.depthWriteEnable=      _depthTestWrite;
@@ -947,18 +1020,18 @@ bool vkoShader::build() {
 
     // color blend - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap26.html#VkPipelineColorBlendStateCreateInfo
     colorBlend.sType= VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlend.pNext= null;
+    colorBlend.pNext= nullptr;
     colorBlend.flags= 0;
     colorBlend.logicOpEnable=     _colorBlendLogicOpEnable;
     colorBlend.logicOp=           _colorBlendLogicOp;
-    colorBlend.blendConstants[0]= _colorBlendConstColor.r;
-    colorBlend.blendConstants[1]= _colorBlendConstColor.g;
-    colorBlend.blendConstants[2]= _colorBlendConstColor.b;
-    colorBlend.blendConstants[3]= _colorBlendConstColor.a;
+    colorBlend.blendConstants[0]= _colorBlendConstColor[0];
+    colorBlend.blendConstants[1]= _colorBlendConstColor[1];
+    colorBlend.blendConstants[2]= _colorBlendConstColor[2];
+    colorBlend.blendConstants[3]= _colorBlendConstColor[3];
     colorBlend.attachmentCount=   _colorBlendAttachements.nrNodes;
     if(colorBlend.attachmentCount) {
       colorBlendAtt= new VkPipelineColorBlendAttachmentState[colorBlend.attachmentCount]; // ALLOC 5
-      uint a= 0;
+      uint32_t a= 0;
       for(_ColorBlendAttachment *p= (_ColorBlendAttachment *)_colorBlendAttachements.first; p; p= (_ColorBlendAttachment *)p->next)
         colorBlendAtt[a++]= p->att;
     } 
@@ -973,37 +1046,31 @@ bool vkoShader::build() {
     /// the constant variants are ingored
     
     dynStates.sType= VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynStates.pNext= null;
+    dynStates.pNext= nullptr;
     dynStates.flags= 0;
     dynStates.dynamicStateCount= _dynamicStates.nrNodes;
     if(dynStates.dynamicStateCount) {
       dynStates.pDynamicStates= new VkDynamicState[dynStates.dynamicStateCount];        // ALLOC 6
-      uint a= 0;
+      uint32_t a= 0;
       for(_DynamicState *p= (_DynamicState *)_dynamicStates.first; p; p= (_DynamicState *)p->next)
         ((VkDynamicState *)dynStates.pDynamicStates)[a++]= p->dyn;
     }
 
     graphInfo.pDynamicState= &dynStates; // This can be NULL, which means no state in the pipeline is considered dynamic.
-
     
       
     // pipeline cache is VK_NULL_HANDLE, ATM
-    if(parent->vk->CreateGraphicsPipelines(*parent, VK_NULL_HANDLE, 1, &graphInfo, *parent, &pipeline)!= VK_SUCCESS) {
-      error.detail("Vulkan pipeline creation failed", __FUNCTION__, __LINE__);
-      pipeline= null;
+    if(!parent->errorCheck(parent->CreateGraphicsPipelines(*parent, VK_NULL_HANDLE, 1, &graphInfo, *parent, &pipeline), __FUNCTION__": Vulkan pipeline creation failed")) {
+      pipeline= nullptr;
       goto Exit;
     }
   } /// compute / graphics pipeline
 
-
-
   ret= true; // success
-
-
 
   Exit:
 
-  for(uint a= 0; a< IX_MAX_SHADER_STAGES; a++) {
+  for(uint32_t a= 0; a< IX_MAX_SHADER_STAGES; a++) {
     if(sConsts[a].pMapEntries)
       delete[] sConsts[a].pMapEntries;    // DEALLOC 1 (in vkPopulateSpecConsts())
     if(sConsts[a].pData)

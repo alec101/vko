@@ -1,4 +1,4 @@
-#include "vkObject.h"
+#include "vko/include/vkObject.h"
 
 
 
@@ -7,7 +7,7 @@
 // COMMANDPOOL object ================== //
 ///===================------------------///
 
-VkoCommandPool::VkoCommandPool(): commandPool(null), _parent(null) {
+VkoCommandPool::VkoCommandPool(): commandPool(nullptr), _parent(nullptr) {
   _flags= 0;
   _queueFamily= ~0;
 }
@@ -15,15 +15,15 @@ VkoCommandPool::VkoCommandPool(): commandPool(null), _parent(null) {
 
 
 void VkoCommandPool::destroy() {
-  if(_parent->device== null) return;
+  if(_parent->device== nullptr) return;
   if(commandPool) {
-    _parent->vk->DestroyCommandPool(_parent->device, commandPool, _parent->memCallback);
-    commandPool= null;
+    _parent->DestroyCommandPool(_parent->device, commandPool, _parent->memCallback);
+    commandPool= nullptr;
   }
 }
 
 
-void VkoCommandPool::configure(uint32 in_queueFamily, VkCommandPoolCreateFlags in_flags) {
+void VkoCommandPool::configure(uint32_t in_queueFamily, VkCommandPoolCreateFlags in_flags) {
   _flags= in_flags;
   _queueFamily= in_queueFamily;
   // defaul flags
@@ -47,19 +47,13 @@ bool VkoCommandPool::build() {
   VkCommandPoolCreateInfo cpInfo; // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap5.html#VkCommandPoolCreateInfo
 
   cpInfo.sType= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  cpInfo.pNext= null;
+  cpInfo.pNext= nullptr;
   cpInfo.flags= _flags;
   cpInfo.queueFamilyIndex= _queueFamily;
   
   // create the pool
-  VkResult res= _parent->vk->CreateCommandPool(_parent->device, &cpInfo, _parent->memCallback, &commandPool);
-
-  // error
-  if(res!= VK_SUCCESS) {
-    error.detail("Vulkan command pool creation failed", __FUNCTION__, __LINE__);
-    error.vkPrint(res);
+  if(!_parent->errorCheck(_parent->CreateCommandPool(_parent->device, &cpInfo, _parent->memCallback, &commandPool), __FUNCTION__": Vulkan command pool creation failed"))
     goto Exit;
-  }
 
   ret= true; // success
 
@@ -76,38 +70,38 @@ VkCommandBuffer VkoCommandPool::addCommandBuffer(VkCommandBufferLevel in_level) 
   VkCommandBuffer ret;
 
   cbInfo.sType= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  cbInfo.pNext= null;
+  cbInfo.pNext= nullptr;
   cbInfo.commandBufferCount= 1;
   cbInfo.commandPool= commandPool;
   cbInfo.level= in_level;
 
-  _parent->vk->AllocateCommandBuffers(*_parent, &cbInfo, &ret);
+  _parent->AllocateCommandBuffers(*_parent, &cbInfo, &ret);
   return ret;
 }
 
 
 
-void VkoCommandPool::addCommandBuffers(uint32 in_nr, VkCommandBufferLevel in_level, VkCommandBuffer *out_buffers) {
+void VkoCommandPool::addCommandBuffers(uint32_t in_nr, VkCommandBufferLevel in_level, VkCommandBuffer *out_buffers) {
   VkCommandBufferAllocateInfo cbInfo;
 
   cbInfo.sType= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  cbInfo.pNext= null;
+  cbInfo.pNext= nullptr;
   cbInfo.commandBufferCount= in_nr;
   cbInfo.commandPool= commandPool;
   cbInfo.level= in_level;
 
-  _parent->vk->AllocateCommandBuffers(*_parent, &cbInfo, out_buffers);
+  _parent->AllocateCommandBuffers(*_parent, &cbInfo, out_buffers);
 }
 
 
 
 void VkoCommandPool::freeCommandBuffer(VkCommandBuffer in_buffer) {
-  _parent->vk->FreeCommandBuffers(*_parent, commandPool, 1, &in_buffer);
+  _parent->FreeCommandBuffers(*_parent, commandPool, 1, &in_buffer);
 }
 
 
-void VkoCommandPool::freeCommandBuffers(uint32 in_nr, VkCommandBuffer *in_buffer) {
-  _parent->vk->FreeCommandBuffers(*_parent, commandPool, in_nr, in_buffer);
+void VkoCommandPool::freeCommandBuffers(uint32_t in_nr, VkCommandBuffer *in_buffer) {
+  _parent->FreeCommandBuffers(*_parent, commandPool, in_nr, in_buffer);
 }
 
 

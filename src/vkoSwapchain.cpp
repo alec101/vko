@@ -1,4 +1,4 @@
-#include "vkObject.h"
+#include "../include/vkObject.h"
 
 
 
@@ -9,20 +9,20 @@
 
 
 VkoSwapchain::VkoSwapchain() {
-  _parent= null;
+  _parent= nullptr;
   _index= 0;
 
-  swapchain= null;
+  swapchain= nullptr;
 
   nrImages= 0;
-  images= null;         // MEM INIT
-  //semaphore= null;
+  images= nullptr;         // MEM INIT
+  //semaphore= nullptr;
 
   currentIndex= ~0U;
   dx= dy= 0;
 
   cfg.flags= 0;
-  cfg.surface= null;
+  cfg.surface= nullptr;
   cfg.minBuffers= 2;    // default: 2 buffers to swap between
   cfg.imageFormat= VK_FORMAT_B8G8R8A8_UNORM;
   cfg.colorSpace= VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
@@ -45,14 +45,14 @@ VkoSwapchain::VkoSwapchain() {
 
   /// present info struct
   _showInfo.sType= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  _showInfo.pNext= null;
+  _showInfo.pNext= nullptr;
   _showInfo.waitSemaphoreCount= 1;
   _showInfo.swapchainCount= 1;
 
-  _oldSwapchain= null;
+  _oldSwapchain= nullptr;
 
   _nformats= 0;
-  _formats= null;
+  _formats= nullptr;
 }
 
 
@@ -63,20 +63,19 @@ VkoSwapchain::~VkoSwapchain() {
 
 
 void VkoSwapchain::destroy() {
-  if((swapchain!= null) && (_parent->device!= null) && (_parent->vk->DestroySwapchainKHR))
-    _parent->vk->DestroySwapchainKHR(_parent->device, swapchain, _parent->memCallback);
+  if((swapchain!= nullptr) && (_parent->device!= nullptr) && (_parent->DestroySwapchainKHR))
+    _parent->DestroySwapchainKHR(_parent->device, swapchain, _parent->memCallback);
 
-  swapchain= null;
-  if(images!= null) { delete[] images; images= null; } // MEM DEALLOC 1
+  swapchain= nullptr;
+  if(images!= nullptr) { delete[] images; images= nullptr; } // MEM DEALLOC 1
   nrImages= 0;
   currentIndex= ~0;
   dx= dy= 0;
 }
 
 
-void VkoSwapchain::SwapchainSettings::addShareBetwenQueueFamily(uint32 in_family) {
+void VkoSwapchain::SwapchainSettings::addShareBetwenQueueFamily(uint32_t in_family) {
   _Share *p= new _Share;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
   p->queueFamilyIndex= in_family;
   _sharedQueues.add(p);
   
@@ -86,7 +85,6 @@ void VkoSwapchain::SwapchainSettings::addShareBetwenQueueFamily(uint32 in_family
 
 void VkoSwapchain::SwapchainSettings::addMultipleFormat(VkFormat in_f) {
   _Format *p= new _Format;
-  if(p== null) { error.alloc(__FUNCTION__); return; }
   p->format= in_f;
   _multipleFormats.add(p);
 }
@@ -95,15 +93,15 @@ void VkoSwapchain::SwapchainSettings::addMultipleFormat(VkFormat in_f) {
 
 bool VkoSwapchain::_isFormatOk(VkSurfaceKHR in_s, VkFormat in_f, VkColorSpaceKHR in_c) {
   /// populate (only once)
-  if(_formats== null) {
-    vk.GetPhysicalDeviceSurfaceFormatsKHR(_parent->vkr->vkGPU, in_s, &_nformats, null);
+  if(_formats== nullptr) {
+    _parent->GetPhysicalDeviceSurfaceFormatsKHR(*_parent, in_s, &_nformats, nullptr);
     if(_nformats) {
       _formats= new VkSurfaceFormatKHR[_nformats];
-      vk.GetPhysicalDeviceSurfaceFormatsKHR(_parent->vkr->vkGPU, in_s, &_nformats, _formats);
+      _parent->GetPhysicalDeviceSurfaceFormatsKHR(*_parent, in_s, &_nformats, _formats);
     }
   }
 
-  for(uint a= 0; a< _nformats; a++)
+  for(uint32_t a= 0; a< _nformats; a++)
     if((_formats[a].format== in_f) && (_formats[a].colorSpace== in_c))
       return true;
 
@@ -143,7 +141,7 @@ bool VkoSwapchain::build() {
   destroy();
   
   bool ret= false;                            /// return value
-  uint a;
+  uint32_t a;
   VkBool32 supported;
   VkSwapchainCreateInfoKHR swapInfo;
   VkDeviceGroupSwapchainCreateInfoKHR deviceGroupInfo;
@@ -151,12 +149,12 @@ bool VkoSwapchain::build() {
   VkSurfaceCapabilitiesKHR surfaceCfg;
   //VkSemaphoreCreateInfo semaphoreInfo;
 
-  imageFormatListInfo.pViewFormats= null;     // INIT 1
-  swapInfo.pQueueFamilyIndices= null;         // INIT 2
+  imageFormatListInfo.pViewFormats= nullptr;     // INIT 1
+  swapInfo.pQueueFamilyIndices= nullptr;         // INIT 2
 
   swapInfo.sType= VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
   
-  swapInfo.pNext= null;
+  swapInfo.pNext= nullptr;
   const void **pNext= &swapInfo.pNext;
 
   /// device group
@@ -164,7 +162,7 @@ bool VkoSwapchain::build() {
     *pNext= &deviceGroupInfo;
     // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkDeviceGroupSwapchainCreateInfoKHR
     deviceGroupInfo.sType= VK_STRUCTURE_TYPE_DEVICE_GROUP_SWAPCHAIN_CREATE_INFO_KHR;
-    deviceGroupInfo.pNext= null;
+    deviceGroupInfo.pNext= nullptr;
     deviceGroupInfo.modes= cfg.deviceGroupFlags;
     pNext= &deviceGroupInfo.pNext;
   }
@@ -174,9 +172,8 @@ bool VkoSwapchain::build() {
     *pNext= &imageFormatListInfo;
     // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap11.html#VkImageFormatListCreateInfoKHR
     imageFormatListInfo.sType= VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO_KHR;
-    imageFormatListInfo.pNext= null;
+    imageFormatListInfo.pNext= nullptr;
     imageFormatListInfo.pViewFormats= new VkFormat[cfg._multipleFormats.nrNodes]; // ALLOC 1
-    if(imageFormatListInfo.pViewFormats== null) { error.alloc(__FUNCTION__); goto Exit; }
     a= 0;
     for(_Format *p= (_Format *)cfg._multipleFormats.first; p; p= (_Format *)p->next, a++)
       ((VkFormat *)imageFormatListInfo.pViewFormats)[a]= p->format;
@@ -185,15 +182,17 @@ bool VkoSwapchain::build() {
   }
   
   /// surface
-  if(cfg.surface!= null)
-    swapInfo.surface= cfg.surface;
-  else
-    swapInfo.surface= (VkSurfaceKHR)_parent->vkr->monitor->win->vkSurface;
 
-  vk.GetPhysicalDeviceSurfaceSupportKHR(_parent->vkr->vkGPU, _parent->vkr->vkQueues[0].family, swapInfo.surface, &supported);
-  if(supported== false) { error.detail("Swapchain: Surface not supported", __FUNCTION__); goto Exit; }
+  //if(cfg.surface!= nullptr)
+  swapInfo.surface= cfg.surface;
+  //else
+    //swapInfo.surface= (VkSurfaceKHR)_parent->vkr->monitor->win->vkSurface;
 
-  if(swapInfo.surface== null) { error.detail("No VkSurfaceKHR specified, or present on current osiWindow. Aborting.", __FUNCTION__); goto Exit; }
+
+  if(swapInfo.surface== nullptr) { _parent->errorText= __FUNCTION__": No VkSurfaceKHR specified. Aborting."; goto Exit; }
+
+  _parent->GetPhysicalDeviceSurfaceSupportKHR(*_parent, _parent->queue[0].family, swapInfo.surface, &supported);
+  if(supported== false) { _parent->errorText= __FUNCTION__": Swapchain: Surface not supported"; goto Exit; }
   
   /// image size
   if(cfg.imageSize.height && cfg.imageSize.width) {
@@ -201,7 +200,7 @@ bool VkoSwapchain::build() {
     dx= cfg.imageSize.width;
     dy= cfg.imageSize.height;
   } else {
-    _parent->vk->GetPhysicalDeviceSurfaceCapabilitiesKHR((VkPhysicalDevice)_parent->vkr->GPU->vkGPU, swapInfo.surface, &surfaceCfg);
+    _parent->GetPhysicalDeviceSurfaceCapabilitiesKHR(*_parent, swapInfo.surface, &surfaceCfg);
     swapInfo.imageExtent= surfaceCfg.currentExtent;
     dx= surfaceCfg.currentExtent.width;
     dy= surfaceCfg.currentExtent.height;
@@ -211,18 +210,17 @@ bool VkoSwapchain::build() {
   swapInfo.minImageCount=         cfg.minBuffers;
   swapInfo.imageFormat=           cfg.imageFormat;
   swapInfo.imageColorSpace=       cfg.colorSpace;
-  if(!_isFormatOk(swapInfo.surface, swapInfo.imageFormat, swapInfo.imageColorSpace)) { error.detail("Requested format is not avaible for this surface", __FUNCTION__); goto Exit; }
+  if(!_isFormatOk(swapInfo.surface, swapInfo.imageFormat, swapInfo.imageColorSpace)) { _parent->errorText= __FUNCTION__": Requested format is not avaible for this surface"; goto Exit; }
 
   swapInfo.imageArrayLayers=      cfg.imageArrayLayers;
   swapInfo.imageUsage=            cfg.imageUsage;
   swapInfo.imageSharingMode=      cfg.imageSharingMode;
   swapInfo.queueFamilyIndexCount= cfg._sharedQueues.nrNodes;
   if(cfg._sharedQueues.nrNodes> 0) {
-    swapInfo.pQueueFamilyIndices= new uint32[cfg._sharedQueues.nrNodes];    // ALLOC 2
-    if(swapInfo.pQueueFamilyIndices== null) { error.alloc(__FUNCTION__); goto Exit; }
+    swapInfo.pQueueFamilyIndices= new uint32_t[cfg._sharedQueues.nrNodes];    // ALLOC 2
     a= 0;
     for(_Share *p= (_Share *)cfg._sharedQueues.first; p; p= (_Share *)p->next, a++)
-      ((uint32 *)swapInfo.pQueueFamilyIndices)[a]= p->queueFamilyIndex;
+      ((uint32_t *)swapInfo.pQueueFamilyIndices)[a]= p->queueFamilyIndex;
   }
   swapInfo.preTransform=   cfg.preTransform;
   swapInfo.compositeAlpha= cfg.compositeAlpha;
@@ -230,21 +228,17 @@ bool VkoSwapchain::build() {
   swapInfo.clipped=        cfg.clipped;
   swapInfo.oldSwapchain= _oldSwapchain;
   
-  VkResult res= _parent->vk->CreateSwapchainKHR(_parent->device, &swapInfo, _parent->memCallback, &swapchain);
-  if(res!= VK_SUCCESS) {
-    error.detail("Swapchain create fail.", __FUNCTION__);
-    error.vkPrint(res);
+  if(!_parent->errorCheck(_parent->CreateSwapchainKHR(_parent->device, &swapInfo, _parent->memCallback, &swapchain),
+    __FUNCTION__": Swapchain create fail."))
     goto Exit;
-  }
 
   // populate images / nrImages
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#vkGetSwapchainImagesKHR
-  _parent->vk->GetSwapchainImagesKHR(_parent->device, swapchain, &nrImages, null);
+  _parent->GetSwapchainImagesKHR(_parent->device, swapchain, &nrImages, nullptr);
   if(nrImages) {
-    if(images) delete[] images; images= null;
+    if(images) delete[] images; images= nullptr;
     images= new VkImage[nrImages];
-    if(images== null) { error.alloc(__FUNCTION__, __LINE__); goto Exit; }
-    _parent->vk->GetSwapchainImagesKHR(_parent->device, swapchain, &nrImages, images);
+    _parent->GetSwapchainImagesKHR(_parent->device, swapchain, &nrImages, images);
   }
 
   /// showInfo, the struct that is used for presenting images
@@ -254,12 +248,12 @@ bool VkoSwapchain::build() {
   ret= true;
 
 Exit:
-  if(ret== false && swapchain!= null) destroy();
+  if(ret== false && swapchain!= nullptr) destroy();
   if(imageFormatListInfo.pViewFormats) delete[] imageFormatListInfo.pViewFormats; // DEALLOC 1
   if(swapInfo.pQueueFamilyIndices) delete[]  swapInfo.pQueueFamilyIndices;        // DEALLOC 2
   if(_oldSwapchain) {
-    _parent->vk->DestroySwapchainKHR(_parent->device, _oldSwapchain, _parent->memCallback);
-    _oldSwapchain= null;
+    _parent->DestroySwapchainKHR(_parent->device, _oldSwapchain, _parent->memCallback);
+    _oldSwapchain= nullptr;
   }
 
   return ret;
@@ -268,7 +262,7 @@ Exit:
 
 bool VkoSwapchain::rebuild() {
   _oldSwapchain= swapchain;
-  swapchain= null;
+  swapchain= nullptr;
   dx= dy= 0;
   currentIndex= ~0;
   return build();
@@ -291,7 +285,7 @@ bool VkoSwapchain::check() {
 
   // CHOOSEN THE FAST WAY, ONLY TRUE AND FALSE. SUBJECT TO CHANGE
 
-  VkResult r= _parent->vk->GetSwapchainStatusKHR(_parent->device, swapchain);
+  VkResult r= _parent->GetSwapchainStatusKHR(_parent->device, swapchain);
   if(r== VK_SUCCESS) return true;
   else return false;
 }
@@ -301,7 +295,7 @@ bool VkoSwapchain::check() {
 
 
 // 
-bool VkoSwapchain::aquire(VkSemaphore in_finishPresenting, VkFence in_finishPresentingFence, uint64 in_timeout, uint32 *out_index) {
+bool VkoSwapchain::aquire(VkSemaphore in_finishPresenting, VkFence in_finishPresentingFence, uint64_t in_timeout, uint32_t *out_index) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkAcquireNextImageInfoKHR
   /*
   VK_SUCCESS        =is returned if an image became available.
@@ -317,22 +311,29 @@ bool VkoSwapchain::aquire(VkSemaphore in_finishPresenting, VkFence in_finishPres
   //  Implementations may use this information to avoid performing expensive data transition operations.
   //  (AFTER PRESENTING, YOU DON'T CARE ABOUT THE IMAGE ANYMORE)
 
-
+  #ifdef VKO_BE_CHATTY
   bool chatty= true;      // DEBUG
+  #endif
+
   bool ret= true;
 
-  VkResult res= _parent->vk->AcquireNextImageKHR(_parent->device, swapchain, in_timeout, in_finishPresenting, in_finishPresentingFence, &currentIndex);
+  VkResult res= _parent->AcquireNextImageKHR(_parent->device, swapchain, in_timeout, in_finishPresenting, in_finishPresentingFence, &currentIndex);
   if(res!= VK_SUCCESS) {
     if(res== VK_SUBOPTIMAL_KHR) {
       if(rebuild()) {
-        if(chatty) error.simple("WARNING: Vulkan surface rebuilt due VK_SUBOPTIMAL_KHR"); // DEBUG
-        if(_parent->vk->AcquireNextImageKHR(_parent->device, swapchain, in_timeout, in_finishPresenting, in_finishPresentingFence, &currentIndex)!= VK_SUCCESS)
+        #ifdef VKO_BE_CHATTY
+        if(chatty) printf("WARNING: Vulkan surface rebuilt due VK_SUBOPTIMAL_KHR\n"); // DEBUG
+        #endif
+
+        if(_parent->AcquireNextImageKHR(_parent->device, swapchain, in_timeout, in_finishPresenting, in_finishPresentingFence, &currentIndex)!= VK_SUCCESS)
           currentIndex= ~0, ret= false;
       }
     } else if(res== VK_ERROR_OUT_OF_DATE_KHR) {
       if(rebuild()) {
-        if(chatty) error.simple("WARNING: Vulkan surface rebuilt due VK_ERROR_OUT_OF_DATE_KHR");
-        if(_parent->vk->AcquireNextImageKHR(_parent->device, swapchain, in_timeout, in_finishPresenting, in_finishPresentingFence, &currentIndex)!= VK_SUCCESS)
+        #ifdef VKO_BE_CHATTY
+        if(chatty) printf("WARNING: Vulkan surface rebuilt due VK_ERROR_OUT_OF_DATE_KHR\n");
+        #endif
+        if(_parent->AcquireNextImageKHR(_parent->device, swapchain, in_timeout, in_finishPresenting, in_finishPresentingFence, &currentIndex)!= VK_SUCCESS)
           currentIndex= ~0, ret= false;
       }
     } else 
