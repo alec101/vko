@@ -299,6 +299,11 @@ public:
   //Ix *ix;                           // parent ix engine this shader belongs to
   vkObject *parent;
 
+
+
+
+  // PRIVATE STUFF FROM HERE ON
+  ///--------------------------
 private:
   //chainList _descriptors;
   //chainList _descriptorSetFlags;
