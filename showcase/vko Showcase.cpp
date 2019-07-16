@@ -1,23 +1,23 @@
-  vkObject vk;
+  vkObject vko;
 
-  vk.cfg.addValidationLayer("VK_LAYER_KHRONOS_validation");
-  vk.cfg.queueRequestUniversal= 1;
-  vk.cfg.extensions.instance.vk_KHR_win32_surface.enable= 1;
-  vk.cfg.extensions.instance.vk_KHR_surface.enable= 1;
-  vk.cfg.extensions.instance.vk_EXT_debug_utils.enable= 1;
+  vko.cfg.addValidationLayer("VK_LAYER_KHRONOS_validation");
+  vko.cfg.queueRequestUniversal= 1;
+  vko.cfg.extensions.instance.vk_KHR_win32_surface.enable= 1;
+  vko.cfg.extensions.instance.vk_KHR_surface.enable= 1;
+  vko.cfg.extensions.instance.vk_EXT_debug_utils.enable= 1;
   
-  vk.buildInstance();
+  vko.buildInstance();
 
 
   VkPhysicalDeviceFeatures f;
   memclr(&f, sizeof(VkPhysicalDeviceFeatures));  
   f.depthBounds= 1;
   f.samplerAnisotropy= 1;
-  vk.cfg.gpuFeatures= &f;
+  vko.cfg.gpuFeatures= &f;
 
-  vk.cfg.extensions.device.vk_KHR_swapchain.enable= 1;
-  vk.physicalDevice= vk.info.physicalDevice[0].physicalDevice;
-  vk.build();
+  vko.cfg.extensions.device.vk_KHR_swapchain.enable= 1;
+  vko.physicalDevice= vk.info.physicalDevice[0].physicalDevice;
+  vko.build();
 
 
   // create your window with glsl/osi/watever  
