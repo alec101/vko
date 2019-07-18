@@ -15,8 +15,9 @@ public:
   VkDescriptorSet set;                    // vulkan descriptor set - populated after calling any build func
   VkoDescriptorManager *parent;           // parent manager (pool) of this set
 
-  inline operator VkDescriptorSet() { return set; }
-  inline operator VkDescriptorSetLayout() { return layout; }
+  //VkDescriptorSet and VkDescriptorSetLayout are defined differently on 32/64 ... lovely...
+  //inline operator VkDescriptorSet() { return set; }
+  //inline operator VkDescriptorSetLayout() { return layout; }
 
 
   // this func is mainly for descriptor push
@@ -41,7 +42,7 @@ public:
   bool buildLayout();
   void destroyLayout();
 
-  VkoSet(): index(~0), flags(0), layout(nullptr), set(nullptr), parent(nullptr) {}
+  VkoSet(): index(~0), flags(0), layout(0), set(0), parent(nullptr) {}
   ~VkoSet();
 };
 

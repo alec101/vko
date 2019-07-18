@@ -9,7 +9,7 @@ VkoSet::~VkoSet() {
 
 
 void VkoSet::destroyLayout() {
-  if((layout!= nullptr) && (parent->_parent->device!= nullptr))
+  if((layout!= NULL) && (parent->_parent->device!= nullptr))
     parent->_parent->DestroyDescriptorSetLayout(*parent->_parent, layout, parent->_parent->memCallback);
 }
 

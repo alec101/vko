@@ -10,7 +10,7 @@
 
 VkoRenderPass::VkoRenderPass() {
   _parent= nullptr;
-  renderPass= nullptr;
+  renderPass= NULL;
 }
 
 
@@ -23,7 +23,7 @@ void VkoRenderPass::destroy() {
   if(!_parent->device) return;
   if(renderPass) {
     _parent->DestroyRenderPass(_parent->device, *this, _parent->memCallback);
-    renderPass= nullptr;
+    renderPass= NULL;
   }
 }
 

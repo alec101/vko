@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{DD383AD7-7822-4311-A03A-669AA97AB7F2}</ProjectGuid>
+    <RootNamespace>vkoexample</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;../osi</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;../osi</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;../osi</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;../osi</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..;../osi/extlib/vulkan;../osi/include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <OutputFile>output/$(TargetName)$(TargetExt)</OutputFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..;../osi/extlib/vulkan;../osi/include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <OutputFile>output/$(TargetName)$(TargetExt)</OutputFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..;../osi/extlib/vulkan;../osi/include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>output/$(TargetName)$(TargetExt)</OutputFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..;../osi/extlib/vulkan;../osi/include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>output/$(TargetName)$(TargetExt)</OutputFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\osi\src\osiChar.cpp" />
+    <ClCompile Include="..\osi\src\osiDisplay.cpp" />
+    <ClCompile Include="..\osi\src\osiGlExt.cpp" />
+    <ClCompile Include="..\osi\src\osiGlRenderer.cpp" />
+    <ClCompile Include="..\osi\src\osiInput.cpp" />
+    <ClCompile Include="..\osi\src\osinteraction.cpp" />
+    <ClCompile Include="..\osi\src\osiVkRenderer.cpp" />
+    <ClCompile Include="..\osi\src\osiVulkan.cpp" />
+    <ClCompile Include="..\osi\src\osiWindow.cpp" />
+    <ClCompile Include="..\osi\src\util\errorHandling.cpp" />
+    <ClCompile Include="..\osi\src\util\filePNG.cpp" />
+    <ClCompile Include="..\osi\src\util\fileTGA.cpp" />
+    <ClCompile Include="..\osi\src\util\mzPacker.cpp" />
+    <ClCompile Include="..\osi\src\util\segList.cpp" />
+    <ClCompile Include="..\osi\src\util\str16.cpp" />
+    <ClCompile Include="..\osi\src\util\str32.cpp" />
+    <ClCompile Include="..\osi\src\util\str8.cpp" />
+    <ClCompile Include="..\osi\src\util\strCommon.cpp" />
+    <ClCompile Include="..\vko\src\vkObject.cpp" />
+    <ClCompile Include="..\vko\src\vkoBuffer.cpp" />
+    <ClCompile Include="..\vko\src\vkoCommandPool.cpp" />
+    <ClCompile Include="..\vko\src\vkoDescriptor.cpp" />
+    <ClCompile Include="..\vko\src\vkoDescriptorManager.cpp" />
+    <ClCompile Include="..\vko\src\vkoDevice.cpp" />
+    <ClCompile Include="..\vko\src\vkoExt.cpp" />
+    <ClCompile Include="..\vko\src\vkoFramebuffer.cpp" />
+    <ClCompile Include="..\vko\src\vkoFuncs.cpp" />
+    <ClCompile Include="..\vko\src\vkoMemory.cpp" />
+    <ClCompile Include="..\vko\src\vkoRenderPass.cpp" />
+    <ClCompile Include="..\vko\src\vkoSemaphore.cpp" />
+    <ClCompile Include="..\vko\src\vkoSet.cpp" />
+    <ClCompile Include="..\vko\src\vkoShader.cpp" />
+    <ClCompile Include="..\vko\src\vkoSwapchain.cpp" />
+    <ClCompile Include="vko example.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\vko\include\chainList.hpp" />
+    <ClInclude Include="..\vko\include\vkObject.h" />
+    <ClInclude Include="..\vko\include\vkoBuffer.h" />
+    <ClInclude Include="..\vko\include\vkoCommandPool.h" />
+    <ClInclude Include="..\vko\include\vkoDescriptor.h" />
+    <ClInclude Include="..\vko\include\vkoDescriptorManager.h" />
+    <ClInclude Include="..\vko\include\vkoDevice.h" />
+    <ClInclude Include="..\vko\include\vkoExt.h" />
+    <ClInclude Include="..\vko\include\vkoFramebuffer.h" />
+    <ClInclude Include="..\vko\include\vkoFuncs.h" />
+    <ClInclude Include="..\vko\include\vkoGlbFuncs.hpp" />
+    <ClInclude Include="..\vko\include\vkoMemory.h" />
+    <ClInclude Include="..\vko\include\vkoRenderPass.h" />
+    <ClInclude Include="..\vko\include\vkoSemaphore.h" />
+    <ClInclude Include="..\vko\include\vkoSet.h" />
+    <ClInclude Include="..\vko\include\vkoShader.h" />
+    <ClInclude Include="..\vko\include\vkoSwapchain.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\osi\src\osiCocoa.mm" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

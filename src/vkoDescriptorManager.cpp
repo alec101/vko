@@ -6,7 +6,7 @@
 ///==========================---------------------///
 
 VkoDescriptorManager::VkoDescriptorManager() {
-  descriptorPool= nullptr;
+  descriptorPool= 0;
   flags= 0;
 
   _maxSets= 0;
@@ -20,7 +20,7 @@ void VkoDescriptorManager::destroy() {
   if(_parent->device) {
     if(descriptorPool) {
       _parent->DestroyDescriptorPool(*_parent, *this, _parent->memCallback);
-      descriptorPool= nullptr;
+      descriptorPool= 0;
     }
   }
 }
@@ -254,7 +254,7 @@ void VkoDescriptorManager::freeSet(uint32_t in_i) {
   if(p== nullptr) { _parent->errorText= "VkoDescriptorManager::freeSet(): index not found. aborting."; return; }
 
   _parent->errorCheck(_parent->FreeDescriptorSets(*_parent, descriptorPool, 1, &p->set), __FUNCTION__": vkFreeDescriptorSets() failed");
-  p->set= nullptr;
+  p->set= NULL;
   
   /// all descriptors will be destroyed too, fromt he p->descriptors chainList
   sets.del(p);

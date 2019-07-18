@@ -33,7 +33,7 @@ VkoBuffer *VkoBufferManager::addBuffer() {
 ///==============------------------///
 
 
-VkoBuffer::VkoBuffer(): buffer(nullptr), _parent(nullptr) {
+VkoBuffer::VkoBuffer(): buffer(0), _parent(nullptr) {
   _createInfo.sType= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   _createInfo.pNext= nullptr;
   _createInfo.flags= 0;
@@ -63,7 +63,7 @@ void VkoBuffer::destroy() {
   if(_parent->_parent->device== nullptr) return;
   if(buffer) {
     _parent->_parent->DestroyBuffer(_parent->_parent->device, buffer, _parent->_parent->memCallback);
-    buffer= nullptr;
+    buffer= 0;
   }
 }
 

@@ -7,7 +7,7 @@
 // COMMANDPOOL object ================== //
 ///===================------------------///
 
-VkoCommandPool::VkoCommandPool(): commandPool(nullptr), _parent(nullptr) {
+VkoCommandPool::VkoCommandPool(): commandPool(0), _parent(nullptr) {
   _flags= 0;
   _queueFamily= ~0;
 }
@@ -18,7 +18,7 @@ void VkoCommandPool::destroy() {
   if(_parent->device== nullptr) return;
   if(commandPool) {
     _parent->DestroyCommandPool(_parent->device, commandPool, _parent->memCallback);
-    commandPool= nullptr;
+    commandPool= 0;
   }
 }
 

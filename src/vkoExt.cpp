@@ -7,12 +7,6 @@
 
 
 
-
-
-// osiVkExt _osiVkExtensionsRaw[];
-//extern _osiVkExtensionsRawClass _osiVkExtensionsRaw;
-//osiVkExt *_osiVkExtensionsRaw= _osiVkExtensionsRawC._ext;
-
 bool VkoExtensions::populateAvailabilityInstance() {
   uint32_t n;
   VkExtensionProperties *ext= nullptr;

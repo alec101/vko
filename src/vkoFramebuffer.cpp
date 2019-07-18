@@ -7,8 +7,8 @@
 
 VkoFramebuffer::VkoFramebuffer() {
   _parent= nullptr;
-  framebuffer= nullptr;
-  renderPass= nullptr;
+  framebuffer= NULL;
+  renderPass= NULL;
   imageView= nullptr;
   nrImageViews= 0;
   dx= dy= layers= 0;
@@ -24,7 +24,7 @@ void VkoFramebuffer::destroy() {
   if(_parent->device) {
     if(framebuffer) {
       _parent->DestroyFramebuffer(_parent->device, *this, _parent->memCallback);
-      framebuffer= nullptr;
+      framebuffer= NULL;
     }
     if(imageView)
       for(uint32_t a= 0; a< nrImageViews; a++)

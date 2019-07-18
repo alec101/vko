@@ -12,7 +12,7 @@ VkoSwapchain::VkoSwapchain() {
   _parent= nullptr;
   _index= 0;
 
-  swapchain= nullptr;
+  swapchain= NULL;
 
   nrImages= 0;
   images= nullptr;         // MEM INIT
@@ -22,7 +22,7 @@ VkoSwapchain::VkoSwapchain() {
   dx= dy= 0;
 
   cfg.flags= 0;
-  cfg.surface= nullptr;
+  cfg.surface= NULL;
   cfg.minBuffers= 2;    // default: 2 buffers to swap between
   cfg.imageFormat= VK_FORMAT_B8G8R8A8_UNORM;
   cfg.colorSpace= VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
@@ -49,7 +49,7 @@ VkoSwapchain::VkoSwapchain() {
   _showInfo.waitSemaphoreCount= 1;
   _showInfo.swapchainCount= 1;
 
-  _oldSwapchain= nullptr;
+  _oldSwapchain= NULL;
 
   _nformats= 0;
   _formats= nullptr;
@@ -63,10 +63,10 @@ VkoSwapchain::~VkoSwapchain() {
 
 
 void VkoSwapchain::destroy() {
-  if((swapchain!= nullptr) && (_parent->device!= nullptr) && (_parent->DestroySwapchainKHR))
+  if((swapchain!= NULL) && (_parent->device!= NULL) && (_parent->DestroySwapchainKHR))
     _parent->DestroySwapchainKHR(_parent->device, swapchain, _parent->memCallback);
 
-  swapchain= nullptr;
+  swapchain= NULL;
   if(images!= nullptr) { delete[] images; images= nullptr; } // MEM DEALLOC 1
   nrImages= 0;
   currentIndex= ~0;
@@ -189,7 +189,7 @@ bool VkoSwapchain::build() {
     //swapInfo.surface= (VkSurfaceKHR)_parent->vkr->monitor->win->vkSurface;
 
 
-  if(swapInfo.surface== nullptr) { _parent->errorText= __FUNCTION__": No VkSurfaceKHR specified. Aborting."; goto Exit; }
+  if(swapInfo.surface== NULL) { _parent->errorText= __FUNCTION__": No VkSurfaceKHR specified. Aborting."; goto Exit; }
 
   _parent->GetPhysicalDeviceSurfaceSupportKHR(*_parent, _parent->queue[0].family, swapInfo.surface, &supported);
   if(supported== false) { _parent->errorText= __FUNCTION__": Swapchain: Surface not supported"; goto Exit; }
@@ -248,12 +248,12 @@ bool VkoSwapchain::build() {
   ret= true;
 
 Exit:
-  if(ret== false && swapchain!= nullptr) destroy();
+  if(ret== false && swapchain!= NULL) destroy();
   if(imageFormatListInfo.pViewFormats) delete[] imageFormatListInfo.pViewFormats; // DEALLOC 1
   if(swapInfo.pQueueFamilyIndices) delete[]  swapInfo.pQueueFamilyIndices;        // DEALLOC 2
   if(_oldSwapchain) {
     _parent->DestroySwapchainKHR(_parent->device, _oldSwapchain, _parent->memCallback);
-    _oldSwapchain= nullptr;
+    _oldSwapchain= NULL;
   }
 
   return ret;
@@ -262,7 +262,7 @@ Exit:
 
 bool VkoSwapchain::rebuild() {
   _oldSwapchain= swapchain;
-  swapchain= nullptr;
+  swapchain= NULL;
   dx= dy= 0;
   currentIndex= ~0;
   return build();

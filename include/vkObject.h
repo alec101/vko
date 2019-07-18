@@ -45,8 +45,8 @@
 #endif
 
 #define VK_NO_PROTOTYPES 1
-#include "../extlib/vulkan/vulkan.h"
-//#include "vulkan.h"
+//#include "../extlib/vulkan/vulkan.h"
+#include "vulkan.h"
 
 struct VkoPhysicalDevice;
 class vkObject;
@@ -105,7 +105,7 @@ public:
     int32_t queueRequestGraphics;                    // [def:0] request a number of graphics VkQueues. used if deviceInfo is NULL
     int32_t queueRequestCompute;                     // [def:0] request a number of compute VkQueues. used if deviceInfo is NULL
     int32_t queueRequestTransfer;                    // [def:0] request a number of transfer VkQueues. used if deviceInfo is NULL
-    bool queueRequestAll;                            // [daf:false] request all avaible queues
+    bool queueRequestAll;                            // [def:false] request all avaible queues
     VkQueueFlagBits queueExtraFlagBits;              // [def:0] request VK_QUEUE_SPARSE_BINDING_BIT or VK_QUEUE_PROTECTED_BIT for queues if needed
 
     // instance & device extensions;

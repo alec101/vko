@@ -11,7 +11,7 @@ public:
   VkSemaphore semaphore;
   inline operator VkSemaphore() { return semaphore; }
 
-  inline VkoSemaphore(): semaphore(nullptr), _parent(nullptr), _handleTypes(0), name(nullptr) { dwAccess= 0, pAttributes.bInheritHandle= 0, pAttributes.lpSecurityDescriptor= 0, pAttributes.nLength= 0; }
+  inline VkoSemaphore(): semaphore(0), _parent(nullptr), _handleTypes(0), name(nullptr) { dwAccess= 0, pAttributes.bInheritHandle= 0, pAttributes.lpSecurityDescriptor= 0, pAttributes.nLength= 0; }
   inline VkoSemaphore(vkObject *in_parent): VkoSemaphore() { _parent= in_parent; }
   inline ~VkoSemaphore() { if(name) delete[] name; }
 

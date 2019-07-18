@@ -54,7 +54,7 @@ private:
     VkImageAspectFlags aspect;
     uint32_t baseLayer;
     uint32_t nrLayers;
-    _Attachment(): image(nullptr) {}
+    _Attachment(): image(NULL) {}
   };
 
   vkObject *_parent;

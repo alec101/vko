@@ -29,7 +29,7 @@ bool VkoSemaphore::build() {
   VkExportSemaphoreWin32HandleInfoKHR win32ExportInfo;
   const void **pNext= &semInfo.pNext;
   
-  if(semaphore!= nullptr) destroy();
+  if(semaphore!= NULL) destroy();
 
   if(_handleTypes!= 0) {
     *pNext= &exportInfo;
@@ -64,7 +64,7 @@ void VkoSemaphore::destroy() {
   if(!_parent->device) return;
   if(semaphore)
     _parent->DestroySemaphore(_parent->device, semaphore, _parent->memCallback);
-  semaphore= nullptr;
+  semaphore= NULL;
 }
 
 

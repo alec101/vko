@@ -3,70 +3,14 @@
 #endif
 
 #include "../include/vkObject.h"
-//#include "osinteraction.h"
-//#include "ix/util/common.hpp"
-//#include "util/mlib.hpp"
-//#include "ix/vko/vkObject.h"
-//#include "ix/vko/VkoShader.h"
-//#include "util/str8.h"
-//#include "util/errorHandling.h"
-
-// online shader compiler & preview http://shdr.bkcore.com
-
-/*
-this might not be this simple  https://www.opengl.org/wiki/Fragment_Shader
-Pre-link specification
-Before linking a program that includes a fragment shader, the user may tell OpenGL to assign a particular output variable to a particular fragment color. This is done with the following function:
-void glBindFragDataLocation​(GLuint program​, GLuint colorNumber​, const char * name​);
-*/
-
-//ixShaderSys ixShaders;
-
-/*
-vulkan shader research:
-
-- more than 1 pipeline per shader??? could it be that maybe just create more shaders... or rebuild it... i dono if it's worth it
-  changing pipelines like changing socks... it might be too much, i am not sure if such thing would really benefit anything,
-  if you have the option to build another
-
-- i left space for multiple viewports, be them constant or dynamic
-  dynamic ones are setup from the command buffers using vkCmdSetViewport()
-  constant ones are setup in the pipeline, and are auto-configured when shader is functional. to change the constant ones, you must destroy the pipeline...
-  so if a window resizes you'd have to rebuild the shader with constant viewports.
-  i didn't find a clear indication dynamic viewports are slower, so even fullscreen windows could be setup with dynamic, if needed
 
 
-
-FRAGMENT SHADERS:
--"Interpolation Decorations"   https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap8.html#shaders-interpolation-decorations
-Inputs that could be interpolated can be decorated by at most one of the following decorations:
-   *Flat: no interpolation
-   *NoPerspective: linear interpolation (for lines and polygons)
-
--"specialization constants" https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap9.html#pipelines-specialization-constants
-  these are true constants, in the fact that they are setup either in the shader:
-    layout (constant_id = 0) const int NUM_SAMPLES = 64;
-  or when the shader is completed, in the pipeline creation, with an initializer.
-  these can be omited in the application code, and only used by the shader
-
-
-- push constants are the replacement uniforms - not really! the uniform buffers are left and those must be used. push constants are just an addition
-
-
-- glslValidator.exe: --invert-y | --iy : invert position.Y in the vertex output. This can be an option instead of doing so in the shader?
-
-
+/* TODO:
+  - [TOP PRIORITY] compute pipeline
 
 
 
 */
-
-
-
-
-
-
-
 
 
 ///====================================///
@@ -82,14 +26,14 @@ VkoShader::VkoShader() {
   //nrDescriptorSets= 0;      SCRAPED
   //descriptorsLayout= nullptr;
   
-  pipelineLayout= nullptr;
-  renderPass= nullptr;
+  pipelineLayout= NULL;
+  renderPass= NULL;
 
-  vert= tesc= tese= geom= frag= comp= nullptr;
+  vert= tesc= tese= geom= frag= comp= NULL;
   vertFile= tescFile= teseFile= geomFile= fragFile= compFile= nullptr;
 
-  subpass= 0;
-  pipeline= nullptr;
+  subpass= NULL;
+  pipeline= NULL;
 
   /// input assembly
   _topology= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -175,7 +119,7 @@ void VkoShader::destroy() {
       nrDescriptorSets= 0;
     }
     */
-    if(pipelineLayout) { parent->DestroyPipelineLayout(*parent, pipelineLayout, *parent); pipelineLayout= nullptr; }
+    if(pipelineLayout) { parent->DestroyPipelineLayout(*parent, pipelineLayout, *parent); pipelineLayout= NULL; }
   }
 }
 
@@ -554,7 +498,7 @@ bool VkoShader::loadModule(const char *in_file, VkShaderModule *out_module) {
   bool chatty= true;
   #endif
 
-  *out_module= nullptr;
+  *out_module= NULL;
   parent->clearError();
 
   /// tmp vars
@@ -594,10 +538,10 @@ bool VkoShader::loadModule(const char *in_file, VkShaderModule *out_module) {
   smci.pNext= nullptr;
   smci.flags= 0;
   smci.pCode= (const uint32_t *)buf;
-  smci.codeSize= fs;                // <<< must be divisible by 4
+  smci.codeSize= (size_t)fs;                // <<< must be divisible by 4
 
   if(!parent->errorCheck(parent->CreateShaderModule(*parent, &smci, *parent, out_module), __FUNCTION__": Shader module create failed")) {
-    *out_module= nullptr;
+    *out_module= NULL;
     goto Exit;
   }
 
@@ -673,12 +617,12 @@ inline bool VkoShader::loadModuleComp(const char *in_comp) {
 
 void VkoShader::destroyModules() {
   if(parent->device== nullptr) return;
-  if(vert) { parent->DestroyShaderModule(*parent, vert, *parent); vert= nullptr; }
-  if(tesc) { parent->DestroyShaderModule(*parent, tesc, *parent); tesc= nullptr; }
-  if(tese) { parent->DestroyShaderModule(*parent, tese, *parent); tese= nullptr; }
-  if(geom) { parent->DestroyShaderModule(*parent, geom, *parent); geom= nullptr; }
-  if(frag) { parent->DestroyShaderModule(*parent, frag, *parent); frag= nullptr; }
-  if(comp) { parent->DestroyShaderModule(*parent, comp, *parent); comp= nullptr; }
+  if(vert) { parent->DestroyShaderModule(*parent, vert, *parent); vert= NULL; }
+  if(tesc) { parent->DestroyShaderModule(*parent, tesc, *parent); tesc= NULL; }
+  if(tese) { parent->DestroyShaderModule(*parent, tese, *parent); tese= NULL; }
+  if(geom) { parent->DestroyShaderModule(*parent, geom, *parent); geom= NULL; }
+  if(frag) { parent->DestroyShaderModule(*parent, frag, *parent); frag= NULL; }
+  if(comp) { parent->DestroyShaderModule(*parent, comp, *parent); comp= NULL; }
 }
 
 
@@ -765,8 +709,9 @@ bool VkoShader::build() {
 
   // COMPUTE pipeline
   if(comp) {
-    VkComputePipelineCreateInfo compInfo;
     
+    VkComputePipelineCreateInfo compInfo;
+    // MAKEME
 
 
 
@@ -785,7 +730,7 @@ bool VkoShader::build() {
     graphInfo.pNext= nullptr;                         /// or an extension, atm none i think
     graphInfo.flags= 0;                            // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap9.html#VkPipelineCreateFlagBits
 
-    if(renderPass== nullptr) { parent->errorText= __FUNCTION__": Vulkan renderpass not set. aborting."; goto Exit; }
+    if(renderPass== NULL) { parent->errorText= __FUNCTION__": Vulkan renderpass not set. aborting."; goto Exit; }
     graphInfo.renderPass= renderPass;              // the renderpass
     graphInfo.subpass= subpass;                    // index of the subpass
 
@@ -1061,7 +1006,7 @@ bool VkoShader::build() {
       
     // pipeline cache is VK_NULL_HANDLE, ATM
     if(!parent->errorCheck(parent->CreateGraphicsPipelines(*parent, VK_NULL_HANDLE, 1, &graphInfo, *parent, &pipeline), __FUNCTION__": Vulkan pipeline creation failed")) {
-      pipeline= nullptr;
+      pipeline= NULL;
       goto Exit;
     }
   } /// compute / graphics pipeline

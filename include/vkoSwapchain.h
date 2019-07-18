@@ -73,7 +73,7 @@ public:
   bool check();
   void destroy();
 
-  bool aquire(VkSemaphore in_finishPresenting, VkFence in_finishPresentingFence= nullptr, uint64_t timeout= ~0, uint32_t *out_index= nullptr);     //
+  bool aquire(VkSemaphore in_finishPresenting, VkFence in_finishPresentingFence= 0, uint64_t timeout= ~0, uint32_t *out_index= nullptr);     //
   inline void queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing);// { _showInfo.pWaitSemaphores= &in_finishDrawing, _showInfo.pImageIndices= &in_surfaceIndex; _parent->vk->QueuePresentKHR(in_queue, &_showInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
   inline void queueShowCurrent(VkQueue in_queue, VkSemaphore in_finishDrawing) { queueShow(currentIndex, in_queue, in_finishDrawing); }
 

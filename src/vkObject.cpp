@@ -1,81 +1,34 @@
-//#define OSI_USE_OPENGL_EXOTIC_EXT 1
-//#include "osinteraction.h"
-//#include "ix/ix.h"
-
-
-#include "util/typeShortcuts.h"
 #include "../include/vkObject.h"
 
-
-
-//#include "ix/GFX/ixvk.h"
-/*
-  alot of funcs to fix
-
-    osi should have the remove all opengl traces
-
-    and the option to use vko
-
-    using vko could populate display with further data to make matches.
-/*
 
 
   /*
 
   TODO:
-  -PRIORITY specialized descriptor for textures
-  -PRIORITY specialized descriptor for buffers of any kind
-  -VkoTexture ? VkoBuffer? in any case a base descriptor class i think, is needed.
 
-
-
-  -VkoCommandPool must be extended into VkoCommands object.
+  -[MAYBE] VkoCommandPool could be extended into VkoCommands object.
     it must incorporate ONE pool/
     it must be able to create many primary buffers
     it must be able to create many secondary buffers
     when it's built, you should just have handy vars for everything command-buffer/pool related
 
-  -VkoMemory object must handle everything memory - alloc / dealloc required
-    -i don't think it should have a build func, it should be created on vkObject::init()
 
+  -[TOP PRIORITY] EXTENSIONS HANDLING:
   
+    i think... vko::pNext.a= point to your specific extension
+               vko::pNext.b= point to your specific extension
+               vko::pNext.c= point to your specific extension
+               vko::pNext.d= point to your specific extension
 
+               BETTER:
+           vkoObjectX::pNext.nameOfTheStruct.addStruct(..) or just add(..)
 
-  designing stuff:
-
-
-  i think... vko::pNext.a= point to your specific extension
-           vko::pNext.b= point to your specific extension
-           vko::pNext.c= point to your specific extension
-           vko::pNext.d= point to your specific extension
-
-  and this should handle all new extensions, for example
-  if not, just add new funcs
-    but im thinking new funcs for KHR extensions imho...
-
+    and this should handle all new extensions, for example
+    if not, just add new funcs
+      but im thinking new funcs only for KHR extensions...
 
 
 
-  Command Pools:
-  - vk->TrimCommandPool(device, commandPool, 0);
-    Trimming may be an expensive operation, and should not be called frequently.
-    Trimming should be treated as a way to relieve memory pressure after application-known points
-    when there exists enough unused memory that the cost of trimming is “worth” it.
-
-  - vk->ResetCommandPool(device, commandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT); // that flag will release all memory
-    Resetting the command pool will remove all allocated memory for command buffers. all recording buffers will be marked invalid
-  
-
-  Swap Chain:
-  - the swapchain is an extension that has to be enabled, unless i'm gonna do with these imageViews and manually draw them,
-      that will probly be a magnitude slower, unless i know the optimal way to show for every OS
-
-  Descriptor Pools:
-    -the free func is optional, and must be treated with care, can create fragmentation problems.
-       i am thinking whatever is freed, must be alocated with the same block size
-       if you use only alloc + reset, it is guaranteed to work.
-
-    -also, descriptor pools can be created on the fly, they are not really tied to anything
 
   */
 
@@ -172,7 +125,7 @@ void vkObject::destroy() {
   if(device== nullptr) return;
 
   // SHADERS >>> parent->shaders.delData();
-
+  // WIP , THERE HAS TO BE A CLEAR ORDER IN HERE
   delCommandPools();
   delDescriptorManagers();
   delSwapchains();
@@ -227,7 +180,7 @@ VkoRenderPass *vkObject::addRenderPass() {
 
 void vkObject::delRenderPasses() {
   for(VkoRenderPass *p= (VkoRenderPass *)renderPassList.first; p; p= (VkoRenderPass *)p->next)
-    if(p->renderPass!= nullptr)
+    if(p->renderPass!= 0)
       p->destroy();
 }
 
@@ -244,7 +197,7 @@ VkoFramebuffer *vkObject::addFramebuffer() {
 
 void vkObject::delFramebuffers() {
   for(VkoFramebuffer *p= (VkoFramebuffer *)framebuffersList.first; p; p= (VkoFramebuffer *)p->next)
-    if(p->framebuffer!= nullptr)
+    if(p->framebuffer!= 0)
       p->destroy();
 }
 

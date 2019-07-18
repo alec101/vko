@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="INC">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="SRC">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="osinteraction">
+      <UniqueIdentifier>{6ac5b031-f254-43c1-a231-59b5cfd2f107}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VKO">
+      <UniqueIdentifier>{c05d8169-296e-4fbb-9964-9e287a5c3ac1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="vko example.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkObject.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoBuffer.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoCommandPool.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoDescriptor.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoDescriptorManager.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoDevice.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoExt.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoFramebuffer.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoFuncs.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoMemory.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoRenderPass.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoSemaphore.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoSet.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoShader.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vko\src\vkoSwapchain.cpp">
+      <Filter>VKO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\errorHandling.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\filePNG.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\fileTGA.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\mzPacker.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\segList.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\str16.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\str32.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\str8.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\util\strCommon.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osiChar.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osiDisplay.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osiGlExt.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osiGlRenderer.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osiInput.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osinteraction.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osiVkRenderer.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osiVulkan.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\osi\src\osiWindow.cpp">
+      <Filter>osinteraction</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\vko\include\vkObject.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoBuffer.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoCommandPool.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoDescriptor.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoDescriptorManager.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoDevice.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoExt.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoFramebuffer.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoFuncs.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoMemory.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoRenderPass.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoSemaphore.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoSet.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoShader.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoSwapchain.h">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\chainList.hpp">
+      <Filter>VKO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vko\include\vkoGlbFuncs.hpp">
+      <Filter>VKO</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\osi\src\osiCocoa.mm">
+      <Filter>osinteraction</Filter>
+    </None>
+  </ItemGroup>
+</Project>
