@@ -1,16 +1,13 @@
 #pragma once
-//#include "util/typeShortcuts.h"
-//#include "util/str8.h"
 #include "chainList.hpp"
-//#include "util/mlib.hpp"
-//#include "ix/util/common.hpp"
 
 #define VKO_SHADER_SAMPLE_MASK_MAX_SIZE 2
 
 
-
 class VkoSet;
 class vkObject;
+class VkoDescriptorSetLayout;
+class VkoDescriptorLayout;
 
 //using namespace mlib;
 
@@ -21,49 +18,40 @@ public:
 
   VkShaderModule vert, tesc, tese, geom, frag, comp;    // all shader modules; they're null if not used/loaded; will be dealocated once the shader is built/functional
   const char *vertFile, *tescFile, *teseFile, *geomFile, *fragFile, *compFile; // all shader modules filenames; these will remain thruout the life of the shader
-  VkPipeline pipeline;    //   the shader pipeline
-
-  // SCRAPED VV THERE IS VKOMANAGER OBJECT THAT HANDLES ALL THE SETS. WOULD A LIST OF USED SETS HAVE ANY USE HERE?
-  //VkDescriptorSetLayout *descriptorsLayout; // array of descriptor sets (if more than one). descriptorsLayout[0] is set 0, describing all bindings
-  //uint32_t nrDescriptorSets;
-  VkPipelineLayout pipelineLayout;
+  VkPipeline pipeline;              // created on build()
+  VkPipelineLayout pipelineLayout;  // created on build()
 
   inline void setSubpass(uint32_t in_subpassNr) { subpass= in_subpassNr; }
-  uint32_t subpass; // [def:0] subpass that will be used <<<< IS THIS OK?
-  VkRenderPass renderPass; // renderPass that will work on this shader (i am guessing all compatible renderpasses with this1 will work)
+  uint32_t subpass;         // [def:0] subpass that will be used <<<< IS THIS OK?
+  VkRenderPass renderPass;  // renderPass that will work on this shader (i am guessing all compatible renderpasses with this1 will work)
+
+  uint32_t nrDescSets;              // number of descriptor sets that this shader is linked to
+  VkoDescriptorSetLayout **descSet; // list with all the descriptor sets that this shader is linked to
 
 
   // set a renderpass that will work with this shader
   inline void setRenderPass(const VkRenderPass in_r) { renderPass= in_r; }
 
-  /*
-  // creates a descriptor (a descriptor can be any kind of buffer, texture, sampler. it's a vague description of all those things)
+
+  
+  // creates a new set layout for this shader, auto-assigns an index, that is taken from the order of creation
+  // <in_flags>: [def:0] - https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap13.html#VkDescriptorSetLayoutCreateFlagBits
+  //                  VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR - specifies that descriptor sets must not be allocated using this layout,
+  //                    and descriptors are instead pushed by vkCmdPushDescriptorSetKHR.
+  //                    In specs, it says there should be only one set with dynamic push, in an array of sets that are to be used
+  VkoDescriptorSetLayout *addDescriptorSet(VkDescriptorSetLayoutCreateFlags in_flags= 0);
+
+  // populates a set layout with a descriptor (a descriptor can be any kind of buffer, texture, sampler. it's a vague description of all those things)
   // <in_set>:     set number. (make sure set 0 actually exists if you create set 1)
   // <in_binding>: binding number (again, create them in order OR make sure prev number exists OR at least use in_count 0, if you skip it)
   // <in_type>:    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER / VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER / etc https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#VkDescriptorType
   // <in_count>:   accessed in a shader as an array, when multiple. Can be 0, so it's reserved, and never accessed
   // <in_stages>:  shader stages that will use this descriptor https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap9.html#VkShaderStageFlagBits
-  // <in_imutableSampler>: imutable / constant samplers, but i'd just not change them -.- imhho this ext is extra stuff that could be avoided. i think there's an extension for these
-  void addDescriptor(uint32_t in_set, uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler= null);
-  void addDescriptor(const VkoDescriptor *in_descriptor);
-  void addUniformBlock();     // [shortcut] this basically creates a descriptor for set 0, binding 0, to be used as the main uniform variables block
+  // <in_imutableSampler>: imutable / constant samplers
+  void addDescriptor(uint32_t in_set, uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler= nullptr);
 
-  // this func is mainly for descriptor push
-  //  VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR - specifies that descriptor sets must not be allocated using this layout,
-  //  and descriptors are instead pushed by vkCmdPushDescriptorSetKHR
-  // In specs, it says there should be only one set with dynamic push, in an array of sets that are to be used
-  void setDescriptorSetFlags(uint32_t in_set, VkDescriptorSetLayoutCreateFlags in_flags);
-  */
-
-
-
-
-  // create the descriptors / sets, then pass the layouts or VkoSet objects, that this shader will use
-  void addDescriptorSet(const VkDescriptorSetLayout in_setLayout);
-  void addDescriptorSet(const VkoSet *in_set);
-  
-
-
+  // adds a new set layout for this shader, pre-created
+  void addDescriptorSetFromExisting(VkoDescriptorSetLayout *in_set);
 
 
 
@@ -269,45 +257,55 @@ public:
   // loads shaer's modules from files; any stage that is not present, must be marked by null;
   // or, load each module that will be used with "loadModuleXXXX(..)" funcs
   // if comp is loaded, the shader will be created with a compute pipeline, else it's a graphics pipeline
-  bool loadModules(const char *in_vert, const char *in_tesc, const char *in_tese, const char *in_geom, const char *in_frag, const char *in_comp);
-  bool loadModuleVert(const char *in_vert);
-  bool loadModuleFrag(const char *in_frag);
-  bool loadModuleTesc(const char *in_tesc);
-  bool loadModuleTese(const char *in_tese);
-  bool loadModuleGeom(const char *in_geom);
-  bool loadModuleComp(const char *in_comp);
+  void loadModules(const char *in_vert, const char *in_tesc, const char *in_tese, const char *in_geom, const char *in_frag, const char *in_comp);
+  void loadModuleVert(const char *in_vert);
+  void loadModuleFrag(const char *in_frag);
+  void loadModuleTesc(const char *in_tesc);
+  void loadModuleTese(const char *in_tese);
+  void loadModuleGeom(const char *in_geom);
+  void loadModuleComp(const char *in_comp);
 
-  bool loadModule(const char *in_file, VkShaderModule *out_module);    // loads a shader module
-  void destroyModules();            // modules can/should be destroyed after the shader is completed/operational
+  // any structure's pNext that is used in the creation of this shader, can be modified thru this PNext struct
+  struct PNext {
+    void *VkPipelineLayoutCreateInfo;
+    void *VkShaderModuleCreateInfo;
+    void *VkGraphicsPipelineCreateInfo;
+    void *VkPipelineVertexInputStateCreateInfo;
+    void *VkPipelineInputAssemblyStateCreateInfo;
+    void *VkPipelineTessellationStateCreateInfo;
+    void *VkPipelineViewportStateCreateInfo;
+    void *VkPipelineRasterizationStateCreateInfo;
+    void *VkPipelineMultisampleStateCreateInfo;
+    void *VkPipelineDepthStencilStateCreateInfo;
+    void *VkPipelineColorBlendStateCreateInfo;
+    void *VkPipelineDynamicStateCreateInfo;
+    inline void delData() { VkPipelineLayoutCreateInfo= VkShaderModuleCreateInfo= VkGraphicsPipelineCreateInfo=
+                            VkPipelineVertexInputStateCreateInfo= VkPipelineInputAssemblyStateCreateInfo= VkPipelineTessellationStateCreateInfo=
+                            VkPipelineViewportStateCreateInfo= VkPipelineRasterizationStateCreateInfo= VkPipelineMultisampleStateCreateInfo=
+                            VkPipelineDepthStencilStateCreateInfo= VkPipelineColorBlendStateCreateInfo= VkPipelineDynamicStateCreateInfo= nullptr; }
+  } pNext;
 
-  // after setting all the data, adding all the descriptors, call this func to create the pipeline, descriptors, layouts, etc.
+
+  // after setting all the data,  call this func to create the pipeline, layout, etc.
   // this func will make this shader object fully functional
   bool build();
-
   void destroy();
-
-
-
-  //void updateViewportPos();
+  bool rebuild() { destroy(); return build(); }
 
   // constructor/destructor
 
-  VkoShader();
-  virtual ~VkoShader();
-  //virtual void delData();
+  VkoShader(vkObject *in_parent);
+  ~VkoShader();
+  void delData();
 
-  //Ix *ix;                           // parent ix engine this shader belongs to
-  vkObject *parent;
-
-
-
+  vkObject *_vko;
 
   // PRIVATE STUFF FROM HERE ON
   ///--------------------------
 private:
   //chainList _descriptors;
   //chainList _descriptorSetFlags;
-  chainList _setLayouts;
+  //chainList _setLayouts;
   chainList _pushConsts;
   chainList _specConsts;
   chainList _vertBindings;
@@ -360,6 +358,11 @@ private:
   chainList _dynamicStates;
 
 
+  bool _loadModule(const char *in_file, VkShaderModule *out_module);    // loads a shader module
+  bool _loadModules();
+  void _destroyModules();            // modules can/should be destroyed after the shader is completed/operational
+
+
   // void _vkCreateDescriptorsLayout();  SCRAPED - DESCRIPTORS/SETS ARE DONE IN ANOTHER OBJECT, AND LAYOUTS PASSED TO THIS1
   void _vkCreatePipelineLayout();
   void _vkPopulateSpecConsts(VkShaderStageFlags in_stage, VkSpecializationInfo *out_sConst);
@@ -388,18 +391,21 @@ private:
   };
   */
 
+  /*
   class _SetLayout: public chainData {
   public:
       VkDescriptorSetLayout layout;
   };
+  */
+
 
   class _SpecConst: public chainData {
   public:
     uint32_t id;                // ID of the constant
-    VkShaderStageFlags stage; // shader stage
+    VkShaderStageFlags stage;   // shader stage
     uint32_t size;              // in bytes;
     uint32_t offset;            // in bytes; (starting point in the specialization constants data buffer)
-    void *value;              // the actual value of the constant, whatever type and size it is
+    void *value;                // the actual value of the constant, whatever type and size it is
     _SpecConst(): value(nullptr) {}
     ~_SpecConst() { if(value) delete[] value; } 
   };

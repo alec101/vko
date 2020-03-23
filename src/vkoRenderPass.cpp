@@ -8,27 +8,38 @@
 
 
 
-VkoRenderPass::VkoRenderPass() {
-  _parent= nullptr;
-  renderPass= NULL;
+VkoRenderPass::VkoRenderPass(vkObject *in_parent): _vko(in_parent), renderPass(0) {
+  pNext.delData();
 }
 
-
 VkoRenderPass::~VkoRenderPass() {
+  destroy();
+}
 
+void VkoRenderPass::delData() {
+  pNext.delData();
+  _attachments.delData();
+  _subpasses.delData();
+  _dependencies.delData();
+  _aspectAttachments.delData();
+  _multiView.delData();
 }
 
 
 void VkoRenderPass::destroy() {
-  if(!_parent->device) return;
   if(renderPass) {
-    _parent->DestroyRenderPass(_parent->device, *this, _parent->memCallback);
-    renderPass= NULL;
+    if(_vko->device)
+      _vko->DestroyRenderPass(*_vko, *this, *_vko);
+    renderPass= 0;
   }
 }
 
-// customization funcs
 
+
+
+
+// configuration funcs //
+///-------------------///
 
 void VkoRenderPass::addAttachment(const VkAttachmentDescription *in_attDescription) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkAttachmentDescription
@@ -66,8 +77,8 @@ void VkoRenderPass::addSubpass(VkSubpassDescriptionFlags in_flags, VkPipelineBin
 
 
 void VkoRenderPass::addSubpassInputAttachment(uint32_t in_subpass, uint32_t in_attachment, VkImageLayout in_layout) {
-  _parent->clearError();
-  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _parent->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
+  _vko->clearError();
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _AttachmentRef *p= new _AttachmentRef;
   p->attachment= in_attachment;
@@ -79,8 +90,8 @@ void VkoRenderPass::addSubpassInputAttachment(uint32_t in_subpass, uint32_t in_a
 void VkoRenderPass::addSubpassColorAttachment(uint32_t in_subpass,     uint32_t in_colorAtt,        VkImageLayout in_colorLayout,
                                               bool enableResolve,      uint32_t in_resolveAtt,      VkImageLayout in_resolveLayout,
                                               bool enableDepthStencil, uint32_t in_depthStencilAtt, VkImageLayout in_depthStencilLayout) {
-  _parent->clearError();
-  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _parent->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
+  _vko->clearError();
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _ColorAtt *p= new _ColorAtt;
   p->colorAtt= in_colorAtt;
@@ -107,9 +118,9 @@ void VkoRenderPass::addSubpassColorAttachment(uint32_t in_subpass,     uint32_t 
 
 
 void VkoRenderPass::addSubpassColorAttachment2(uint32_t in_subpass, VkAttachmentReference *in_color, VkAttachmentReference *in_resolve, VkAttachmentReference *in_depthStencil) {
-  _parent->clearError();
-  if(in_color== nullptr) { _parent->errorText= __FUNCTION__": <in_color> parameter nullptr"; return; }
-  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _parent->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
+  _vko->clearError();
+  if(in_color== nullptr) { _vko->errorText= __FUNCTION__": <in_color> parameter nullptr"; return; }
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
 
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _ColorAtt *p= new _ColorAtt;
@@ -164,8 +175,8 @@ void VkoRenderPass::addSubpassDependency2(const VkSubpassDependency *in_dependen
 
 void VkoRenderPass::addSubpassPreserveAttachment(uint32_t in_subpass, uint32_t in_attachment) {
   // attachments that are not used by this subpass, but whose contents must be preserved throughout the subpass.
-  _parent->clearError();
-  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _parent->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
+  _vko->clearError();
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _AttachmentRef *p= new _AttachmentRef;
   p->attachment= in_attachment;
@@ -256,14 +267,14 @@ bool VkoRenderPass::build() {
   renderPassInfo.sType= VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.flags= 0;            // reserved ATM
   renderPassInfo.pNext= nullptr;         //  VkRenderPassInputAttachmentAspectCreateInfo or VkRenderPassMultiviewCreateInfo
-  const void **pNext= &renderPassInfo.pNext;
+  const void **_pNext= &renderPassInfo.pNext;
 
   // input attachment aspect - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkRenderPassInputAttachmentAspectCreateInfo
   /// To specify which aspects of an input attachment can be read add a VkRenderPassInputAttachmentAspectCreateInfo
   /// you use that struct to pinpoint the atachement and subpass that can be read by a shader stage it seems
 
   if(_aspectAttachments.nrNodes) {
-    *pNext= &aspectInfo;
+    *_pNext= &aspectInfo;
     aspectInfo.sType= VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO;
     aspectInfo.pNext= nullptr;
     aspectInfo.aspectReferenceCount= _aspectAttachments.nrNodes;
@@ -275,12 +286,12 @@ bool VkoRenderPass::build() {
       ((VkInputAttachmentAspectReference *)aspectInfo.pAspectReferences)->inputAttachmentIndex= p->inputAttachmentIndex,
       ((VkInputAttachmentAspectReference *)aspectInfo.pAspectReferences)->aspectMask= p->aspectMask,
       a++;
-    pNext= &aspectInfo.pNext;
+    _pNext= &aspectInfo.pNext;
   }
 
   // multiviews - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkRenderPassMultiviewCreateInfo
   if(_multiView.enable) {
-    *pNext= &multiViewInfo;
+    *_pNext= &multiViewInfo;
     multiViewInfo.sType= VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
     multiViewInfo.pNext= nullptr;
     multiViewInfo.subpassCount=         _multiView.subpassCount;
@@ -289,8 +300,11 @@ bool VkoRenderPass::build() {
     multiViewInfo.pViewOffsets=         _multiView.pViewOffsets;
     multiViewInfo.correlationMaskCount= _multiView.correlationMaskCount;
     multiViewInfo.pCorrelationMasks=    _multiView.pCorrelationMasks;
-    pNext= &multiViewInfo.pNext;
+    _pNext= &multiViewInfo.pNext;
   }
+
+  *_pNext= pNext.VkRenderPassCreateInfo;  // last pNext link is the custom one
+
 
   // atachements used by this renderpass - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkAttachmentDescription
 
@@ -407,7 +421,7 @@ bool VkoRenderPass::build() {
   } /// if there are dependencies
 
   
-  if(!_parent->errorCheck(_parent->CreateRenderPass(_parent->device, &renderPassInfo, _parent->memCallback, &renderPass),
+  if(!_vko->errorCheck(_vko->CreateRenderPass(*_vko, &renderPassInfo, *_vko, &renderPass),
     __FUNCTION__": Vulkan render pass creation failed"))
     goto Exit;
 

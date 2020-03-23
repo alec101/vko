@@ -46,12 +46,15 @@
 
 #define VK_NO_PROTOTYPES 1
 //#include "../extlib/vulkan/vulkan.h"
+#ifdef VKO_USE_VULKAN_INCLUDE_DIR
+#include VKO_USE_VULKAN_INCLUDE_DIR
+#else
 #include "vulkan.h"
+#endif
 
 struct VkoPhysicalDevice;
 class vkObject;
 
-#include "vkoDevice.h"
 #include "vkoFuncs.h"
 #include "vkoExt.h"
 
@@ -60,15 +63,17 @@ class vkObject;
 
 #include "vkoSwapchain.h"
 #include "vkoCommandPool.h"
+//#include "vkoCommandBuffer.h"
 #include "vkoShader.h"
 
+#include "vkoSetLayout.h"
 #include "vkoSet.h"
-#include "vkoDescriptor.h"
-#include "vkoDescriptorManager.h"
+#include "vkoDescriptorPool.h"
 
 #include "vkoRenderPass.h"
 #include "vkoFramebuffer.h"
 
+#include "vkoSampler.h"
 
 
 class VkoSemaphore;
@@ -83,6 +88,9 @@ public:
     uint32_t apiVersion; // [def:0] installed vulkan version; if it is 0, vulkan is not present on system. Use VK_VERSION_MAJOR, xx_MINOR, xx_PATCH, to extract
     static uint32_t nrPhysicalDevices;          // nr physical devices on system; populated after buildInstance() is called
     static VkoPhysicalDevice *physicalDevice;   // list with every phyical device on system; populated after buildInstance() is called
+
+    static VkPhysicalDeviceMemoryProperties memProp;   // memory properties struct
+
     ~VkoInfo();
   } info;
 
@@ -113,15 +121,19 @@ public:
     // enable every extension that is to be used. Avoid enabling extensions that are not used, due they will change the way vulkan works.
     VkoExtensions extensions;     // enable each extension from this OR, manually populate instanceInfo / deviceInfo
 
+    // PNext struct is a tool to add to any .pNext create info struct extra structures/configurations/extensions
+    // usage ex: object.pNext.VkInstanceCreateInfo= &yourChainOfExtraStructuresThatWillBeAddedToPnext;
+    struct PNext {
+      void *VkInstanceCreateInfo;
+      void *VkDeviceCreateInfo;
+      PNext(): VkInstanceCreateInfo(nullptr), VkDeviceCreateInfo(nullptr) {}
+    } pNext;
+
   private:
     vkObject *parent;
     friend class vkObject;
   } cfg;
 
-
-  //Ix *parent;                   // parent Ix engine
-  //osiVkRenderer *vkr;           // osi renderer tied to this ix engine
-  //_osiVkFuncs *vk;              // renderer's direct vulkan device funcs
 
   static VkInstance instance;         // the instance; gets created when buildInstance() is called. Only one instance is needed for multiple vkObjects
   VkDevice device;                    // the device; gets created when build() is called.
@@ -147,6 +159,8 @@ public:
   static VkoFuncs instanceLinked; // global instance-linked vulkan funcs. they have higher CPU usage
   #endif
 
+
+
   // build / destroy
 
   bool buildInstance();           // creates the unique instance. Setup what is needed in vkObject::cfg struct
@@ -157,64 +171,93 @@ public:
   vkObject();
   ~vkObject();
 
+  // useful funcs
+
+  uint32_t findMemory(uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties); //  https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
+
 
 
 
   // various objects creation
   ///========================
 
-  VkoMemoryManager memory;
-  VkoBufferManager buffers;
+  struct Objects {
+    chainList memories;             // [VkoMemory:              chainData] list with all created memory blocks
+    chainList buffers;              // [VkoBuffer:              chainData] list with all created buffers
+    chainList shaders;              // [VkoShader:              chainData] list with all created shaders
+    chainList commandPools;         // [VkoCommands:            chainData] all created commands objects
+    chainList descriptorPools;      // [VkoDescriptorSetPool:   chainData] all created descriptor pools
+    chainList descriptorSetLayouts; // [VkoDescriptorSetLayout: chainData] all created descriptor set layouts
+    chainList swapchains;           // [VkoSwapchain:           chainData] all created swapchains
+    chainList renderPasses;         // [VkoRenderPass:          chainData] all created render pass objects
+    chainList framebuffers;         // [VkoFramebuffer:         chainData] all created framebuffers
+    chainList samplers;             // [VkoSampler:             chainData]
+    chainList semaphores;           // [VkoSemaphore:           chainData]
 
-  chainList shaders;            // list with all created shaders
-  
-  // Commands object - handles pools, alocates primary and secondary command buffers
+    VkoMemory *addMemory();
+    void addCustomMemory(VkoMemory *p) { memories.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delMemory(VkoMemory *out_mem);
+    void delAllMemories();
 
-  VkoCommandPool *addCommandPool(); 
-  chainList commandPoolList;      // [VkoCommands: chainData] all created commands objects
-  void delCommandPools();
+    VkoBuffer *addBuffer();
+    void addCustomBuffer(VkoBuffer *p) { buffers.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delBuffer(VkoBuffer *out_buffer);
+    void delAllBuffers();
 
-  // Descriptor Manager - handles the descriptor pool and creates descriptors and sets
+    VkoShader *addShader();
+    void addCustomShader(VkoShader *p) { shaders.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delShader(VkoShader *out_shader);
+    void delAllShaders();
 
-  VkoDescriptorManager *addDescriptorManager();
-  chainList descriptorManagerList; // [VkoDescriptorManager: chainData] all created descriptor managers
-  void delDescriptorManagers();
+    VkoCommandPool *addCommandPool(); 
+    void addCustomCommandPool(VkoCommandPool *p) { commandPools.add((chainData *)p);} // alloc your own object, then call this to link it to VKO
+    void delCommandPool(VkoCommandPool *out_cmdPool);
+    void delAllCommandPools();
 
-  // swap chain
-  
-  VkoSwapchain *addSwapchain();
-  chainList swapchainList;        // [VkoSwapchain: chainData] all created swapchains
-  void delSwapchains();           // from specs: The surface must not be destroyed until after the swapchain is destroyed.
+    VkoDescriptorPool *addDescriptorPool();
+    void addCustomDescriptorPool(VkoDescriptorPool *p) { descriptorPools.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delDescriptorPool(VkoDescriptorPool *out_descPool);
+    void delAllDescriptorPools();
 
-  // render pass chainlist
-  
-  VkoRenderPass *addRenderPass();
-  chainList renderPassList;       // [VkoRenderPass: chainData] all created render pass objects
-  void delRenderPasses();
+    VkoDescriptorSetLayout *addDescriptorSetLayout();
+    void addCustomDescriptorSetLayout(VkoDescriptorSetLayout *p) { descriptorSetLayouts.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delDescriptorSetLayout(VkoDescriptorSetLayout *out_layout);
+    void delAllDescriptorSetLayouts();
 
-  // frame buffer
+    VkoSwapchain *addSwapchain();
+    void addCustomSwapchain(VkoSwapchain *p) { swapchains.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delSwapchain(VkoSwapchain *out_swapchain);
+    void delAllSwapchains();           // from specs: The surface must not be destroyed until after the swapchain is destroyed.
 
-  VkoFramebuffer *addFramebuffer();
-  chainList framebuffersList;     // [Framebuffer: chainData] all created framebuffers
-  void delFramebuffers();
+    VkoRenderPass *addRenderPass();
+    void addCustomRenderPass(VkoRenderPass *p) { renderPasses.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delRenderPass(VkoRenderPass *out_renderPass);
+    void delAllRenderPasses();
 
-  // shader handling
+    VkoFramebuffer *addFramebuffer();
+    void addCustomFramebuffer(VkoFramebuffer *p) { framebuffers.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delFramebuffer(VkoFramebuffer *out_framebuffer);
+    void delAllFramebuffers();
 
-  template <class T>
-  inline void createShader(T **out_shader) {
-    *out_shader= new T;
-    ((VkoShader *)(*out_shader))->parent= this;
-    shaders.add(*out_shader);
-  }
-  inline void delShader(VkoShader *in_s) { shaders.del(in_s); }
+    VkoSampler *addSampler();
+    void addCustomSampler(VkoSampler *p) { samplers.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delSampler(VkoSampler *out_sampler);
+    void delAllSamplers();
 
+    VkoSemaphore *addSemaphore();
+    void addCustomSemaphore(VkoSemaphore *p) { semaphores.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delSemaphore(VkoSemaphore *out_semaphore);
+    void delAllSemaphores();
 
-  VkoSemaphore *addSemaphore();
+  private:
+    vkObject *_vko;
+    friend class vkObject;
+  } objects;
 
 
 private:
   static void *_vulkanLib;           // vulkan library linking
-  chainList _VkoSemaphores;
+
   
 
   void constructorLevelInit(); // TO BE OR NOT TO BE
@@ -267,7 +310,8 @@ private:
 
 
 #include "vkoSemaphore.h"
-inline void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) { _showInfo.pWaitSemaphores= &in_finishDrawing, _showInfo.pImageIndices= &in_surfaceIndex; _parent->QueuePresentKHR(in_queue, &_showInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
+#include "vkoCommandBuffer.h"
+inline void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) { _presentInfo.pWaitSemaphores= &in_finishDrawing, _presentInfo.pImageIndices= &in_surfaceIndex; _vko->QueuePresentKHR(in_queue, &_presentInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
 
 
 
@@ -276,6 +320,7 @@ inline void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, 
     uint32_t index;           // queue index in family
     VkQueueFlags typeFlags;
     VkQueue queue;
+    inline operator VkQueue() { return queue; }
   };
 
   struct VkoPhysicalDevice {

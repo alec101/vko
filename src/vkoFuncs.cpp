@@ -683,6 +683,13 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(GetFenceFdKHR);
   #endif
 
+  #ifdef VK_KHR_performance_query
+  VKO_LINK_DEVICE_FUNC(EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR);
+  VKO_LINK_DEVICE_FUNC(GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR);
+  VKO_LINK_DEVICE_FUNC(AcquireProfilingLockKHR);
+  VKO_LINK_DEVICE_FUNC(ReleaseProfilingLockKHR);
+  #endif
+
   #ifdef VK_KHR_get_memory_requirements2 // "VK_KHR_get_memory_requirements2"
   VKO_LINK_DEVICE_FUNC(GetImageMemoryRequirements2KHR);
   VKO_LINK_DEVICE_FUNC(GetBufferMemoryRequirements2KHR);
@@ -708,6 +715,24 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(CmdDrawIndexedIndirectCountKHR);
   #endif
   
+  #ifdef VK_KHR_timeline_semaphore // "VK_KHR_timeline_semaphore"
+  VKO_LINK_DEVICE_FUNC(GetSemaphoreCounterValueKHR);
+  VKO_LINK_DEVICE_FUNC(WaitSemaphoresKHR);
+  VKO_LINK_DEVICE_FUNC(SignalSemaphoreKHR);
+  #endif
+  
+  #ifdef VK_KHR_buffer_device_address
+  VKO_LINK_DEVICE_FUNC(GetBufferDeviceAddressKHR);
+  VKO_LINK_DEVICE_FUNC(GetBufferOpaqueCaptureAddressKHR);
+  VKO_LINK_DEVICE_FUNC(GetDeviceMemoryOpaqueCaptureAddressKHR);
+  #endif
+
+  #ifdef VK_KHR_pipeline_executable_properties
+  VKO_LINK_DEVICE_FUNC(GetPipelineExecutablePropertiesKHR);
+  VKO_LINK_DEVICE_FUNC(GetPipelineExecutableStatisticsKHR);
+  VKO_LINK_DEVICE_FUNC(GetPipelineExecutableInternalRepresentationsKHR);
+  #endif
+
   #ifdef VK_EXT_debug_marker // "VK_EXT_debug_marker"
   VKO_LINK_DEVICE_FUNC(DebugMarkerSetObjectTagEXT);
   VKO_LINK_DEVICE_FUNC(DebugMarkerSetObjectNameEXT);
@@ -723,6 +748,10 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(CmdBeginQueryIndexedEXT);
   VKO_LINK_DEVICE_FUNC(CmdEndQueryIndexedEXT);
   VKO_LINK_DEVICE_FUNC(CmdDrawIndirectByteCountEXT);
+  #endif
+  
+  #ifdef VK_NVX_image_view_handle // "VK_NVX_image_view_handle"
+  VKO_LINK_DEVICE_FUNC(GetImageViewHandleNVX);
   #endif
 
   #ifdef VK_AMD_draw_indirect_count // "VK_AMD_draw_indirect_count"
@@ -848,6 +877,18 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(GetQueueCheckpointDataNV);
   #endif
   
+  #ifdef VK_INTEL_performance_query // "VK_NV_device_diagnostic_checkpoints"
+  VKO_LINK_DEVICE_FUNC(InitializePerformanceApiINTEL);
+  VKO_LINK_DEVICE_FUNC(UninitializePerformanceApiINTEL);
+  VKO_LINK_DEVICE_FUNC(CmdSetPerformanceMarkerINTEL);
+  VKO_LINK_DEVICE_FUNC(CmdSetPerformanceStreamMarkerINTEL);
+  VKO_LINK_DEVICE_FUNC(CmdSetPerformanceOverrideINTEL);
+  VKO_LINK_DEVICE_FUNC(AcquirePerformanceConfigurationINTEL);
+  VKO_LINK_DEVICE_FUNC(ReleasePerformanceConfigurationINTEL);
+  VKO_LINK_DEVICE_FUNC(QueueSetPerformanceConfigurationINTEL);
+  VKO_LINK_DEVICE_FUNC(GetPerformanceParameterINTEL);
+  #endif
+
   #ifdef VK_AMD_display_native_hdr
   VKO_LINK_DEVICE_FUNC(SetLocalDimmingAMD);
   #endif
@@ -856,11 +897,29 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(GetBufferDeviceAddressEXT);
   #endif
   
+  #ifdef VK_EXT_tooling_info // VK_EXT_tooling_info
+  VKO_LINK_DEVICE_FUNC(GetPhysicalDeviceToolPropertiesEXT);
+  #endif
+
+  #ifdef VK_NV_cooperative_matrix
+  VKO_LINK_DEVICE_FUNC(GetPhysicalDeviceCooperativeMatrixPropertiesNV);
+  #endif
+
+  #ifdef VK_NV_coverage_reduction_mode
+  VKO_LINK_DEVICE_FUNC(GetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV);
+  #endif
+
+  #ifdef VK_EXT_headless_surface
+  VKO_LINK_DEVICE_FUNC(CreateHeadlessSurfaceEXT);
+  #endif
+
+  #ifdef VK_EXT_line_rasterization
+  VKO_LINK_DEVICE_FUNC(CmdSetLineStippleEXT);
+  #endif
+
   #ifdef VK_EXT_host_query_reset
   VKO_LINK_DEVICE_FUNC(ResetQueryPoolEXT);
   #endif
-
-
 
 
   // ANDROID OS specific =====================================================================================

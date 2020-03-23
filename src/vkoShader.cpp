@@ -20,20 +20,43 @@
 
 
 
-VkoShader::VkoShader() {
-  parent= nullptr;
+VkoShader::VkoShader(vkObject *in_parent): _vko(in_parent) {
 
-  //nrDescriptorSets= 0;      SCRAPED
-  //descriptorsLayout= nullptr;
+  pipeline= VK_NULL_HANDLE;
+  pipelineLayout= VK_NULL_HANDLE;
+  vert= tesc= tese= geom= frag= comp= VK_NULL_HANDLE;
+
+  descSet= nullptr;           // INIT 1
+  vertFile= tescFile= teseFile= geomFile= fragFile= compFile= nullptr;  // INIT 2, 3, 4, 5, 6, 7
+
+  delData();
+}
+
+
+VkoShader::~VkoShader() {
+  delData();
+}
+
+
+void VkoShader::delData() {
+  if(pipeline || pipelineLayout) destroy();
   
-  pipelineLayout= NULL;
-  renderPass= NULL;
+  if(descSet)  { delete[] descSet;  descSet=  nullptr; } // DEALLOC 1
 
-  vert= tesc= tese= geom= frag= comp= NULL;
-  vertFile= tescFile= teseFile= geomFile= fragFile= compFile= nullptr;
+  if(vertFile) { delete[] vertFile; vertFile= nullptr; } // DEALLOC 2
+  if(tescFile) { delete[] tescFile; tescFile= nullptr; } // DEALLOC 3
+  if(teseFile) { delete[] teseFile; teseFile= nullptr; } // DEALLOC 4
+  if(geomFile) { delete[] geomFile; geomFile= nullptr; } // DEALLOC 5
+  if(fragFile) { delete[] fragFile; fragFile= nullptr; } // DEALLOC 6
+  if(compFile) { delete[] compFile; compFile= nullptr; } // DEALLOC 7
 
-  subpass= NULL;
-  pipeline= NULL;
+  // default values
+
+  pNext.delData();
+
+  renderPass= VK_NULL_HANDLE;
+  subpass= VK_NULL_HANDLE;
+  nrDescSets= 0;
 
   /// input assembly
   _topology= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -93,97 +116,61 @@ VkoShader::VkoShader() {
 }
 
 
-VkoShader::~VkoShader() {
-  destroy();
-  if(vertFile) delete[] vertFile;
-  if(tescFile) delete[] tescFile;
-  if(teseFile) delete[] teseFile;
-  if(geomFile) delete[] geomFile;
-  if(fragFile) delete[] fragFile;
-  if(compFile) delete[] compFile;
-
-}
-
-
 void VkoShader::destroy() {
-  if(parent)
-    if(parent->device) {
-
-      /* SCRAPED
-    if(descriptorsLayout) {
-      for(uint32_t a= 0; a< nrDescriptorSets; a++)
-        if(descriptorsLayout[a])
-          parent->vk->DestroyDescriptorSetLayout(*parent, descriptorsLayout[a], *parent);
-      delete[] descriptorsLayout;
-      descriptorsLayout= nullptr;
-      nrDescriptorSets= 0;
+  if(_vko)
+    if(_vko->device) {
+      _destroyModules();
+      if(pipelineLayout) _vko->DestroyPipelineLayout(*_vko, pipelineLayout, *_vko);
+      if(pipeline)       _vko->DestroyPipeline(*_vko, pipeline, *_vko);
     }
-    */
-    if(pipelineLayout) { parent->DestroyPipelineLayout(*parent, pipelineLayout, *parent); pipelineLayout= NULL; }
-  }
+
+  pipelineLayout= 0;
+  pipeline= 0;
 }
 
+
+
+
+VkoDescriptorSetLayout *VkoShader::addDescriptorSet(VkDescriptorSetLayoutCreateFlags in_flags) {
+  VkoDescriptorSetLayout *p= _vko->objects.addDescriptorSetLayout();
+  p->setDescriptorSetFlags(in_flags);
+
+  addDescriptorSetFromExisting(p);
+
+  return p;
+}
+
+
+void VkoShader::addDescriptor(uint32_t in_set, uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler) {
+  _vko->clearError();
+  if(descSet== nullptr) { _vko->result= VK_INCOMPLETE, _vko->errorText= "no descriptor set was added prior"; return; }
+  if(in_set> nrDescSets- 1) { _vko->result= VK_INCOMPLETE, _vko->errorText= "<in_set> greater than current number of sets"; return; }
+
+  descSet[in_set]->addDescriptor(in_binding, in_type, in_count, in_stages, in_pImutableSampler);
+}
+
+
+void VkoShader::addDescriptorSetFromExisting(VkoDescriptorSetLayout *in_set) {
+
+  nrDescSets++;
+
+  VkoDescriptorSetLayout **newLayouts= new VkoDescriptorSetLayout*[nrDescSets];
+
+  /// copy the old list to the new one
+  if(nrDescSets> 1)
+    for(uint32_t a= 0; a< nrDescSets- 1; a++)
+      newLayouts[a]= descSet[a];
+  
+  newLayouts[nrDescSets- 1]= in_set;/// add the new member
+  
+  if(descSet) delete[] descSet;     /// delete the old list
+
+  descSet= newLayouts;              /// update the descSet list
+
+}
 
 
 /*
-void VkoShader::addDescriptor(uint32_t in_set, uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler) {
-  _Descriptor *p= new _Descriptor;
-  if(p== nullptr) { error.alloc(__FUNCTION__); return; }
-
-  p->set= in_set;
-  p->binding= in_binding;
-  p->type= in_type;
-  p->count= in_count;
-  p->shaderStages= in_stages;
-  p->pImutableSamplers= in_pImutableSampler;
-  _descriptors.add(p);
-}
-
-
-void VkoShader::addDescriptor(const VkoDescriptor *in_desc) {
-  _Descriptor *p= new _Descriptor;
-  if(p== nullptr) { error.alloc(__FUNCTION__); return; }
-
-  p->set= in_desc->set;
-  p->binding= in_desc->binding;
-  p->type= in_desc->type;
-  p->count= in_desc->arrayCount;
-  p->shaderStages= in_desc->shaderStages;
-  p->pImutableSamplers= in_desc->pImutableSamplers;
-
-  _descriptors.add(p);
-}
-
-
-
-void VkoShader::addUniformBlock() {
-  addDescriptor(0, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL);
-}
-
-
-
-void VkoShader::setDescriptorSetFlags(uint32_t in_set, VkDescriptorSetLayoutCreateFlags in_flags) {
-  _DescriptorSetFlags *p= nullptr;
-  /// search maybe there are flags already for this set
-  for(p= (_DescriptorSetFlags *)_descriptorSetFlags.first; p; p= (_DescriptorSetFlags *)p->next)
-    if(p->set== in_set)
-      break;
-
-  /// there are existing flags for this set ... should pop an error imho
-  if(p)
-    p->flags= p->flags| in_flags;
-
-  // create flags for this set
-  else {
-    p= new _DescriptorSetFlags;
-    p->set= in_set;
-    p->flags= in_flags;
-  }
-}
-
-*/
-
-
 void VkoShader::addDescriptorSet(const VkoSet *in_set) {
   _SetLayout *p= new _SetLayout;
   p->layout= in_set->layout;
@@ -196,7 +183,7 @@ void VkoShader::addDescriptorSet(const VkDescriptorSetLayout in_layout) {
   p->layout= in_layout;
   _setLayouts.add(p);
 }
-
+*/
 
 
 
@@ -357,89 +344,6 @@ void VkoShader::addDynamicState(VkDynamicState in_dyn) {
 }
 
 
-/*
-void VkoShader::_vkCreateDescriptorsLayout() {
-  /// https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#descriptorsets-sets
-
-  // from the specs:
-  //  "The maximum binding number specified should be as compact as possible to avoid wasted memory."
-
-  // can be multiple sets, each set can have muliple bindings
-  // the layout will find the maximum existing bindings, from what i am digging thru these hieroglyphs
-
-  _Descriptor *p= nullptr;
-  uint32_t nrSets= 0, nrBindings;
-  VkDescriptorSetLayoutBinding *bindings= nullptr;
-
-
-  /// find out how many sets there are
-  for(p= (_Descriptor *)_descriptors.first; p; p= (_Descriptor *)p->next)
-    if((p->set+ 1)> nrSets)
-      nrSets= p->set+ 1;
-
-  nrDescriptorSets= nrSets;
-
-  descriptorsLayout= new VkDescriptorSetLayout[nrSets];
-  if(descriptorsLayout== nullptr) { error.detail("descriptorsLayout mem alloc failed. aborting.", __FUNCTION__); goto Exit; }
-
-  /// loop thru all sets
-  for(uint32_t a= 0; a< nrSets; a++) {
-    /// find out how many bindings are in this set (set:a)
-    nrBindings= 0;
-    for(p= (_Descriptor *)_descriptors.first; p; p= (_Descriptor *)p->next)
-      if((p->binding+ 1)> nrBindings)
-        nrBindings= p->binding+ 1;
-
-    if(nrBindings== 0) { error.detail("nr bindings found, is zero. aborting.", __FUNCTION__); goto Exit; }
-
-    bindings= new VkDescriptorSetLayoutBinding[nrBindings];
-    if(bindings== nullptr) { error.detail("mem alloc error (bindings)", __FUNCTION__); goto Exit; }
-
-    /// loop thru all bindings in this set
-    for(uint32_t b= 0; b< nrBindings; b++) {
-      /// find descritor with set:a and binding:b
-      for(p= (_Descriptor *)_descriptors.first; p; p= (_Descriptor *)p->next)
-        if(p->set== a && p->binding== b)
-          break;
-
-      if(p== nullptr) { error.detail("binding not found. list is not complete and gap-less?. aborting.", __FUNCTION__); goto Exit; }
-
-      bindings[b].binding=            p->binding;
-      bindings[b].descriptorCount=    p->count;
-      bindings[b].descriptorType=     p->type;
-      bindings[b].stageFlags=         p->shaderStages;
-      bindings[b].pImmutableSamplers= p->pImutableSamplers;
-    }
-
-    VkDescriptorSetLayoutCreateFlags flags= 0;
-    for(_DescriptorSetFlags *p= (_DescriptorSetFlags *)_descriptorSetFlags.first; p; p= (_DescriptorSetFlags *)p->next)
-      if(p->set== a) {
-        flags= p->flags;
-        break;
-      }
-
-    // create the descriptor set
-    VkDescriptorSetLayoutCreateInfo setInfo;
-    setInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    setInfo.pNext= nullptr;
-    setInfo.flags= flags; // VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR - specifies that descriptor sets must not be allocated using this layout, and descriptors are instead pushed by vkCmdPushDescriptorSetKHR
-    setInfo.bindingCount= nrBindings;
-    setInfo.pBindings= bindings;
-    
-    if(parent->vk->CreateDescriptorSetLayout(*parent, &setInfo, *parent, &descriptorsLayout[a])!= VK_SUCCESS) {
-      error.detail(str8().f("Vulkan descriptor set[%d] layout create failed", a), __FUNCTION__, __LINE__);
-      descriptorsLayout[a]= nullptr;
-    }
-
-    if(bindings) delete[] bindings;
-    bindings= nullptr;
-  }
-
-Exit:
-  if(bindings) delete[] bindings;
-}
-*/
-
 
 void VkoShader::_vkCreatePipelineLayout() {
 
@@ -465,6 +369,16 @@ void VkoShader::_vkCreatePipelineLayout() {
   }
 
   /// populate all set layouts
+  if(nrDescSets) {
+    setLayout= new VkDescriptorSetLayout[nrDescSets];           // ALLOC 2
+
+    for(uint32_t a= 0; a< nrDescSets; a++) {
+      if(descSet[a]->layout== 0) descSet[a]->build();
+      setLayout[a]= descSet[a]->layout;
+    }
+  }
+
+  /*
   if(_setLayouts.nrNodes) {
     setLayout= new VkDescriptorSetLayout[_setLayouts.nrNodes];  // ALLOC 2
 
@@ -472,18 +386,19 @@ void VkoShader::_vkCreatePipelineLayout() {
     for(uint32_t a= 0; p; p= (_SetLayout *)p->next, a++)
       setLayout[a]= p->layout;
   }
+  */
 
   /// populate create info struct
   VkPipelineLayoutCreateInfo plci;    // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#VkPipelineLayoutCreateInfo
   plci.sType= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  plci.pNext= nullptr;
+  plci.pNext= pNext.VkPipelineLayoutCreateInfo;
   plci.flags= 0;
-  plci.setLayoutCount= _setLayouts.nrNodes;
+  plci.setLayoutCount= nrDescSets;  //_setLayouts.nrNodes;
   plci.pSetLayouts= setLayout;
   plci.pushConstantRangeCount= _pushConsts.nrNodes;
   plci.pPushConstantRanges= pcRange;
 
-  parent->errorCheck(parent->CreatePipelineLayout(*parent, &plci, *parent, &pipelineLayout),
+  _vko->errorCheck(_vko->CreatePipelineLayout(*_vko, &plci, *_vko, &pipelineLayout),
     __FUNCTION__": Shader Pipeline layout creation failed.");
 
   if(pcRange)   delete[] pcRange;     // DEALLOC 1
@@ -491,15 +406,35 @@ void VkoShader::_vkCreatePipelineLayout() {
 }
 
 
+bool VkoShader::_loadModules() {
+  if(vertFile) if(!_loadModule(vertFile, &vert)) return false;
+  if(tescFile) if(!_loadModule(tescFile, &tesc)) return false;
+  if(teseFile) if(!_loadModule(teseFile, &tese)) return false;
+  if(geomFile) if(!_loadModule(geomFile, &geom)) return false;
+  if(fragFile) if(!_loadModule(fragFile, &frag)) return false;
+  if(compFile) if(!_loadModule(compFile, &comp)) return false;
+  return true;
+}
+
+void VkoShader::_destroyModules() {
+  if(_vko->device== nullptr) return;
+  if(vert) { _vko->DestroyShaderModule(*_vko, vert, *_vko); vert= VK_NULL_HANDLE; }
+  if(tesc) { _vko->DestroyShaderModule(*_vko, tesc, *_vko); tesc= VK_NULL_HANDLE; }
+  if(tese) { _vko->DestroyShaderModule(*_vko, tese, *_vko); tese= VK_NULL_HANDLE; }
+  if(geom) { _vko->DestroyShaderModule(*_vko, geom, *_vko); geom= VK_NULL_HANDLE; }
+  if(frag) { _vko->DestroyShaderModule(*_vko, frag, *_vko); frag= VK_NULL_HANDLE; }
+  if(comp) { _vko->DestroyShaderModule(*_vko, comp, *_vko); comp= VK_NULL_HANDLE; }
+}
 
 
-bool VkoShader::loadModule(const char *in_file, VkShaderModule *out_module) {
+
+bool VkoShader::_loadModule(const char *in_file, VkShaderModule *out_module) {
   #ifdef VKO_BE_CHATTY
   bool chatty= true;
   #endif
 
   *out_module= NULL;
-  parent->clearError();
+  _vko->clearError();
 
   /// tmp vars
   uint8_t *buf= nullptr;
@@ -510,24 +445,24 @@ bool VkoShader::loadModule(const char *in_file, VkShaderModule *out_module) {
 
   // file open & read into mem
   f= fopen(in_file, "rb");
-  if(f== nullptr) { parent->errorText= __FUNCTION__": file not found. aborting."; goto Exit; }
+  if(f== nullptr) { _vko->errorText= __FUNCTION__": file not found. aborting."; goto Exit; }
 
   /// file size
   pos= ftell(f);
   fseek(f, 0, SEEK_END);
   fs= ftell(f);
-  fseek(f, pos, SEEK_SET);
+  fseek(f, (long)pos, SEEK_SET);
 
   #ifdef VKO_BE_CHATTY
   if(chatty) printf("opening file[%s] [%lld]bytes\n", in_file, fs);
   #endif
 
-  if(fs<= 0) { parent->errorText= __FUNCTION__": filesize is <= 0. aborting."; goto Exit; }
-  if((fs% 4) != 0) { parent->errorText= __FUNCTION__": shader filesize is not divisible by 4. aborting."; goto Exit; }
+  if(fs<= 0) { _vko->errorText= __FUNCTION__": filesize is <= 0. aborting."; goto Exit; }
+  if((fs% 4) != 0) { _vko->errorText= __FUNCTION__": shader filesize is not divisible by 4. aborting."; goto Exit; }
 
   buf= new uint8_t[fs];
-  if(buf== nullptr) { parent->errorText= __FUNCTION__": buffer allocation failed"; goto Exit; }
-  if(fread(buf, 1, fs, f)!= fs) { parent->errorText= __FUNCTION__": file read error. aborting"; goto Exit; }
+  if(buf== nullptr) { _vko->errorText= __FUNCTION__": buffer allocation failed"; goto Exit; }
+  if(fread(buf, 1, fs, f)!= fs) { _vko->errorText= __FUNCTION__": file read error. aborting"; goto Exit; }
 
   fclose(f); f= nullptr;
 
@@ -535,12 +470,12 @@ bool VkoShader::loadModule(const char *in_file, VkShaderModule *out_module) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap8.html#shader-modules
   VkShaderModuleCreateInfo smci;
   smci.sType= VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  smci.pNext= nullptr;
+  smci.pNext= pNext.VkShaderModuleCreateInfo;
   smci.flags= 0;
   smci.pCode= (const uint32_t *)buf;
   smci.codeSize= (size_t)fs;                // <<< must be divisible by 4
 
-  if(!parent->errorCheck(parent->CreateShaderModule(*parent, &smci, *parent, out_module), __FUNCTION__": Shader module create failed")) {
+  if(!_vko->errorCheck(_vko->CreateShaderModule(*_vko, &smci, *_vko, out_module), __FUNCTION__": Shader module create failed")) {
     *out_module= NULL;
     goto Exit;
   }
@@ -554,75 +489,38 @@ bool VkoShader::loadModule(const char *in_file, VkShaderModule *out_module) {
 }
 
 
-bool VkoShader::loadModules(const char *in_vert, const char *in_tesc, const char *in_tese, const char *in_geom, const char *in_frag, const char *in_comp) {
-  if(in_vert) if(!loadModuleVert(in_vert)) return false;
-  if(in_tesc) if(!loadModuleTesc(in_tesc)) return false;
-  if(in_tese) if(!loadModuleTese(in_tese)) return false;
-  if(in_geom) if(!loadModuleGeom(in_geom)) return false;
-  if(in_frag) if(!loadModuleFrag(in_frag)) return false;
-  if(in_comp) if(!loadModuleComp(in_comp)) return false;
-
-  return true;
+void VkoShader::loadModules(const char *in_vert, const char *in_tesc, const char *in_tese, const char *in_geom, const char *in_frag, const char *in_comp) {
+  if(in_vert) loadModuleVert(in_vert);
+  if(in_tesc) loadModuleTesc(in_tesc);
+  if(in_tese) loadModuleTese(in_tese);
+  if(in_geom) loadModuleGeom(in_geom);
+  if(in_frag) loadModuleFrag(in_frag);
+  if(in_comp) loadModuleComp(in_comp);
 }
 
 
-inline bool VkoShader::loadModuleVert(const char *in_vert) {
-  if(loadModule(in_vert, &vert)) {
-    vkObject::_strCopy((char **)&vertFile, in_vert);
-    return true; }
-  else
-    return false;
+void VkoShader::loadModuleVert(const char *in_vert) {
+  vkObject::_strCopy((char **)&vertFile, in_vert);
 }
 
-inline bool VkoShader::loadModuleFrag(const char *in_frag) {
-  if(loadModule(in_frag, &frag)) {
-    vkObject::_strCopy((char **)&fragFile, in_frag);
-    return true;
-  } else
-    return false;
+void VkoShader::loadModuleFrag(const char *in_frag) {
+  vkObject::_strCopy((char **)&fragFile, in_frag);
 }
 
-inline bool VkoShader::loadModuleTesc(const char *in_tesc) {
-  if(loadModule(in_tesc, &tese)) {
-    vkObject::_strCopy((char **)&tescFile, in_tesc);
-    return true;
-  } else
-    return false;
+void VkoShader::loadModuleTesc(const char *in_tesc) {
+  vkObject::_strCopy((char **)&tescFile, in_tesc);
 }
 
-inline bool VkoShader::loadModuleTese(const char *in_tese) {
-  if(loadModule(in_tese, &tese)) {
-    vkObject::_strCopy((char **)&teseFile, in_tese);
-    return true;
-  } else
-    return false;
+void VkoShader::loadModuleTese(const char *in_tese) {
+  vkObject::_strCopy((char **)&teseFile, in_tese);
 }
 
-inline bool VkoShader::loadModuleGeom(const char *in_geom) {
-  if(loadModule(in_geom, &geom)) {
-    vkObject::_strCopy((char **)&geomFile, in_geom);
-    return true;
-  } else
-    return false;
+void VkoShader::loadModuleGeom(const char *in_geom) {
+  vkObject::_strCopy((char **)&geomFile, in_geom);
 }
 
-inline bool VkoShader::loadModuleComp(const char *in_comp) {
-  if(loadModule(in_comp, &comp)) {
-    vkObject::_strCopy((char **)&compFile, in_comp);
-    return true;
-  } else
-    return false;
-}
-
-
-void VkoShader::destroyModules() {
-  if(parent->device== nullptr) return;
-  if(vert) { parent->DestroyShaderModule(*parent, vert, *parent); vert= NULL; }
-  if(tesc) { parent->DestroyShaderModule(*parent, tesc, *parent); tesc= NULL; }
-  if(tese) { parent->DestroyShaderModule(*parent, tese, *parent); tese= NULL; }
-  if(geom) { parent->DestroyShaderModule(*parent, geom, *parent); geom= NULL; }
-  if(frag) { parent->DestroyShaderModule(*parent, frag, *parent); frag= NULL; }
-  if(comp) { parent->DestroyShaderModule(*parent, comp, *parent); comp= NULL; }
+void VkoShader::loadModuleComp(const char *in_comp) {
+  vkObject::_strCopy((char **)&compFile, in_comp);
 }
 
 
@@ -665,7 +563,7 @@ void VkoShader::_vkPopulateSpecConsts(VkShaderStageFlags in_stage, VkSpecializat
 
 bool VkoShader::build() {
   #define IX_MAX_SHADER_STAGES 6    // vert+tesc+tese+geom+frag+comp = 6; more can just be added
-  parent->clearError();
+  _vko->clearError();
   bool ret= false;
   VkPipelineShaderStageCreateInfo ssInfo[IX_MAX_SHADER_STAGES];
   VkSpecializationInfo sConsts[IX_MAX_SHADER_STAGES];
@@ -692,6 +590,8 @@ bool VkoShader::build() {
   vertAttribs= nullptr;                    // INIT 7
   vertBindings= nullptr;                   // INIT 8
 
+  /// load all the shader module files from disk
+  if(!_loadModules()) return false;
 
   /// find out the number of stages that will be used
   /// add more possible stages if raytrace/ new stuff gets added
@@ -727,10 +627,10 @@ bool VkoShader::build() {
     
     VkGraphicsPipelineCreateInfo graphInfo;
     graphInfo.sType= VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    graphInfo.pNext= nullptr;                         /// or an extension, atm none i think
+    graphInfo.pNext= pNext.VkGraphicsPipelineCreateInfo;   /// or an extension, atm none i think
     graphInfo.flags= 0;                            // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap9.html#VkPipelineCreateFlagBits
 
-    if(renderPass== NULL) { parent->errorText= __FUNCTION__": Vulkan renderpass not set. aborting."; goto Exit; }
+    if(renderPass== NULL) { _vko->errorText= __FUNCTION__": Vulkan renderpass not set. aborting."; goto Exit; }
     graphInfo.renderPass= renderPass;              // the renderpass
     graphInfo.subpass= subpass;                    // index of the subpass
 
@@ -751,7 +651,7 @@ bool VkoShader::build() {
       uint32_t a;
       for(a= 0; a< nrStages; a++)
         ssInfo[a].sType= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        ssInfo[a].pNext= nullptr,
+        ssInfo[a].pNext= nullptr,                 // << I DON'T SEE ATM HOW TO LINK A CUSTOM PNEXT TO THIS
         ssInfo[a].flags= 0;
 
       /// per stage specific data
@@ -818,7 +718,7 @@ bool VkoShader::build() {
     // pipeline vertex input https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap20.html#VkPipelineVertexInputStateCreateInfo
     VkPipelineVertexInputStateCreateInfo pvisci;
     pvisci.sType= VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    pvisci.pNext= nullptr;
+    pvisci.pNext= pNext.VkPipelineVertexInputStateCreateInfo;
     pvisci.flags= 0;
 
     /// vertex bindings
@@ -854,7 +754,7 @@ bool VkoShader::build() {
     // pipeline input asembly https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap19.html#VkPipelineInputAssemblyStateCreateInfo
     VkPipelineInputAssemblyStateCreateInfo piasci;
     piasci.sType= VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    piasci.pNext= nullptr;
+    piasci.pNext= pNext.VkPipelineInputAssemblyStateCreateInfo;
     piasci.flags= 0;
     piasci.primitiveRestartEnable= _primitiveRestartEnable;
     piasci.topology= _topology;
@@ -875,6 +775,9 @@ bool VkoShader::build() {
       ptsci.pNext= &teseOrigin;
     } else 
       ptsci.pNext= nullptr;
+
+    ptsci.pNext= pNext.VkPipelineTessellationStateCreateInfo;
+
     ptsci.patchControlPoints= _teseControlPoints;
 
     graphInfo.pTessellationState= &ptsci;
@@ -882,7 +785,7 @@ bool VkoShader::build() {
     // pipeline viewport - ignored if rasterization is disabled
     // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap23.html#VkPipelineViewportStateCreateInfo
     viewports.sType= VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewports.pNext= nullptr;
+    viewports.pNext= pNext.VkPipelineViewportStateCreateInfo;
     viewports.flags= 0;
 
     // TO THINK ABOUT: MULTIPLE VIEWPORTS? WOULD SETTING THESE TO CONSTANT IN HERE BE BETTER?
@@ -894,7 +797,7 @@ bool VkoShader::build() {
     /// constant viewports
     if(_dynamicViewports== 0) {
       if(_constViewports.nrNodes== 0) {
-        parent->errorText= __FUNCTION__": Shader pipeline creation failed: no constant or dynamic viewports were defined (use setDynamicViewport()/setConstViewport())";
+        _vko->errorText= __FUNCTION__": Shader pipeline creation failed: no constant or dynamic viewports were defined (use setDynamicViewport()/setConstViewport())";
         goto Exit;
       }
       viewports.viewportCount= _constViewports.nrNodes;
@@ -916,7 +819,7 @@ bool VkoShader::build() {
 
     // pipeline rasterization state - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap24.html#VkPipelineRasterizationStateCreateInfo
     raster.sType= VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    raster.pNext= nullptr;                  /// extension (none atm)
+    raster.pNext= pNext.VkPipelineRasterizationStateCreateInfo; /// extension (none atm)
     raster.flags= 0;                     /// reserved
     raster.depthClampEnable=        _depthClampEnable;        // "controls whether to clamp the fragment’s depth values as described in Depth Test. Enabling depth clamp will also disable clipping primitives to the z planes of the frustrum as described in Primitive Clipping."
     raster.rasterizerDiscardEnable= _rasterizerDiscardEnable; // "controls whether primitives are discarded immediately before the rasterization stage."
@@ -934,7 +837,7 @@ bool VkoShader::build() {
     // pipeline multisample - ignored if rasterization is disabled
     // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap24.html#VkPipelineMultisampleStateCreateInfo
     msAntiAlias.sType= VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    msAntiAlias.pNext= nullptr;
+    msAntiAlias.pNext= pNext.VkPipelineMultisampleStateCreateInfo;
     msAntiAlias.flags= 0;
     msAntiAlias.rasterizationSamples=  _nrMultisamples;
     msAntiAlias.sampleShadingEnable=   _sampleShadingEnable;
@@ -950,7 +853,7 @@ bool VkoShader::build() {
     // depth / stencil - ignored if rasterization is disabled OR renderpass has no depth/stencil atachement
     // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap25.html#VkPipelineDepthStencilStateCreateInfo
     depthStencil.sType= VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.pNext= nullptr;
+    depthStencil.pNext= pNext.VkPipelineDepthStencilStateCreateInfo;
     depthStencil.flags= 0;
     depthStencil.depthTestEnable=       _depthTestEnable;
     depthStencil.depthWriteEnable=      _depthTestWrite;
@@ -965,7 +868,7 @@ bool VkoShader::build() {
 
     // color blend - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap26.html#VkPipelineColorBlendStateCreateInfo
     colorBlend.sType= VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlend.pNext= nullptr;
+    colorBlend.pNext= pNext.VkPipelineColorBlendStateCreateInfo;
     colorBlend.flags= 0;
     colorBlend.logicOpEnable=     _colorBlendLogicOpEnable;
     colorBlend.logicOp=           _colorBlendLogicOp;
@@ -991,7 +894,7 @@ bool VkoShader::build() {
     /// the constant variants are ingored
     
     dynStates.sType= VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynStates.pNext= nullptr;
+    dynStates.pNext= pNext.VkPipelineDynamicStateCreateInfo;
     dynStates.flags= 0;
     dynStates.dynamicStateCount= _dynamicStates.nrNodes;
     if(dynStates.dynamicStateCount) {
@@ -1005,7 +908,7 @@ bool VkoShader::build() {
     
       
     // pipeline cache is VK_NULL_HANDLE, ATM
-    if(!parent->errorCheck(parent->CreateGraphicsPipelines(*parent, VK_NULL_HANDLE, 1, &graphInfo, *parent, &pipeline), __FUNCTION__": Vulkan pipeline creation failed")) {
+    if(!_vko->errorCheck(_vko->CreateGraphicsPipelines(*_vko, VK_NULL_HANDLE, 1, &graphInfo, *_vko, &pipeline), __FUNCTION__": Vulkan pipeline creation failed")) {
       pipeline= NULL;
       goto Exit;
     }
@@ -1034,7 +937,7 @@ bool VkoShader::build() {
   if(vertBindings)
     delete[] vertBindings;                // DEALLOC 8
 
-  //this->destroyModules();
+  this->_destroyModules();
 
   #undef IX_MAX_SHADER_STAGES
   return ret;

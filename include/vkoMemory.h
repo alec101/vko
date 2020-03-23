@@ -1,35 +1,6 @@
 #pragma once
-class VkoMemory;
 
-class VkoMemoryManager {
-public:
-
-  VkPhysicalDeviceMemoryProperties memProp;   // memory properties struct, gets populated in init()
-
-  uint32_t findMemory(uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties); //  https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
-
-  
-  VkoMemory *addMemoryBlock();
-  chainList memoryBlocks;   // [VkoMemory obj] list with all created memory blocks
-
-
-  VkoMemoryManager();
-  ~VkoMemoryManager();
-
-private:
-  void init();
-
-  vkObject *_parent;
-  friend class vkObject;
-  friend class VkoMemory;
-};
-
-
-
-
-
-
-// vulkan memory block
+// vulkan memory object
 
 class VkoMemory: public chainData {
 public:
@@ -39,7 +10,6 @@ public:
   VkDeviceSize size;                // size, in bytes of this memory block
   uint32_t typeIndex;               // index of this type, in the vulkan physical device memory list
   VkMemoryPropertyFlags typeFlags;  // memory flags
-
 
   // settings
   
@@ -64,13 +34,25 @@ public:
   void addVkMemoryAllocateFlagsInfo(VkMemoryAllocateFlags flags, uint32_t deviceMask); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryAllocateFlagsInfo
   void addVkMemoryDedicatedAllocateInfo(VkImage image, VkBuffer buffer); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryDedicatedAllocateInfo
 
-  // build
+  // or use this for your custom pNext in VkMemoryAllocateInfo
+  struct PNext {
+    void *VkMemoryAllocateInfo;
+    void delData() { VkMemoryAllocateInfo= nullptr; }
+  } pNext;
+
+
+  // build / destroy
 
   bool build();                       // build the memory block - allocates the desired memory type. returns true if succeeded.
+  void destroy();
+  inline bool rebuild() { destroy(); return build(); }
 
-  VkoMemory();
+  // constructors / destructors
+
+  VkoMemory(vkObject *);
   virtual ~VkoMemory();
-  
+  void delData();                     // clears all data
+
 private:
 
   VkExportMemoryAllocateInfo       *_exportInfo;
@@ -80,11 +62,8 @@ private:
   VkMemoryAllocateFlagsInfo        *_flagsInfo;
   VkMemoryDedicatedAllocateInfo    *_dedicatedInfo;
 
-  VkoMemoryManager *_parent;
   vkObject *_vko;
-
   friend class vkObject;
-  friend class VkoMemoryManager;
 };
 
 

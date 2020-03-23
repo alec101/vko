@@ -10,10 +10,10 @@ public:
   VkFramebuffer framebuffer;  // after being built, this will hold the VkFramebuffer handle 
 
   VkRenderPass renderPass;    // the renderpass working with this framebuffer
-  uint32_t dx, dy, layers;      // framebuffer dimensions
+  uint32_t dx, dy, layers;    // framebuffer dimensions
 
   VkImageView *imageView;     // after being built, this is an array of imageviews for every attachement
-  uint32_t nrImageViews;        // after being built, this is the number of imageviews
+  uint32_t nrImageViews;      // after being built, this is the number of imageviews
 
   inline operator VkFramebuffer() { return framebuffer; }
 
@@ -36,14 +36,22 @@ public:
   // <in_index>: already built attachment index that will be changed
   void changeAttachment(uint32_t in_index, VkImage in_image, VkFormat in_imageFormat, VkImageAspectFlags in_aspect, uint32_t in_baseLayer= 0, uint32_t in_nrLayers= 1);
 
+  struct PNext {
+    void *VkImageViewCreateInfo;
+    void *VkFramebufferCreateInfo;
+    void delData() { VkImageViewCreateInfo= VkFramebufferCreateInfo= nullptr; }
+  } pNext;
+
+
   // main funcs
 
   bool build();
-  inline bool rebuild() { destroy(); return build(); }
   void destroy();
+  inline bool rebuild() { destroy(); return build(); }
 
-  VkoFramebuffer();
-  ~VkoFramebuffer();
+  VkoFramebuffer(vkObject *in_parent);
+  ~VkoFramebuffer() { destroy(); delData(); }
+  void delData();
 
 private:
   chainList _attachments;
@@ -57,27 +65,9 @@ private:
     _Attachment(): image(NULL) {}
   };
 
-  vkObject *_parent;
+  vkObject *_vko;
   friend class vkObject;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -1,41 +1,10 @@
 #include "../include/vkObject.h"
 
-
-
-  /*
-
+/*
   TODO:
 
-  -[MAYBE] VkoCommandPool could be extended into VkoCommands object.
-    it must incorporate ONE pool/
-    it must be able to create many primary buffers
-    it must be able to create many secondary buffers
-    when it's built, you should just have handy vars for everything command-buffer/pool related
+*/
 
-
-  -[TOP PRIORITY] EXTENSIONS HANDLING:
-  
-    i think... vko::pNext.a= point to your specific extension
-               vko::pNext.b= point to your specific extension
-               vko::pNext.c= point to your specific extension
-               vko::pNext.d= point to your specific extension
-
-               BETTER:
-           vkoObjectX::pNext.nameOfTheStruct.addStruct(..) or just add(..)
-
-    and this should handle all new extensions, for example
-    if not, just add new funcs
-      but im thinking new funcs only for KHR extensions...
-
-
-
-
-  */
-
-
-
-
-//VkoFuncs *vkoGlb= nullptr;
 
 VkInstance vkObject::instance= nullptr;
 
@@ -43,8 +12,9 @@ VkInstance            vkObject::VkoConfiguration::customInstance= nullptr;
 VkInstanceCreateInfo *vkObject::VkoConfiguration::instanceInfo= nullptr;
 VkApplicationInfo     vkObject::VkoConfiguration::appInfo= { VK_STRUCTURE_TYPE_APPLICATION_INFO, nullptr, 0, 0, 0, 0 };
 
-uint32_t           vkObject::VkoInfo::nrPhysicalDevices= 0;
-VkoPhysicalDevice *vkObject::VkoInfo::physicalDevice=    nullptr;
+uint32_t                         vkObject::VkoInfo::nrPhysicalDevices= 0;
+VkoPhysicalDevice               *vkObject::VkoInfo::physicalDevice=    nullptr;
+VkPhysicalDeviceMemoryProperties vkObject::VkoInfo::memProp;
 
 vkObject::VkoConfiguration::VkoVer vkObject::VkoConfiguration::versionRequest= {1, 1, 0 };
 void *vkObject::_vulkanLib= nullptr;
@@ -56,10 +26,7 @@ VkoFuncs *vkObject::glb= &vkObject::instanceLinked;  // pointer to the instance-
 
 
 vkObject::vkObject(): VkoFuncs() {
-  //vkr= nullptr;
-  //vk= nullptr;
-
-  //vkObject::instance= nullptr;
+  objects._vko= this;
 
   memCallback= nullptr;
   device= nullptr;
@@ -67,28 +34,12 @@ vkObject::vkObject(): VkoFuncs() {
   nrQueues= 0;
   queue= nullptr;              // INIT 1 - NOT DEALOCATED <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-  memory._parent= this;
-  buffers._parent= this;
-
-
   cfg.parent= this;
   cfg.extensions._vko= this;
 
-  //cfg.customInstance= nullptr;
-
-  // vulkan app info
-  /*
-  cfg.appInfo.sType= VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  cfg.appInfo.pNext= nullptr;
-  cfg.appInfo.apiVersion= 0;
-  cfg.appInfo.pApplicationName= nullptr;
-  cfg.appInfo.applicationVersion= 0;
-  cfg.appInfo.pEngineName= nullptr;
-  cfg.appInfo.engineVersion= 0;
-  */
-
   info.apiVersion= 0;
-
+  info.memProp.memoryHeapCount= 0;
+  info.memProp.memoryTypeCount= 0;
 
   _linkLib();
   _linkCriticalFuncs(this);
@@ -105,38 +56,25 @@ vkObject::vkObject(): VkoFuncs() {
 
 
 
-/*
-void vkObject::init(const osiRenderer *in_r) {
-  if(in_r->type!= 1) return;
-  vkr= (osiVkRenderer *)in_r;
-  vk= &vkr->vk;
-
-  device= vkr->vkDevice;
-  memory.init();
-}
-*/
-
-
 vkObject::~vkObject() {
 }
 
 
 void vkObject::destroy() {
-  if(device== nullptr) return;
+  if(device)
+    DeviceWaitIdle(device);
 
-  // SHADERS >>> parent->shaders.delData();
-  // WIP , THERE HAS TO BE A CLEAR ORDER IN HERE
-  delCommandPools();
-  delDescriptorManagers();
-  delSwapchains();
-  delRenderPasses();
-  delFramebuffers();
-  
-  // VkoSemaphore destroy
-  for(VkoSemaphore *p= (VkoSemaphore *)_VkoSemaphores.first; p; p= (VkoSemaphore *)p->next)
-    p->destroy();
-
-
+  objects.delAllShaders();
+  objects.delAllCommandPools();
+  objects.delAllSwapchains();
+  objects.delAllRenderPasses();
+  objects.delAllFramebuffers();
+  objects.delAllBuffers();
+  objects.delAllDescriptorPools();
+  objects.delAllDescriptorSetLayouts();
+  objects.delAllSamplers();
+  objects.delAllSemaphores();
+  objects.delAllMemories();
 
 }
 
@@ -149,102 +87,218 @@ vkObject::VkoInfo::~VkoInfo() {
 }
 
 
+// until funcs
 
+uint32_t vkObject::findMemory(uint32_t in_memTypeBits, VkMemoryPropertyFlags in_prop) {
+  // mem type https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
+  for(uint32_t a= 0; a< info.memProp.memoryTypeCount; a++)
+    if((in_memTypeBits& (1 << a)) && ((info.memProp.memoryTypes[a].propertyFlags& in_prop)== in_prop))
+      return a;
 
-VkoSwapchain *vkObject::addSwapchain() {
-  VkoSwapchain *p= new VkoSwapchain;
-
-  p->_parent= this;
-
-  swapchainList.add(p);
-  return p;
+  return ~0u;
 }
 
 
-void vkObject::delSwapchains() {
+
+
+// VkoBuffer
+
+VkoBuffer *vkObject::Objects::addBuffer() {
+  VkoBuffer *p= new VkoBuffer(_vko);
+  buffers.add(p);
+  return p;
+}
+
+void vkObject::Objects::delBuffer(VkoBuffer *out_p) {
+  out_p->destroy();
+  buffers.del(out_p);
+}
+
+void vkObject::Objects::delAllBuffers() {
+  while(buffers.first)
+    delBuffer((VkoBuffer *)buffers.first);
+}
+
+// VkoMemory
+
+VkoMemory *vkObject::Objects::addMemory() {
+  VkoMemory *p= new VkoMemory(_vko);
+  memories.add(p);
+  return p;
+}
+
+void vkObject::Objects::delMemory(VkoMemory *out_p) {
+  out_p->destroy();
+  memories.del(out_p);
+}
+
+void vkObject::Objects::delAllMemories() {
+  while(memories.first)
+    delMemory((VkoMemory *)memories.first);
+}
+
+// VkoShader
+
+VkoShader *vkObject::Objects::addShader() {
+  VkoShader *p= new VkoShader(_vko);
+  shaders.add(p);
+  return p;
+}
+
+void vkObject::Objects::delShader(VkoShader *out_p) {
+  out_p->destroy();
+  shaders.del(out_p);
+}
+
+void vkObject::Objects::delAllShaders() {
+  while(shaders.first)
+    delShader((VkoShader *)shaders.first);
+}
+
+// VkoSwapchain
+
+VkoSwapchain *vkObject::Objects::addSwapchain() {
+  VkoSwapchain *p= new VkoSwapchain(_vko);
+  swapchains.add(p);
+  return p;
+}
+
+void vkObject::Objects::delSwapchain(VkoSwapchain *out_p) {
   // from specs: The surface must not be destroyed until after the swapchain is destroyed.
-  for(VkoSwapchain *p= (VkoSwapchain *)swapchainList.first; p; p= (VkoSwapchain *)p->next)
-    p->destroy();
+  out_p->destroy();
+  swapchains.del(out_p);
+}
+
+void vkObject::Objects::delAllSwapchains() {
+  while(swapchains.first)
+    delSwapchain((VkoSwapchain *)swapchains.first);
 }
 
 
-VkoRenderPass *vkObject::addRenderPass() {
-  VkoRenderPass *p= new VkoRenderPass;
+// VkoRenderpass
 
-  p->_parent= this;
-
-  renderPassList.add(p);
+VkoRenderPass *vkObject::Objects::addRenderPass() {
+  VkoRenderPass *p= new VkoRenderPass(_vko);
+  renderPasses.add(p);
   return p;
 }
 
-
-void vkObject::delRenderPasses() {
-  for(VkoRenderPass *p= (VkoRenderPass *)renderPassList.first; p; p= (VkoRenderPass *)p->next)
-    if(p->renderPass!= 0)
-      p->destroy();
+void vkObject::Objects::delRenderPass(VkoRenderPass *out_p) {
+  out_p->destroy();
+  renderPasses.del(out_p);
 }
 
+void vkObject::Objects::delAllRenderPasses() {
+  while(renderPasses.first)
+    delRenderPass((VkoRenderPass *)renderPasses.first);
+}
 
-VkoFramebuffer *vkObject::addFramebuffer() {
-  VkoFramebuffer *p= new VkoFramebuffer;
+// frame buffers
 
-  p->_parent= this;
-
-  framebuffersList.add(p);
+VkoFramebuffer *vkObject::Objects::addFramebuffer() {
+  VkoFramebuffer *p= new VkoFramebuffer(_vko);
+  framebuffers.add(p);
   return p;
 }
 
-
-void vkObject::delFramebuffers() {
-  for(VkoFramebuffer *p= (VkoFramebuffer *)framebuffersList.first; p; p= (VkoFramebuffer *)p->next)
-    if(p->framebuffer!= 0)
-      p->destroy();
+void vkObject::Objects::delFramebuffer(VkoFramebuffer *out_p) {
+  out_p->destroy();
+  framebuffers.del(out_p);
 }
 
+void vkObject::Objects::delAllFramebuffers() {
+  while(framebuffers.first)
+    delFramebuffer((VkoFramebuffer *)framebuffers.first);
+}
 
+// command pools
 
-
-VkoCommandPool *vkObject::addCommandPool() {
-  VkoCommandPool *p= new VkoCommandPool;
-
-  p->_parent= this;
-
-  commandPoolList.add(p);
+VkoCommandPool *vkObject::Objects::addCommandPool() {
+  VkoCommandPool *p= new VkoCommandPool(_vko);
+  commandPools.add(p);
   return p;
 }
 
-
-void vkObject::delCommandPools() {
-  for(VkoCommandPool *p= (VkoCommandPool *)commandPoolList.first; p; p= (VkoCommandPool *)p->next)
-    p->destroy();
+void vkObject::Objects::delCommandPool(VkoCommandPool *out_p) {
+  out_p->destroy();
+  commandPools.del(out_p);
 }
 
+void vkObject::Objects::delAllCommandPools() {
+  while(commandPools.first)
+    delCommandPool((VkoCommandPool *)commandPools.first);
+}
 
-VkoDescriptorManager *vkObject::addDescriptorManager() {
-  VkoDescriptorManager *p= new VkoDescriptorManager;
+// descriptor pools
 
-  p->_parent= this;
-
-  descriptorManagerList.add(p);
+VkoDescriptorPool *vkObject::Objects::addDescriptorPool() {
+  VkoDescriptorPool *p= new VkoDescriptorPool(_vko);
+  descriptorPools.add(p);
   return p;
 }
 
-
-void vkObject::delDescriptorManagers() {
-  for(VkoDescriptorManager *p= (VkoDescriptorManager *)descriptorManagerList.first; p; p= (VkoDescriptorManager *)p->next)
-    p->destroy();
+void vkObject::Objects::delDescriptorPool(VkoDescriptorPool *out_p) {
+  out_p->destroy();
+  descriptorPools.del(out_p);
 }
 
+void vkObject::Objects::delAllDescriptorPools() {
+  while(descriptorPools.first)
+    delDescriptorPool((VkoDescriptorPool *)descriptorPools.first);
+}
 
+// descriptor set layouts
 
-VkoSemaphore *vkObject::addSemaphore() {
-  VkoSemaphore *s= new VkoSemaphore;
+VkoDescriptorSetLayout *vkObject::Objects::addDescriptorSetLayout() {
+  VkoDescriptorSetLayout *p= new VkoDescriptorSetLayout(_vko);
+  descriptorSetLayouts.add(p);
+  return p;
+}
 
-  s->_parent= this;
+void vkObject::Objects::delDescriptorSetLayout(VkoDescriptorSetLayout *out_p) {
+  out_p->destroy();
+  descriptorSetLayouts.del(out_p);
+}
 
-  _VkoSemaphores.add(s);
+void vkObject::Objects::delAllDescriptorSetLayouts() {
+  while(descriptorSetLayouts.first)
+    delDescriptorSetLayout((VkoDescriptorSetLayout *)descriptorSetLayouts.first);
+}
+
+// semaphores
+
+VkoSemaphore *vkObject::Objects::addSemaphore() {
+  VkoSemaphore *s= new VkoSemaphore(_vko);
+  semaphores.add(s);
   return s;
+}
 
+void vkObject::Objects::delSemaphore(VkoSemaphore *out_p) {
+  out_p->destroy();
+  semaphores.del(out_p);
+}
+
+void vkObject::Objects::delAllSemaphores() {
+  while(semaphores.first)
+    delSemaphore((VkoSemaphore *)semaphores.first);
+}
+
+// samplers
+
+VkoSampler *vkObject::Objects::addSampler() {
+  VkoSampler *p= new VkoSampler(_vko);
+  samplers.add(p);
+  return p;
+}
+
+void vkObject::Objects::delSampler(VkoSampler *out_p) {
+  out_p->destroy();
+  samplers.del(out_p);
+}
+
+void vkObject::Objects::delAllSamplers() {
+  while(samplers.first)
+    delSampler((VkoSampler *)samplers.first);
 }
 
 
@@ -282,7 +336,7 @@ bool vkObject::_createInstance() {
   if(cfg.instanceInfo== nullptr) {
 
     instInfo.sType= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instInfo.pNext= nullptr;
+    instInfo.pNext= cfg.pNext.VkInstanceCreateInfo;
     instInfo.flags= 0;
     instInfo.pApplicationInfo= &cfg.appInfo;
 
@@ -353,10 +407,10 @@ bool vkObject::_createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_
  
   cfg.extensions.populateAvailabilityDevice(physicalDevice);
 
-  // custom deviceInfo would be best, if not osi will create an automatic one enabling everything
+  // custom deviceInfo would be best, if not, one will be created, enabling everything
   if(cfg.deviceInfo== nullptr) {
     dci.sType= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    dci.pNext= NULL;
+    dci.pNext= cfg.pNext.VkDeviceCreateInfo;
     dci.flags= 0;
     dci.enabledLayerCount= 0;
     dci.ppEnabledLayerNames= nullptr;
@@ -757,7 +811,10 @@ bool vkObject::build() {
     return false;
 
   _linkDeviceFuncs(this, instance, *this);
-  memory.init();
+
+  // memory information
+  GetPhysicalDeviceMemoryProperties(*this, &info.memProp);
+
   _populateVkQueue();
 
   #ifdef VKO_USE_GLOBAL_FUNCS
@@ -885,6 +942,8 @@ void vkObject::_strCopy(char **out_dst, const char *in_src) {
   *out_dst= (char *)new uint8_t[_strlen8(in_src)];
   _strcpy8(*out_dst, in_src);
 }
+
+
 
 
 

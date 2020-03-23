@@ -7,7 +7,6 @@
 
 class VkoRenderPass: public chainData {
 public:
-  //uint32_t index;             // render pass index (starts from 0, each render pass adds 1)
   VkRenderPass renderPass;    // vulkan render pass instance
   inline operator VkRenderPass() { return renderPass; }
 
@@ -81,16 +80,24 @@ public:
 
   inline void disableMultiView() { _multiView.delData(); }
 
-  // after everything is setup, call this to build the renderpass and VkRenderPass instance
+
+  struct PNext {
+    void *VkRenderPassCreateInfo;
+    void delData() { VkRenderPassCreateInfo= nullptr; }
+  } pNext;
+
+
+  // after everything is setup, call build to have a fully functional object
+
   bool build();
-
   void destroy();
-
+  inline bool rebuild() { destroy(); return build(); }
 
   // constructor / destructor
 
-  VkoRenderPass();
+  VkoRenderPass(vkObject *in_parent);
   ~VkoRenderPass();
+  void delData();
 
 private:
   chainList _attachments;       // _Attachment
@@ -118,7 +125,8 @@ private:
     chainList preserveAttachments;        // _AttachmentRef
     bool enableResolve;
     bool enableDepthStencil;
-    _Subpass(): enableResolve(false), enableDepthStencil(false) {}
+    inline _Subpass() { delData(); }
+    inline void delData() { enableResolve= false; enableDepthStencil= false; }
   };
 
   class _ColorAtt: public chainData {
@@ -153,39 +161,17 @@ private:
     const uint32_t  *pCorrelationMasks;
     _MultiView(): pViewMasks(nullptr), pViewOffsets(nullptr), pCorrelationMasks(nullptr) { delData(); }
     void delData() { enable= false; subpassCount= dependencyCount= correlationMaskCount= 0;
-                      if(pViewMasks)        delete[] pViewMasks;        pViewMasks= nullptr;
-                      if(pViewOffsets)      delete[] pViewOffsets;      pViewOffsets= nullptr;
+                      if(pViewMasks)        delete[] pViewMasks;        pViewMasks=        nullptr;
+                      if(pViewOffsets)      delete[] pViewOffsets;      pViewOffsets=      nullptr;
                       if(pCorrelationMasks) delete[] pCorrelationMasks; pCorrelationMasks= nullptr; }
     ~_MultiView() { delData(); }
   } _multiView;
-  vkObject *_parent;
 
+  vkObject *_vko;
   friend class vkObject;
-    
 }; // renderPass;
   
   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

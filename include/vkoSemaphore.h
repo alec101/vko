@@ -11,18 +11,25 @@ public:
   VkSemaphore semaphore;
   inline operator VkSemaphore() { return semaphore; }
 
-  inline VkoSemaphore(): semaphore(0), _parent(nullptr), _handleTypes(0), name(nullptr) { dwAccess= 0, pAttributes.bInheritHandle= 0, pAttributes.lpSecurityDescriptor= 0, pAttributes.nLength= 0; }
-  inline VkoSemaphore(vkObject *in_parent): VkoSemaphore() { _parent= in_parent; }
-  inline ~VkoSemaphore() { if(name) delete[] name; }
+  VkPipelineStageFlags stages; // [def:0] _IF_ applicable, what pipeline stages are affected by it
 
-  // must set, if not using constructor to set it
-  // inline void setParent(vkObject *in_parent) { _parent= in_parent; }
   inline void addExport(VkExternalSemaphoreHandleTypeFlags in_handleTypes) { _handleTypes= in_handleTypes; }
   void addWin32Export(const SECURITY_ATTRIBUTES *in_pAttributes, DWORD in_dwAccess, LPCWSTR in_name);
 
+  struct PNext {
+    void *VkExportSemaphoreCreateInfo;
+    void delData() { VkExportSemaphoreCreateInfo= nullptr; }
+  } pNext;
+
+
   bool build();    // set everything then this func will build the semaphore
   void destroy();
-  
+  inline bool rebuild() { destroy(); return build(); }
+
+  VkoSemaphore(vkObject *in_parent);
+  ~VkoSemaphore() { destroy(); delData(); }
+  void delData();
+
 private:
   // export info
   VkExternalSemaphoreHandleTypeFlags _handleTypes;
@@ -31,27 +38,9 @@ private:
   DWORD               dwAccess;
   LPCWSTR             name;
 
-  vkObject *_parent;
+  vkObject *_vko;
   friend class vkObject;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

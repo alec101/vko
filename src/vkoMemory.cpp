@@ -2,107 +2,14 @@
 
 
 
-
-
-///======================///
-// VkoMEMORYMANAGER class //
-///======================///
-
-VkoMemoryManager::VkoMemoryManager() {
-  _parent= nullptr;
-  memProp.memoryHeapCount= 0;
-  memProp.memoryTypeCount= 0;
-
-  // makeme;
-}
-
-
-VkoMemoryManager::~VkoMemoryManager() {
-  // makeme;
-}
-
-
-void VkoMemoryManager::init() {
-  // mem allocation https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#memory
-  // pipeline barriers https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap6.html#synchronization-pipeline-barriers
-  // mem bariers https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap6.html#synchronization-memory-barriers
-
-  // device memory https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#memory-device
-  
-  _parent->GetPhysicalDeviceMemoryProperties(*_parent, &memProp);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-// Find a memory in `memoryTypeBitsRequirement` that includes all of `requiredProperties`
-int32_t findProperties(const VkPhysicalDeviceMemoryProperties* pMemoryProperties, uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties) {
-  const uint32_t memoryCount = pMemoryProperties->memoryTypeCount;
-  for (uint32_t a = 0; a < memoryCount; ++a) {
-
-    const uint32_t memoryTypeBits = (1 << a);
-    const bool isRequiredMemoryType = memoryTypeBitsRequirement & memoryTypeBits;
-
-    const VkMemoryPropertyFlags properties = pMemoryProperties->memoryTypes[a].propertyFlags;
-    const bool hasRequiredProperties = (properties & requiredProperties) == requiredProperties;
-
-    if (isRequiredMemoryType && hasRequiredProperties)
-      return static_cast<int32_t>(a);
-  }
-
-    // failed to find memory type
-    return -1;
-}
-*/
-
-uint32_t VkoMemoryManager::findMemory(uint32_t in_memTypeBits, VkMemoryPropertyFlags in_prop) {
-  // mem type https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
-  for(uint32_t a= 0; a< memProp.memoryTypeCount; a++)
-    if((in_memTypeBits& (1 << a)) && ((memProp.memoryTypes[a].propertyFlags& in_prop)== in_prop))
-      return a;
-
-  return ~0u;
-}
-
-
-VkoMemory *VkoMemoryManager::addMemoryBlock() {
-  VkoMemory *p= nullptr;
-  p= new VkoMemory;
-  p->_parent= this;
-  p->_vko= _parent;
-  memoryBlocks.add(p);
-  return p;
-}
-
-
-
-
-
-
-
-
-
 ///===============///
 // vkoMEMORY class //
 ///===============///
 
-VkoMemory::VkoMemory() {
-  _parent= nullptr;
-  memory= NULL;
-  size= 0;
-  typeIndex= 0;
-  typeFlags= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+VkoMemory::VkoMemory(vkObject *in_parent): _vko(in_parent) {
+  memory= 0;
 
-  // export/import
+  // init pointers
 
   _exportInfo=    nullptr;
   _exportWin32=   nullptr;
@@ -110,28 +17,42 @@ VkoMemory::VkoMemory() {
   _importWin32=   nullptr;
   _flagsInfo=     nullptr;
   _dedicatedInfo= nullptr;
+
+  delData();      // sets default values too
 }
 
 
 VkoMemory::~VkoMemory() {
-  
+  if(memory) destroy();
+  delData();
+}
+
+
+void VkoMemory::delData() {
   if(_exportWin32) {
     if(_exportWin32->pAttributes) delete   _exportWin32->pAttributes;
     if(_exportWin32->name)        delete[] _exportWin32->name;
-    delete _exportWin32;
+    delete _exportWin32; _exportWin32= nullptr;
   }
 
   if(_importWin32) {
     if(_importWin32->name)        delete[] _importWin32->name;
-    delete _importWin32;
+    delete _importWin32; _importWin32= nullptr;
   }
 
-  if(_exportInfo)    delete _exportInfo;
-  if(_importFd)      delete _importFd;
-  if(_flagsInfo)     delete _flagsInfo;
-  if(_dedicatedInfo) delete _dedicatedInfo;
-}
+  if(_exportInfo)    { delete _exportInfo;    _exportInfo=    nullptr; }
+  if(_importFd)      { delete _importFd;      _importFd=      nullptr; }
+  if(_flagsInfo)     { delete _flagsInfo;     _flagsInfo=     nullptr; }
+  if(_dedicatedInfo) { delete _dedicatedInfo; _dedicatedInfo= nullptr; }
 
+  pNext.delData();
+
+  // DEFAULT values
+
+  size= 0;
+  typeIndex= 0;
+  typeFlags= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+}
 
 
 // VkoMemory CONFIGURATION
@@ -139,9 +60,9 @@ VkoMemory::~VkoMemory() {
 
 bool VkoMemory::configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_required, VkMemoryPropertyFlags in_prefered, uint32_t in_typeBits) {
   _vko->clearError();
-  uint32_t found= _parent->findMemory(in_typeBits, in_required| in_prefered);
+  uint32_t found= _vko->findMemory(in_typeBits, in_required| in_prefered);
   if(found== ~0u)
-    found= _parent->findMemory(in_typeBits, in_required);
+    found= _vko->findMemory(in_typeBits, in_required);
 
   if(found== ~0u) { _vko->errorText= __FUNCTION__": Could not find required Vulkan physical device memory"; return false; }
 
@@ -149,7 +70,7 @@ bool VkoMemory::configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_require
 
   size= in_size;
   typeIndex= found;
-  typeFlags= _parent->memProp.memoryTypes[found].propertyFlags;
+  typeFlags= _vko->info.memProp.memoryTypes[found].propertyFlags;
   return true;
 }
 
@@ -244,54 +165,56 @@ bool VkoMemory::build() {
   VkMemoryAllocateInfo allocInfo;   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryAllocateInfo
   allocInfo.sType= VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocInfo.pNext= nullptr;
-  const void **pNext= &allocInfo.pNext;
+  const void **_pNext= &allocInfo.pNext;
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryAllocateInfo
   if(_exportInfo!= nullptr) {
-    *pNext= _exportInfo;
+    *_pNext= _exportInfo;
     _exportInfo->pNext= nullptr;
-    pNext= &_exportInfo->pNext;
+    _pNext= &_exportInfo->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryWin32HandleInfoKHR
   if(_exportWin32!= nullptr) {
-    *pNext= _exportWin32;
+    *_pNext= _exportWin32;
     _exportWin32->pNext= nullptr;
-    pNext= &_exportWin32->pNext;
+    _pNext= &_exportWin32->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryFdInfoKHR
   if(_importFd!= nullptr) {
-    *pNext= _importFd;
+    *_pNext= _importFd;
     _importFd->pNext= nullptr;
-    pNext= &_importFd->pNext;
+    _pNext= &_importFd->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryWin32HandleInfoKHR
   if(_importWin32!= nullptr) {
-    *pNext= _importWin32;
+    *_pNext= _importWin32;
     _importWin32->pNext= nullptr;
-    pNext= &_importWin32->pNext;
+    _pNext= &_importWin32->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryAllocateFlagsInfo
   if(_flagsInfo!= nullptr) {
-    *pNext= _flagsInfo;
+    *_pNext= _flagsInfo;
     _flagsInfo->pNext= nullptr;
-    pNext= &_flagsInfo->pNext;
+    _pNext= &_flagsInfo->pNext;
   }
 
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryDedicatedAllocateInfo
   if(_dedicatedInfo!= nullptr) {
-    *pNext= _dedicatedInfo;
+    *_pNext= _dedicatedInfo;
     _dedicatedInfo->pNext= nullptr;
-    pNext= &_dedicatedInfo->pNext;
+    _pNext= &_dedicatedInfo->pNext;
   }
+
+  *_pNext= pNext.VkMemoryAllocateInfo;  // final chain in pNext is the custom one, if it is used
 
   allocInfo.allocationSize= size;
   allocInfo.memoryTypeIndex= typeIndex;
   
-  if(!_vko->errorCheck(_vko->AllocateMemory(*_parent->_parent, &allocInfo, *_parent->_parent, &memory),
+  if(!_vko->errorCheck(_vko->AllocateMemory(*_vko, &allocInfo, *_vko, &memory),
     __FUNCTION__": Failed to build Vulkan memory block."))
     goto Exit;
 
@@ -304,7 +227,12 @@ Exit:
 
 
 
-
+void VkoMemory::destroy() {
+  if(memory) {
+    if(_vko) _vko->FreeMemory(*_vko, memory, *_vko);
+    memory= 0;
+  }
+}
 
 
 

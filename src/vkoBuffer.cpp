@@ -2,38 +2,37 @@
 
 
 
-///======================---------------------///
-// buffer MANAGER object ===================== //
-///======================---------------------///
-
-VkoBufferManager::VkoBufferManager() {
-  _parent= nullptr;
-}
-
-
-VkoBufferManager::~VkoBufferManager() {
-
-}
-
-
-
-
-
-VkoBuffer *VkoBufferManager::addBuffer() {
-  VkoBuffer *p= new VkoBuffer;
-  p->_parent= this;
-  list.add(p);
-  return p;
-}
-
-
 
 ///==============------------------///
 // BUFFER object ================== //
 ///==============------------------///
 
 
-VkoBuffer::VkoBuffer(): buffer(0), _parent(nullptr) {
+VkoBuffer::VkoBuffer(vkObject *in_parent): _vko(in_parent) {
+  buffer= 0;
+
+  _createInfo.pQueueFamilyIndices= nullptr;        // INIT 1
+
+  delData();
+}
+
+
+VkoBuffer::~VkoBuffer() {
+  delData();
+}
+
+
+void VkoBuffer::delData() {
+  if(buffer) destroy();
+  offset= 0;
+  size= 0;
+
+  pNext.delData();
+
+  memRequirements.alignment= 0;
+  memRequirements.memoryTypeBits= 0;
+  memRequirements.size= 0;
+
   _createInfo.sType= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   _createInfo.pNext= nullptr;
   _createInfo.flags= 0;
@@ -41,28 +40,20 @@ VkoBuffer::VkoBuffer(): buffer(0), _parent(nullptr) {
   _createInfo.size= 0;
   _createInfo.usage= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
   _createInfo.sharingMode= VK_SHARING_MODE_EXCLUSIVE;
-
+  
   _createInfo.queueFamilyIndexCount= 0;
-  _createInfo.pQueueFamilyIndices= nullptr;        // INIT 1
-
-  memRequirements.alignment= 0;
-  memRequirements.memoryTypeBits= 0;
-  memRequirements.size= 0;
-
-  offset= 0;
-}
-
-
-VkoBuffer::~VkoBuffer() {
-  if(_createInfo.pQueueFamilyIndices)
+  if(_createInfo.pQueueFamilyIndices) {
     delete[] _createInfo.pQueueFamilyIndices;   // DEALLOC 1
+    _createInfo.pQueueFamilyIndices= nullptr;
+  }
 }
 
 
 void VkoBuffer::destroy() {
-  if(_parent->_parent->device== nullptr) return;
   if(buffer) {
-    _parent->_parent->DestroyBuffer(_parent->_parent->device, buffer, _parent->_parent->memCallback);
+    if(_vko)
+      if(_vko->device)
+        _vko->DestroyBuffer(*_vko, buffer, *_vko);
     buffer= 0;
   }
 }
@@ -70,7 +61,9 @@ void VkoBuffer::destroy() {
 
 // settings
 
-void VkoBuffer::setSize(uint32_t in_size) {
+void VkoBuffer::setSize(uint32_t in_size, uint32_t in_offset) {
+  size= in_size;
+  offset= in_offset;
   _createInfo.size= in_size;
 }
 
@@ -81,7 +74,7 @@ void VkoBuffer::setFlags(VkBufferCreateFlagBits in_flags) {
 }
 
 
-void VkoBuffer::setUsage(VkBufferUsageFlagBits in_usage) {
+void VkoBuffer::setUsage(VkBufferUsageFlags in_usage) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap11.html#VkBufferUsageFlagBits
   _createInfo.usage= in_usage;
 }
@@ -149,40 +142,18 @@ void VkoBuffer::setFamilies(uint32_t in_nrFamilies, const uint32_t *in_families)
 bool VkoBuffer::build() {
   bool ret= false;
 
-  if(!_parent->_parent->errorCheck(_parent->_parent->CreateBuffer(*_parent->_parent, &_createInfo, *_parent->_parent, &buffer), __FUNCTION__": Vulkan buffer create failed"))
+  _createInfo.pNext= pNext.VkBufferCreateInfo;
+
+  if(!_vko->errorCheck(_vko->CreateBuffer(*_vko, &_createInfo, *_vko, &buffer), __FUNCTION__": Vulkan buffer create failed"))
     goto Exit;
 
-  _parent->_parent->GetBufferMemoryRequirements(*_parent->_parent, *this, &memRequirements);
+  _vko->GetBufferMemoryRequirements(*_vko, *this, &memRequirements);
 
   ret= true; // success
 
 Exit:
   return ret;
 }
-
-
-
-
-
-///=================///
-// memory management //
-///=================///
-
-
-bool VkoBuffer::allocMem() {
-   
-
-  // WOULD BE ONLY THIS FUNC?
-  
-  //_parent->vk->BindBufferMemory( );
-  
-  return false;
-
-  // could possibly create chainlists in the VkoMemory objects, so know the buffers/images allocated from it
-  // could possibly create chainlists in the vkobject, or a bufferManager object
-}
-
-
 
 
 
