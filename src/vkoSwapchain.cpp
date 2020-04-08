@@ -16,6 +16,7 @@ VkoSwapchain::VkoSwapchain(vkObject *in_parent): cfg(this), _vko(in_parent) {
   _formats= nullptr;                      // INIT 2
   swapInfo.pQueueFamilyIndices= nullptr;  // INIT 3
   _imgFormatInfo.pViewFormats= nullptr;   // INIT 4
+  rebuildRequired= false;
 
   delData();
 }
@@ -94,6 +95,8 @@ void VkoSwapchain::destroy() {
       _vko->DestroySwapchainKHR(*_vko, swapchain, *_vko);
     swapchain= 0;
   }
+
+  rebuildRequired= false;
 
   currentIndex= ~0;
   dx= dy= 0;
@@ -238,7 +241,7 @@ bool VkoSwapchain::build() {
   *_pNext= cfg.pNext.VkSwapchainCreateInfoKHR;  // last pNext in chain is the custom one
 
   /// image size
-  if(cfg._customSize.width && cfg._customSize.width)         // custom size
+  if(cfg._customSize.width && cfg._customSize.height)         // custom size
     swapInfo.imageExtent= cfg._customSize;
   else
     swapInfo.imageExtent= surfaceCfg.currentExtent;
@@ -304,28 +307,6 @@ bool VkoSwapchain::rebuild() {
 
 
 
-
-bool VkoSwapchain::check() {
-  // VK_SUCCESS                 = ok
-  // VK_SUBOPTIMAL_KHR          = no longer matches the surface size, it still functions, but RECREATE is needed
-  // VK_ERROR_OUT_OF_DATE_KHR   = the surface has changed in such a way that it is no longer compatible with the swapchain. No longer functions at all.
-  // VK_ERROR_SURFACE_LOST_KHR  = the surface is no longer available.
-
-  // VK_ERROR_OUT_OF_HOST_MEMORY
-  // VK_ERROR_OUT_OF_DEVICE_MEMORY
-  // VK_ERROR_DEVICE_LOST
-  
-  // CHOOSEN THE FAST WAY, ONLY TRUE AND FALSE. SUBJECT TO CHANGE
-
-  VkResult r= _vko->GetSwapchainStatusKHR(*_vko, swapchain);
-  if(r== VK_SUCCESS) return true;
-  else return false;
-}
-
-
-
-
-
 // 
 bool VkoSwapchain::aquire(VkSemaphore in_finishPresenting, VkFence in_finishPresentingFence, uint64_t in_timeout, uint32_t *out_index) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkAcquireNextImageInfoKHR
@@ -338,15 +319,20 @@ bool VkoSwapchain::aquire(VkSemaphore in_finishPresenting, VkFence in_finishPres
   VK_ERROR_OUT_OF_DATE_KHR happened <<<<<<<<<<<<<<<<<
   */
 
+  if(!swapchain) { currentIndex= ~0; if(out_index) *out_index= currentIndex; return false; }
+
   #ifdef VKO_BE_CHATTY
   bool chatty= true;      // DEBUG
   #endif
 
   bool ret= true;
-
+  
   VkResult res= _vko->AcquireNextImageKHR(*_vko, swapchain, in_timeout, in_finishPresenting, in_finishPresentingFence, &currentIndex);
+
   if(res!= VK_SUCCESS) {
     if((res== VK_SUBOPTIMAL_KHR) || (res== VK_ERROR_OUT_OF_DATE_KHR)) {
+      _vko->DeviceWaitIdle(*_vko);
+      
       if(rebuild()) {
         #ifdef VKO_BE_CHATTY
         if(chatty) printf("WARNING: Vulkan surface rebuilt due %s\n", (res== VK_SUBOPTIMAL_KHR? "VK_SUBOPTIMAL_KHR": "VK_ERROR_OUT_OF_DATE_KHR")); // DEBUG
@@ -366,6 +352,15 @@ bool VkoSwapchain::aquire(VkSemaphore in_finishPresenting, VkFence in_finishPres
 
 
 
+void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) {
+  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
+  
+  _presentInfo.pWaitSemaphores= &in_finishDrawing, _presentInfo.pImageIndices= &in_surfaceIndex;
+
+  VkResult res= _vko->QueuePresentKHR(in_queue, &_presentInfo);
+
+  rebuildRequired= (res== VK_SUCCESS? false: true);
+};
 
 
 

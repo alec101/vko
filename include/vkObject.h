@@ -77,6 +77,7 @@ class vkObject;
 
 
 class VkoSemaphore;
+class VkoFence;
 struct VkoQueue;
 struct VkoFuncs;
 
@@ -193,6 +194,7 @@ public:
     chainList framebuffers;         // [VkoFramebuffer:         chainData] all created framebuffers
     chainList samplers;             // [VkoSampler:             chainData]
     chainList semaphores;           // [VkoSemaphore:           chainData]
+    chainList fences;               // [VkoFence:               chainData] all created fences
 
     VkoMemory *addMemory();
     void addCustomMemory(VkoMemory *p) { memories.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
@@ -248,6 +250,13 @@ public:
     void addCustomSemaphore(VkoSemaphore *p) { semaphores.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
     void delSemaphore(VkoSemaphore *out_semaphore);
     void delAllSemaphores();
+
+    VkoFence *addFence();
+    void addCustomFence(VkoFence *p) { fences.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delFence(VkoFence *out_fence);
+    void delAllFences();
+
+
 
   private:
     vkObject *_vko;
@@ -310,8 +319,9 @@ private:
 
 
 #include "vkoSemaphore.h"
+#include "vkoFence.h"
 #include "vkoCommandBuffer.h"
-inline void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) { _presentInfo.pWaitSemaphores= &in_finishDrawing, _presentInfo.pImageIndices= &in_surfaceIndex; _vko->QueuePresentKHR(in_queue, &_presentInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
+//inline void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) { _presentInfo.pWaitSemaphores= &in_finishDrawing, _presentInfo.pImageIndices= &in_surfaceIndex; _vko->QueuePresentKHR(in_queue, &_presentInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
 
 
 

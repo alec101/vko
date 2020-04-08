@@ -74,6 +74,7 @@ void vkObject::destroy() {
   objects.delAllDescriptorSetLayouts();
   objects.delAllSamplers();
   objects.delAllSemaphores();
+  objects.delAllFences();
   objects.delAllMemories();
 
 }
@@ -281,6 +282,24 @@ void vkObject::Objects::delSemaphore(VkoSemaphore *out_p) {
 void vkObject::Objects::delAllSemaphores() {
   while(semaphores.first)
     delSemaphore((VkoSemaphore *)semaphores.first);
+}
+
+// fences
+
+VkoFence *vkObject::Objects::addFence() {
+  VkoFence *s= new VkoFence(_vko);
+  fences.add(s);
+  return s;
+}
+
+void vkObject::Objects::delFence(VkoFence *out_p) {
+  out_p->destroy();
+  fences.del(out_p);
+}
+
+void vkObject::Objects::delAllFences() {
+  while(fences.first)
+    delFence((VkoFence *)fences.first);
 }
 
 // samplers

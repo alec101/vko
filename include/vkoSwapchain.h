@@ -20,6 +20,8 @@ public:
   uint32_t currentIndex;      // after calling aquire(), this will hold the index of the image currently aquired and can be drawn upon
   uint32_t dx, dy;            // swapchain's current dimensions, populated after it is built/rebuilt or checked the status
 
+  bool rebuildRequired;
+
   VkSwapchainCreateInfoKHR swapInfo;      // struct used with build(), contains all settings
   VkSurfaceCapabilitiesKHR surfaceCfg;    // populated after the surface is set / on build()
   //void populateSurfaceCfg();
@@ -114,11 +116,10 @@ public:
   // after all parameters are set, call this func to create the vulkan swapchain
   bool build();     // returns true if successful. WARNING: A swapchain cannot be built on a minimized window (from specs, not tested)
   bool rebuild();
-  bool check();
   void destroy();
 
   bool aquire(VkSemaphore in_finishPresenting, VkFence in_finishPresentingFence= 0, uint64_t timeout= ~0, uint32_t *out_index= nullptr);     //
-  inline void queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing);// { _showInfo.pWaitSemaphores= &in_finishDrawing, _showInfo.pImageIndices= &in_surfaceIndex; _parent->vk->QueuePresentKHR(in_queue, &_showInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
+  void queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing);   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
   inline void queueShowCurrent(VkQueue in_queue, VkSemaphore in_finishDrawing) { queueShow(currentIndex, in_queue, in_finishDrawing); }
 
     

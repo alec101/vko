@@ -20,7 +20,7 @@ public:
   uint32_t nrSignalSemaphores;
   VkoSemaphore **waitSemaphores;   // [def:null] list with all wait semaphores
   VkoSemaphore **signalSemaphores; // [def:null] list with all signal semaphores
-  VkFence fence;                   // [def:0] the fence from vkQueueSubmit
+  VkFence fence;                   // [def:null] the fence from vkQueueSubmit
 
   //chainList waitSemaphores;   // chainlist with all wait semaphores
   //chainList signalSemaphores; // chainList with all signal semaphores
@@ -74,6 +74,7 @@ public:
   void free();
   inline void build()   { alloc(); }  // allocates memory;
   inline void destroy() { free(); }   // frees memory
+  void updateSemaphoreData();         // if used semaphores got rebuilt, this func must be called so internal lists point to the right vulkan handles
 
   inline void startRecording()         { _vko->BeginCommandBuffer(buffer, &_beginInfo); }       // start recording of the command buffer;
   inline void endRecording()           { _vko->EndCommandBuffer(buffer); }                      // end recording of the buffer

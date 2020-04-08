@@ -36,7 +36,7 @@ void VkoCommandBuffer::delData() {
   pNext.delData();
 
   // default values
-  fence= VK_NULL_HANDLE;
+  fence= 0;
 
   nrWaitSemaphores= 0;
   nrSignalSemaphores= 0;
@@ -208,7 +208,13 @@ void VkoCommandBuffer::submit(VkQueue in_q) {
 */
 
 
+void VkoCommandBuffer::updateSemaphoreData() {
+  for(uint32_t a= 0; a< nrSignalSemaphores; a++)
+    ((VkSemaphore *)_submitInfo.pSignalSemaphores)[a]= signalSemaphores[a]->semaphore;
+  for(uint32_t a= 0; a< nrWaitSemaphores; a++)
+    ((VkSemaphore *)_submitInfo.pWaitSemaphores)[a]= waitSemaphores[a]->semaphore;
 
+}
 
 
 
