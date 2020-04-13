@@ -809,6 +809,7 @@ bool VkoShader::build() {
         ((VkViewport *)viewports.pViewports)[a]= p->view,
         ((VkRect2D *)  viewports.pScissors)[a]=  p->scissor,
         a++;
+
     /// dynamic viewports
     } else
       viewports.viewportCount= _dynamicViewports,

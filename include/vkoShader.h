@@ -58,7 +58,7 @@ public:
   // adds a new range of push constants.
   // call per shader stage(s) or just once for all stages, usually it's best to just be 1 range;
   // from vulkan specs, do not add twice per same shader stage.
-  // <in_nrBytes>: number of push constants that will exist
+  // <in_nrBytes>: how big this range will be, in bytes
   // <in_offset>:  offset these consts will start from. On a bigger picture, all ranges of push constants must form a packed block.
   //               this offset will indicate where to start this range of constants, in this block.
   //               the simplest and best way to define push constants, would be to just offset:0 and nrBytes:sizeof(all combined push consts that will be used)
