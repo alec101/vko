@@ -49,6 +49,7 @@ public:
   // Creates and adds a signal semaphore. It's signaled when job is done
   VkoSemaphore *addSignalSemaphore();
 
+  // queue submit fence
   inline void setFence(VkFence in_f) { fence= in_f; }
 
   // if this is a secondary buffer, the inheritance should be filled in

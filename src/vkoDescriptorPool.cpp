@@ -1,13 +1,18 @@
 #include "vko/include/vkObject.h"
 
 
-///==========================---------------------///
-// Descriptor Manager object ===================== //
-///==========================---------------------///
+///=======================---------------------///
+// Descriptor Pool object ===================== //
+///=======================---------------------///
 
 void VkoDescriptorPool::delData() {
-  _flags= 0;
-  _maxSets= 0;
+  _createInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  _createInfo.flags= 0;
+  _createInfo.maxSets= 0;
+  _createInfo.pNext= nullptr;
+
+  _createInfo.poolSizeCount= 0;
+  _createInfo.pPoolSizes= nullptr;
 
   pNext.delData();
 
@@ -31,6 +36,15 @@ void VkoDescriptorPool::destroy() {
 }
 
 
+void VkoDescriptorPool::resetPool() {
+  _vko->errorCheck(_vko->ResetDescriptorPool(*_vko, descriptorPool, 0), __FUNCTION__": Reset descriptor pool failed");
+
+  /// mark all sets from this pool as not allocated
+  for(VkoSet *p= (VkoSet *)sets.first; p; p= (VkoSet *)p->next)
+    p->set= (VkDescriptorSet)0;
+}
+
+
 
 bool VkoDescriptorPool::build() {
   // create info https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#VkDescriptorPoolCreateInfo
@@ -40,8 +54,7 @@ bool VkoDescriptorPool::build() {
   // alloc / free / reset:
   // VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT - allows for the vkFreeDescriptorSets func, otherwise, ONLY alloc and reset are allowed
   // if freeing and allocating happens often, allocation can fail, due fragmentation
-  // so it is advised the allocation happens once, and maybe reset, or i am thinking of a clever use of the free + alloc, of same sizes, maybe
-  // basically free a fixed size block, alloc the same fixed size block, maybe that could work
+  // so it is advised the allocation happens once, and maybe reset
   //
   // so it seems this pool is bit different from the command pool. it is dangerous to have multiple frees allocs.
   // the pool almost defines the amount of memory to be allocated for your images/buffers, not much of a clever pool here...
@@ -53,70 +66,138 @@ bool VkoDescriptorPool::build() {
   // -vkUpdateDescriptorSets:
   //  "Once allocated, descriptor sets can be updated with a combination of write and copy operations."
   
-  // in any case, the pools are not thread safe, from what i know
-
-  // there is a ton of copy/update/write/etc funcs to fill in descriptors
-  // so the class i have to make, should handle these i think
-
-
-
-
-  // POOL creation ===---------
-  bool ret= false;
-  VkDescriptorPoolCreateInfo descInfo;
-  descInfo.pPoolSizes= nullptr;              // INIT 1
-
-  _computeMaxPoolNumbers();
-
-  /// populate descriptor info
-  descInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  descInfo.pNext= pNext.VkDescriptorPoolCreateInfo;
-
-  descInfo.flags= _flags;
-  descInfo.maxSets= _maxSets;
-  descInfo.poolSizeCount= _maxDescriptors.nrNodes;
-
-  if(_maxDescriptors.nrNodes) {
-    descInfo.pPoolSizes= new VkDescriptorPoolSize[_maxDescriptors.nrNodes];  // ALLOC 1
-    uint32_t a= 0;
-    for(_DescriptorMax *p= (_DescriptorMax *)_maxDescriptors.first; p; p= (_DescriptorMax *)p->next, a++)
-      ((VkDescriptorPoolSize *)descInfo.pPoolSizes)[a].type= p->type,
-      ((VkDescriptorPoolSize *)descInfo.pPoolSizes)[a].descriptorCount= p->descriptorCount;
-  }
+  // in any case, the pools are not thread safe, from what i know,
+  // and these are not actually pools, it's just a fixed array of descriptors that are pre-allocated, it can't expand or have any clever functionality
 
   // create
-  if(!_vko->errorCheck(_vko->CreateDescriptorPool(*_vko, &descInfo, *_vko, &descriptorPool), __FUNCTION__": Vulkan Descriptor Pool create falied."))
-    goto Exit;
+  if(!_vko->errorCheck(_vko->CreateDescriptorPool(*_vko, &_createInfo, *_vko, &descriptorPool), __FUNCTION__": Vulkan Descriptor Pool create falied."))
+    return false;
 
   /// if this is a rebuild, all previously created sets can be re-allocated from this pool
   for(VkoSet *p= (VkoSet *)sets.first; p; p= (VkoSet *)p->next)
-    if(!p->alloc())
-      goto Exit;
+    p->alloc();
 
-  ret= true;    // success
-
-Exit:
-  if(descInfo.pPoolSizes) delete[] descInfo.pPoolSizes;   // DEALLOC 1
-  return ret;
+  return true;
 }
 
 
 
-// add a set, doesn't allocate mem from pool
-VkoSet *VkoDescriptorPool::addDescriptorSet(VkoDescriptorSetLayout *in_layout) {
+
+
+
+void VkoDescriptorPool::addDescriptors(VkDescriptorType in_type, uint32_t in_maxDescriptors) {
+  
+  /// search for existing 
+  for(uint32_t a= 0; a< _createInfo.poolSizeCount; a++)
+    // if found, update, return
+    if(_createInfo.pPoolSizes[a].type== in_type) {
+      (uint32_t)(_createInfo.pPoolSizes[a].descriptorCount)+= in_maxDescriptors;
+      return;
+    }
+
+  _addDescriptorTypeToList(in_type, in_maxDescriptors);
+}
+
+
+void VkoDescriptorPool::addDescriptorsFromLayout(VkoDescriptorSetLayout *in_layout, uint32_t in_nrSets) {
+
+  /// loop thru all descriptors in set layout
+  for(VkoDescriptorLayout *d= (VkoDescriptorLayout *)in_layout->descriptors.first; d; d= (VkoDescriptorLayout *)d->next) {
+
+    // search current list for the decriptor type, add to it's count if found
+    bool found= false;
+    for(uint32_t a= 0; a< _createInfo.poolSizeCount; a++)
+      if(_createInfo.pPoolSizes[a].type== d->type)                            // found
+        (uint32_t)(_createInfo.pPoolSizes[a].descriptorCount)+= in_nrSets,    /// 1 * nrSets
+          found= true;
+
+    // if not found, add the descriptor type to the pool list
+    if(!found)
+      _addDescriptorTypeToList(d->type, in_nrSets);                           /// 1 * nrSets
+  } /// for each descriptor
+}
+
+
+
+void VkoDescriptorPool::_addDescriptorTypeToList(VkDescriptorType in_type, uint32_t in_nr) {
+  VkDescriptorPoolSize *oldList= (VkDescriptorPoolSize *)_createInfo.pPoolSizes;
+  VkDescriptorPoolSize *newList= new VkDescriptorPoolSize[_createInfo.poolSizeCount+ 1];
+
+  /// copy from old list to new
+  if(_createInfo.poolSizeCount)
+    for(uint32_t a= 0; a< _createInfo.poolSizeCount; a++)
+      newList[a].type=            oldList[a].type,
+      newList[a].descriptorCount= oldList[a].descriptorCount;
+      
+  // add the new type of descriptor
+  newList[_createInfo.poolSizeCount].type= in_type;
+  newList[_createInfo.poolSizeCount].descriptorCount= in_nr;
+
+  _createInfo.poolSizeCount++;
+  _createInfo.pPoolSizes= newList;
+}
+
+
+
+
+
+
+
+
+
+
+
+// this func should be used to allocate a big array of non-managed VkDescriptorSets, from this pool
+
+void VkoDescriptorPool::allocateSets(VkDescriptorSet *out_sets, uint32_t in_nr, VkoDescriptorSetLayout *in_layout, void *pNext) {
+  
+  VkDescriptorSetAllocateInfo allocInfo;  // alloc info struct https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#VkDescriptorSetAllocateInfo
+  allocInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.pNext= pNext;
+  allocInfo.descriptorPool= descriptorPool;
+  allocInfo.descriptorSetCount= in_nr;
+
+  if(in_nr== 1) 
+    allocInfo.pSetLayouts= &in_layout->layout;
+  else {
+    allocInfo.pSetLayouts= new VkDescriptorSetLayout[in_nr];
+    for(uint32_t a= 0; a< in_nr; a++)
+      (VkDescriptorSetLayout)(allocInfo.pSetLayouts[a])= in_layout->layout;
+  }
+
+  _vko->errorCheck(_vko->AllocateDescriptorSets(*_vko, &allocInfo, out_sets), __FUNCTION__"() Vulkan allocation func failed.");
+
+  if((in_nr> 1) && (allocInfo.pSetLayouts!= nullptr))
+    delete[] allocInfo.pSetLayouts;
+}
+
+
+// allocates managed VkoSet class
+VkoSet *VkoDescriptorPool::allocVkoSet(VkoDescriptorSetLayout *in_layout, void *pNext) {
   VkoSet *p= new VkoSet(this);
   p->layout= in_layout;
+  p->pNext.VkDescriptorSetAllocateInfo= pNext;
+  
   sets.add(p);
+  if(!p->alloc()) { delete p; return nullptr; }
   return p;
 }
 
 
-void VkoDescriptorPool::setPoolMaxDescriptorType(VkDescriptorType in_type, uint32_t in_maxDescriptors) {
-  _DescriptorMax *dm= _getDescMaxForType(in_type);
-  if(dm== nullptr)
-    dm= _addDescMax(in_type);
-  if(dm)
-    dm->descriptorCount= in_maxDescriptors;
+
+// VkoSet alloc function
+bool VkoSet::alloc() {
+  if((!pool) || (!layout)) return false;
+
+  VkDescriptorSetAllocateInfo allocInfo;  // alloc info struct https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap13.html#VkDescriptorSetAllocateInfo
+    allocInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.pNext= pNext.VkDescriptorSetAllocateInfo;
+    allocInfo.descriptorPool= pool->descriptorPool;
+    allocInfo.descriptorSetCount= 1;
+    allocInfo.pSetLayouts= &layout->layout;
+  if(!pool->_vko->errorCheck(pool->_vko->AllocateDescriptorSets(*pool->_vko, &allocInfo, &set), __FUNCTION__"() Vulkan set allocation func failed."))
+    return false;
+  return true;
 }
 
 
@@ -124,71 +205,11 @@ void VkoDescriptorPool::setPoolMaxDescriptorType(VkDescriptorType in_type, uint3
 
 
 
-void VkoDescriptorPool::resetPool() {
-  _vko->errorCheck(_vko->ResetDescriptorPool(*_vko, descriptorPool, 0), __FUNCTION__": Reset descriptor pool failed");
-
-  /// mark all sets from this pool as not allocated
-  for(VkoSet *p= (VkoSet *)sets.first; p; p= (VkoSet *)p->next)
-    p->set= (VkDescriptorSet)0;
+void VkoDescriptorPool::freeSets(VkDescriptorSet *out_sets, uint32_t in_nr) {
+  _vko->errorCheck(_vko->FreeDescriptorSets(*_vko, descriptorPool, in_nr, out_sets), __FUNCTION__"(): free descriptor sets failed");
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-VkoDescriptorPool::_DescriptorMax *VkoDescriptorPool::_getDescMaxForType(VkDescriptorType in_type) {
-  for(_DescriptorMax *p= (_DescriptorMax *)_maxDescriptors.first; p; p= (_DescriptorMax *)p->next)
-    if(p->type= in_type)
-      return p;
-  return nullptr;
+void VkoSet::free() {
+  pool->_vko->errorCheck(pool->_vko->FreeDescriptorSets(*pool->_vko, *pool, 1, &set), __FUNCTION__"(): free descriptor sets failed");
 }
-
-
-VkoDescriptorPool::_DescriptorMax *VkoDescriptorPool::_addDescMax(VkDescriptorType in_type) {
-  _DescriptorMax *p= new _DescriptorMax;
-  p->type= in_type;
-  p->descriptorCount= 0;
-  _maxDescriptors.add(p);
-  return p;
-}
-
-
-void VkoDescriptorPool::_computeMaxPoolNumbers() {
-  // if not manually specified, computes the maximum number of sets the pool can have based on the number of descriptors added and their sets
-  // and the max number of descriptor types for this pool also.
-
-  // max number of sets
-  if(_maxSets== 0) {                  // auto-compute only if not specified
-    /// such compute the world has never seen
-    _maxSets= sets.nrNodes;    
-  }
-
-  // max number of descriptor types
-  if(_maxDescriptors.nrNodes== 0) {   // auto-compute only if not manually specified
-    /// loop thru all descriptors in all sets
-    for(VkoSet *s= (VkoSet *)sets.first; s; s= (VkoSet *)s->next) {
-      for(VkoDescriptorLayout *d= (VkoDescriptorLayout *)s->layout->descriptors.first; d; d= (VkoDescriptorLayout *)d->next) {
-        _DescriptorMax *dm= _getDescMaxForType(d->type);
-        if(dm== nullptr)
-          dm= _addDescMax(d->type);
-        dm->descriptorCount++;
-      } /// for each descriptor
-    } /// for each set
-  }
-}
-
-
-
-
-
-
-

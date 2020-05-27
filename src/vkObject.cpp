@@ -120,6 +120,24 @@ void vkObject::Objects::delAllBuffers() {
     delBuffer((VkoBuffer *)buffers.first);
 }
 
+// VkoImage
+
+VkoImage *vkObject::Objects::addImage() {
+  VkoImage *p= new VkoImage(_vko);
+  images.add(p);
+  return p;
+}
+
+void vkObject::Objects::delImage(VkoImage *out_p) {
+  out_p->destroy();
+  images.del(out_p);
+}
+
+void vkObject::Objects::delAllImages() {
+  while(images.first)
+    delImage((VkoImage *)images.first);
+}
+
 // VkoMemory
 
 VkoMemory *vkObject::Objects::addMemory() {

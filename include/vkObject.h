@@ -60,6 +60,7 @@ class vkObject;
 
 #include "vkoMemory.h"
 #include "vkoBuffer.h"
+#include "vkoImage.h"
 
 #include "vkoSwapchain.h"
 #include "vkoCommandPool.h"
@@ -69,6 +70,7 @@ class vkObject;
 #include "vkoSetLayout.h"
 #include "vkoSet.h"
 #include "vkoDescriptorPool.h"
+#include "vkoDynamicSet.h"
 
 #include "vkoRenderPass.h"
 #include "vkoFramebuffer.h"
@@ -185,6 +187,7 @@ public:
   struct Objects {
     chainList memories;             // [VkoMemory:              chainData] list with all created memory blocks
     chainList buffers;              // [VkoBuffer:              chainData] list with all created buffers
+    chainList images;               // [VkoImage:               chainData] list with all created images
     chainList shaders;              // [VkoShader:              chainData] list with all created shaders
     chainList commandPools;         // [VkoCommands:            chainData] all created commands objects
     chainList descriptorPools;      // [VkoDescriptorSetPool:   chainData] all created descriptor pools
@@ -205,6 +208,11 @@ public:
     void addCustomBuffer(VkoBuffer *p) { buffers.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
     void delBuffer(VkoBuffer *out_buffer);
     void delAllBuffers();
+
+    VkoImage *addImage();
+    void addCustomImage(VkoImage *p) { images.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
+    void delImage(VkoImage *out_image);
+    void delAllImages();
 
     VkoShader *addShader();
     void addCustomShader(VkoShader *p) { shaders.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
@@ -295,7 +303,7 @@ private:
   void _populatePhysicalDeviceInfo();
 
   
-  static void _memcpy(void *dst, const void *src, uint64_t n);  // copies 8 bytes at a time - 2x- 3x slower than Microsoft memcpy
+  static void _memcpy(void *dst, const void *src, uint64_t n);  // copies 8 bytes at a time
   
 
   static uint32_t _strlen8(const char *x);

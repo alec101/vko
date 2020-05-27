@@ -61,7 +61,7 @@ void VkoBuffer::destroy() {
 
 // settings
 
-void VkoBuffer::setSize(uint32_t in_size, uint32_t in_offset) {
+void VkoBuffer::setSize(VkDeviceSize in_size, VkDeviceSize in_offset) {
   size= in_size;
   offset= in_offset;
   _createInfo.size= in_size;
