@@ -1,4 +1,4 @@
-#include "vko/include/vkObject.h"
+#include "../include/vkObject.h"
 
 #ifdef VKO_BE_CHATTY
 #include <stdio.h>
@@ -79,7 +79,9 @@ bool VkoExtensions::populateAvailabilityDevice(VkPhysicalDevice in_gpu) {
 
   // populate the availability of known extensions
 
+  #ifdef VKO_BE_CHATTY
   if(chatty) printf("\npopulating device extensions...\n");
+  #endif
 
   for(uint32_t a= 0; a< n; a++) {
     VkoExt *e= getDeviceExt(ext[a].extensionName);
@@ -446,10 +448,14 @@ VkoExtensions::VkoExtensions() {
   device.raw[a++]= {"VK_INTEL_shader_integer_functions2",      210, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_INTEL_shader_integer_functions2
   device.raw[a++]= {"VK_NV_dedicated_allocation_image_aliasing", 241, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_NV_dedicated_allocation_image_aliasing
   device.raw[a++]= {"VK_NV_shader_sm_builtins",                155, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_NV_shader_sm_builtins
-  //device.raw[a++]= {"",        000, 1, 0, 0}; // 
+  device.raw[a++]= {"VK_EXT_extended_dynamic_state",           268, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_EXT_extended_dynamic_state
+  // 110
+  device.raw[a++]= {"vk_NV_device_generated_commands",         278, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_NV_device_generated_commands
+  device.raw[a++]= {"VK_EXT_private_data",                     296, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_EXT_private_data
+
   device.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
-// 110
-  
+  //device.raw[a++]= {"",        000, 1, 0, 0}; // 
+
   // device extensions - DEPRECATED 
   a= 0;
   deviceDeprecated.raw[a++]= {"VK_KHR_16bit_storage",                   84, 1, 0, 0}; // [Promoted to Vulkan 1.1] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_KHR_16bit_storage

@@ -22,7 +22,7 @@ public:
   VkPipelineLayout pipelineLayout;  // created on build()
 
   inline void setSubpass(uint32_t in_subpassNr) { subpass= in_subpassNr; }
-  uint32_t subpass;         // [def:0] subpass that will be used <<<< IS THIS OK?
+  uint32_t subpass;         // [def:0] subpass that will be used
   VkRenderPass renderPass;  // renderPass that will work on this shader (i am guessing all compatible renderpasses with this1 will work)
 
   uint32_t nrDescSets;              // number of descriptor sets that this shader is linked to

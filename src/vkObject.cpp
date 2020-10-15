@@ -6,25 +6,6 @@
 */
 
 
-VkInstance vkObject::instance= nullptr;
-
-VkInstance            vkObject::VkoConfiguration::customInstance= nullptr;
-VkInstanceCreateInfo *vkObject::VkoConfiguration::instanceInfo= nullptr;
-VkApplicationInfo     vkObject::VkoConfiguration::appInfo= { VK_STRUCTURE_TYPE_APPLICATION_INFO, nullptr, 0, 0, 0, 0 };
-
-uint32_t                         vkObject::VkoInfo::nrPhysicalDevices= 0;
-VkoPhysicalDevice               *vkObject::VkoInfo::physicalDevice=    nullptr;
-VkPhysicalDeviceMemoryProperties vkObject::VkoInfo::memProp;
-
-vkObject::VkoConfiguration::VkoVer vkObject::VkoConfiguration::versionRequest= {1, 1, 0 };
-void *vkObject::_vulkanLib= nullptr;
-
-#ifdef VKO_USE_GLOBAL_FUNCS
-VkoFuncs vkObject::instanceLinked; // global instance-linked vulkan funcs. they have higher CPU usage
-VkoFuncs *vkObject::glb= &vkObject::instanceLinked;  // pointer to the instance-linked vulkan funcs. This can be changed to point to specific device-linked funcs.
-#endif
-
-
 vkObject::vkObject(): VkoFuncs() {
   objects._vko= this;
 
@@ -38,25 +19,26 @@ vkObject::vkObject(): VkoFuncs() {
   cfg.extensions._vko= this;
 
   info.apiVersion= 0;
-  info.memProp.memoryHeapCount= 0;
-  info.memProp.memoryTypeCount= 0;
+  info.memProp().memoryHeapCount= 0;
+  info.memProp().memoryTypeCount= 0;
 
   _linkLib();
   _linkCriticalFuncs(this);
   cfg.extensions.populateAvailabilityInstance();
-  if(instance) {
-    _linkInstanceFuncs(this, instance);
+  if(instance()) {
+    _linkInstanceFuncs(this, instance());
     _populatePhysicalDeviceInfo();
   }
   
   #ifdef VKO_USE_GLOBAL_FUNCS
-  _linkCriticalFuncs(&instanceLinked);
+  _linkCriticalFuncs(&instanceLinked());
   #endif
 }
 
 
 
 vkObject::~vkObject() {
+  destroy();
 }
 
 
@@ -69,9 +51,10 @@ void vkObject::destroy() {
   objects.delAllSwapchains();
   objects.delAllRenderPasses();
   objects.delAllFramebuffers();
-  objects.delAllBuffers();
   objects.delAllDescriptorPools();
   objects.delAllDescriptorSetLayouts();
+  objects.delAllBuffers();
+  objects.delAllImages();
   objects.delAllSamplers();
   objects.delAllSemaphores();
   objects.delAllFences();
@@ -81,10 +64,10 @@ void vkObject::destroy() {
 
 
 vkObject::VkoInfo::~VkoInfo() {
-  if(physicalDevice)
-    delete[] physicalDevice;
-  physicalDevice= nullptr;
-  nrPhysicalDevices= 0; 
+  if(*physicalDevice())
+    delete[] *physicalDevice();
+  *physicalDevice()= nullptr;
+  nrPhysicalDevices()= 0; 
 }
 
 
@@ -92,8 +75,8 @@ vkObject::VkoInfo::~VkoInfo() {
 
 uint32_t vkObject::findMemory(uint32_t in_memTypeBits, VkMemoryPropertyFlags in_prop) {
   // mem type https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
-  for(uint32_t a= 0; a< info.memProp.memoryTypeCount; a++)
-    if((in_memTypeBits& (1 << a)) && ((info.memProp.memoryTypes[a].propertyFlags& in_prop)== in_prop))
+  for(uint32_t a= 0; a< info.memProp().memoryTypeCount; a++)
+    if((in_memTypeBits& (1 << a)) && ((info.memProp().memoryTypes[a].propertyFlags& in_prop)== in_prop))
       return a;
 
   return ~0u;
@@ -266,6 +249,25 @@ void vkObject::Objects::delAllDescriptorPools() {
     delDescriptorPool((VkoDescriptorPool *)descriptorPools.first);
 }
 
+// dynamic descriptor pools
+
+VkoDynamicSetPool *vkObject::Objects::addDynamicSetPool() {
+  VkoDynamicSetPool *p= new VkoDynamicSetPool(_vko);
+  dynamicSetPools.add(p);
+  return p;
+}
+
+void vkObject::Objects::delDynamicSetPool(VkoDynamicSetPool *out_p) {
+  out_p->destroy();
+  dynamicSetPools.del(out_p);
+}
+
+void vkObject::Objects::delAllDynamicSetPools() {
+  while(dynamicSetPools.first)
+    delDynamicSetPool((VkoDynamicSetPool *)dynamicSetPools.first);
+}
+
+
 // descriptor set layouts
 
 VkoDescriptorSetLayout *vkObject::Objects::addDescriptorSetLayout() {
@@ -366,16 +368,16 @@ bool vkObject::_createInstance() {
   VkInstanceCreateInfo *iiToUse;
 
   // set the requested vulkan version
-  if(cfg.appInfo.apiVersion== 0)
-    cfg.appInfo.apiVersion= VK_MAKE_VERSION(cfg.versionRequest.major, cfg.versionRequest.minor, cfg.versionRequest.patch);
+  if(cfg.appInfo().apiVersion== 0)
+    cfg.appInfo().apiVersion= VK_MAKE_VERSION(cfg.versionRequest().major, cfg.versionRequest().minor, cfg.versionRequest().patch);
 
   // create the instance info here
-  if(cfg.instanceInfo== nullptr) {
+  if(*cfg.instanceInfo()== nullptr) {
 
     instInfo.sType= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instInfo.pNext= cfg.pNext.VkInstanceCreateInfo;
     instInfo.flags= 0;
-    instInfo.pApplicationInfo= &cfg.appInfo;
+    instInfo.pApplicationInfo= &cfg.appInfo();
 
     /// enable requested layers
     instInfo.enabledLayerCount= _validationLayers.nrNodes;
@@ -398,12 +400,12 @@ bool vkObject::_createInstance() {
 
   // use provided custom instance info
   } else {
-    iiToUse= cfg.instanceInfo;
+    iiToUse= *cfg.instanceInfo();
     allocated= false;
   }
 
   // create the instance
-  result= CreateInstance(iiToUse, *this, &instance);
+  result= CreateInstance(iiToUse, *this, &instance());
   if(result!= VK_SUCCESS) {
     errorText= "vkObject::_createInstance(): vkCreateInstance failed";
     goto Exit;
@@ -442,7 +444,7 @@ bool vkObject::_createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_
   VkPhysicalDeviceFeatures pdf;
   VkPhysicalDeviceFeatures *pdfToUse;
  
-  cfg.extensions.populateAvailabilityDevice(physicalDevice);
+  cfg.extensions.populateAvailabilityDevice(*physicalDevice);
 
   // custom deviceInfo would be best, if not, one will be created, enabling everything
   if(cfg.deviceInfo== nullptr) {
@@ -764,27 +766,27 @@ void vkObject::_addValidationLayer(const char *in_name) {
 
 
 void vkObject::_populatePhysicalDeviceInfo() {
-  if(info.physicalDevice) return;     // populate only once
+  if(*info.physicalDevice()) return;     // populate only once
 
   uint32_t npd= 0;
   VkPhysicalDevice *pd= nullptr;
 
   /// number of physical devices on system
-  EnumeratePhysicalDevices(instance, &npd, nullptr);
+  EnumeratePhysicalDevices(instance(), &npd, nullptr);
   if(npd== 0) return;
-  info.nrPhysicalDevices= npd;
+  info.nrPhysicalDevices()= npd;
 
   /// list with all VkPhysicalDevices
   pd= new VkPhysicalDevice[npd];
-  EnumeratePhysicalDevices(instance, &npd, pd);
+  EnumeratePhysicalDevices(instance(), &npd, pd);
 
   /// populate VkoPhysicalDevices
   if(npd) {
-    info.physicalDevice= new VkoPhysicalDevice[npd];
+    *info.physicalDevice()= new VkoPhysicalDevice[npd];
 
     for(uint32_t a= 0; a< npd; a++) {
-      info.physicalDevice[a].physicalDevice= pd[a];
-      GetPhysicalDeviceProperties(pd[a], &info.physicalDevice[a].prop);
+      (*info.physicalDevice())[a].physicalDevice= pd[a];
+      GetPhysicalDeviceProperties(pd[a], &((*info.physicalDevice())[a]).prop);
     }
   }
 
@@ -812,9 +814,9 @@ bool vkObject::buildInstance() {
 
   // instance
 
-  if(instance== nullptr) {
-    if(cfg.customInstance)
-      instance= cfg.customInstance;
+  if(instance()== nullptr) {
+    if(cfg.customInstance())
+      instance()= cfg.customInstance();
     else
       if(_createInstance()== false)
         return false;
@@ -822,11 +824,11 @@ bool vkObject::buildInstance() {
   
   // aquire all instance functions
 
-  _linkInstanceFuncs(this, instance);
+  _linkInstanceFuncs(this, instance());
   _populatePhysicalDeviceInfo();
 
   #ifdef VKO_USE_GLOBAL_FUNCS
-  _linkInstanceFuncs(&instanceLinked, instance);
+  _linkInstanceFuncs(&instanceLinked(), instance());
   #endif
 
   return true;    // success
@@ -844,18 +846,18 @@ bool vkObject::buildInstance() {
 bool vkObject::build() {
   clearError();
 
-  if(!_createDevice(physicalDevice, &device, &nrQueues, &queue))
+  if(!_createDevice(*physicalDevice, &device, &nrQueues, &queue))
     return false;
 
-  _linkDeviceFuncs(this, instance, *this);
+  _linkDeviceFuncs(this, instance(), *this);
 
   // memory information
-  GetPhysicalDeviceMemoryProperties(*this, &info.memProp);
+  GetPhysicalDeviceMemoryProperties(*this, &info.memProp());
 
   _populateVkQueue();
 
   #ifdef VKO_USE_GLOBAL_FUNCS
-  _linkDeviceFuncs(&instanceLinked, instance, nullptr);
+  _linkDeviceFuncs(&instanceLinked(), instance(), nullptr);
   #endif
   return true; // success
 }

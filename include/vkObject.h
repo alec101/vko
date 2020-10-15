@@ -6,18 +6,20 @@
 //   and the vkObject::glb pointer that can be changed to make global funcs call a specific device/vko
 #define VKO_USE_GLOBAL_FUNCS 1
 
-// includes stdio.h, prints various info on console - helps for info/debug
+// prints various info on console - helps for info/debug
+#if !defined NDEBUG
 #define VKO_BE_CHATTY 1
+#endif
 
+#if defined _WIN32 && !defined _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
 
 //#include "util/typeShortcuts.h"
 //#include "osinteraction.h"
 #include <stdint.h>
 #include "chainList.hpp"
 
-#ifdef VKO_BE_CHATTY
-#include <stdio.h>
-#endif
 
 #ifndef _OS_TYPE
 #define _OS_TYPE
@@ -29,6 +31,8 @@
 #define OS_MAC 1
 #endif
 #endif
+
+#include <stdio.h>
 
 
 #ifdef OS_WIN
@@ -68,7 +72,7 @@ class vkObject;
 #include "vkoShader.h"
 
 #include "vkoSetLayout.h"
-#include "vkoSet.h"
+//#include "vkoSet.h"
 #include "vkoDescriptorPool.h"
 #include "vkoDynamicSet.h"
 
@@ -80,8 +84,23 @@ class vkObject;
 
 class VkoSemaphore;
 class VkoFence;
-struct VkoQueue;
+//struct VkoQueue;
 struct VkoFuncs;
+
+struct VkoQueue {
+  uint32_t family;
+  uint32_t index;           // queue index in family
+  VkQueueFlags typeFlags;
+  VkQueue queue;
+  inline operator VkQueue() { return queue; }
+};
+
+struct VkoPhysicalDevice {
+  VkPhysicalDevice physicalDevice;
+  VkPhysicalDeviceProperties prop;
+  inline operator VkPhysicalDevice() { return physicalDevice; }
+};
+
 
 class vkObject: public VkoFuncs {
 public:
@@ -89,10 +108,13 @@ public:
   // informational structure, physical devices are populated after the instance is created
   struct VkoInfo {
     uint32_t apiVersion; // [def:0] installed vulkan version; if it is 0, vulkan is not present on system. Use VK_VERSION_MAJOR, xx_MINOR, xx_PATCH, to extract
-    static uint32_t nrPhysicalDevices;          // nr physical devices on system; populated after buildInstance() is called
-    static VkoPhysicalDevice *physicalDevice;   // list with every phyical device on system; populated after buildInstance() is called
 
-    static VkPhysicalDeviceMemoryProperties memProp;   // memory properties struct
+    // nr physical devices on system; populated after buildInstance() is called
+    inline static uint32_t &nrPhysicalDevices()               { static uint32_t n= 0;                      return n; }
+    // list with every phyical device on system; populated after buildInstance() is called
+    inline static VkoPhysicalDevice **physicalDevice()        { static VkoPhysicalDevice *pd= nullptr;     return &pd; } 
+    // memory properties struct
+    inline static VkPhysicalDeviceMemoryProperties &memProp() { static VkPhysicalDeviceMemoryProperties m; return m; }
 
     ~VkoInfo();
   } info;
@@ -101,10 +123,20 @@ public:
   struct VkoConfiguration {
 
     // instance / application settings
-    struct VkoVer { uint32_t major, minor, patch; } static versionRequest; // [def: 1, 1, 0] requested vulkan version; if you set appInfo::apiVersion directly, this is ignored
-    static VkApplicationInfo appInfo;             // instanceInfo.pApplicationInfo points to this. if apiVersion is 0, version struct is used
-    static VkInstanceCreateInfo *instanceInfo;    // [def:null] if left null, settings.vulkan.extensions struct is used to create VkInstanceCreateInfo struct, else create it as you wish and point this to it
-    static VkInstance customInstance;             // [def:null] if you want to create your own instance, point this to the custom created instance.
+    
+    // [def: 1, 1, 0] requested vulkan version; if you set appInfo::apiVersion directly, this is ignored
+    struct VkoVer { uint32_t major, minor, patch; };
+    inline static VkoVer &versionRequest() { static VkoVer v= {1, 1, 0 }; return v; }
+
+    // instanceInfo.pApplicationInfo points to this. if apiVersion is 0, version struct is used
+    inline static VkApplicationInfo &appInfo() { static VkApplicationInfo _appInfo= { VK_STRUCTURE_TYPE_APPLICATION_INFO, nullptr, 0, 0, 0, 0 }; return _appInfo; }
+
+    // [def:null] if left null, settings.vulkan.extensions struct is used to create VkInstanceCreateInfo struct, else create it as you wish and point this to it
+    inline static VkInstanceCreateInfo **instanceInfo() { static VkInstanceCreateInfo *_instanceInfo= nullptr; return &_instanceInfo; }
+
+    // [def:null] if you want to create your own instance, point this to the custom created instance.
+    inline static VkInstance &customInstance() { static VkInstance _customInstance= 0; return _customInstance; }
+
 
     // device settings
 
@@ -137,10 +169,10 @@ public:
     friend class vkObject;
   } cfg;
 
-
-  static VkInstance instance;         // the instance; gets created when buildInstance() is called. Only one instance is needed for multiple vkObjects
+  // the instance; gets created when buildInstance() is called. Only one instance is needed for multiple vkObjects
+  inline static VkInstance &instance() { static VkInstance _i= nullptr; return _i; }
   VkDevice device;                    // the device; gets created when build() is called.
-  VkPhysicalDevice physicalDevice;    // use cfg.setPhysicalDevice to set it- 
+  VkoPhysicalDevice *physicalDevice;  // use cfg.setPhysicalDevice to set it- 
   VkAllocationCallbacks *memCallback; // [def:null] memory allocation callback struct, you can use one or let it null
 
   uint32_t nrQueues;          // number of queues in queue array; gets populated after build() is called
@@ -153,13 +185,15 @@ public:
 
   inline operator VkDevice() { return device; }
   inline operator VkAllocationCallbacks*() { return memCallback; }
-  inline operator VkInstance() { return instance; }
-  inline operator VkPhysicalDevice() { return physicalDevice; }
+  inline operator VkInstance() { return instance(); }
+  inline operator VkPhysicalDevice() { return physicalDevice->physicalDevice; }
 
 
   #ifdef VKO_USE_GLOBAL_FUNCS
-  static VkoFuncs *glb;           // pointer to the instance-linked vulkan funcs. This can be changed to point to specific device-linked funcs.
-  static VkoFuncs instanceLinked; // global instance-linked vulkan funcs. they have higher CPU usage
+  // pointer to the instance-linked vulkan funcs. This can be changed to point to specific device-linked funcs.
+  inline static VkoFuncs **glb()           { static VkoFuncs *_glb= &instanceLinked();  return &_glb; }
+  // global instance-linked vulkan funcs. they have higher CPU usage
+  inline static VkoFuncs &instanceLinked() { static VkoFuncs _i;                        return _i; }
   #endif
 
 
@@ -198,6 +232,7 @@ public:
     chainList samplers;             // [VkoSampler:             chainData]
     chainList semaphores;           // [VkoSemaphore:           chainData]
     chainList fences;               // [VkoFence:               chainData] all created fences
+    chainList dynamicSetPools;      // [VkoDynamicSetPool:      chainData] all created dynamic descriptor pools
 
     VkoMemory *addMemory();
     void addCustomMemory(VkoMemory *p) { memories.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
@@ -233,6 +268,12 @@ public:
     void addCustomDescriptorSetLayout(VkoDescriptorSetLayout *p) { descriptorSetLayouts.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
     void delDescriptorSetLayout(VkoDescriptorSetLayout *out_layout);
     void delAllDescriptorSetLayouts();
+
+
+    VkoDynamicSetPool *addDynamicSetPool();
+    void addCustomDynamicSetPool(VkoDynamicSetPool *p) { dynamicSetPools.add((chainData *)p); }
+    void delDynamicSetPool(VkoDynamicSetPool *out_pool);
+    void delAllDynamicSetPools();
 
     VkoSwapchain *addSwapchain();
     void addCustomSwapchain(VkoSwapchain *p) { swapchains.add((chainData *)p); } // alloc your own object, then call this to link it to VKO
@@ -273,7 +314,7 @@ public:
 
 
 private:
-  static void *_vulkanLib;           // vulkan library linking
+  inline static void **_vulkanLib() { static void *p= nullptr; return &p; } // vulkan library linking
 
   
 
@@ -303,9 +344,9 @@ private:
   void _populatePhysicalDeviceInfo();
 
   
+
   static void _memcpy(void *dst, const void *src, uint64_t n);  // copies 8 bytes at a time
   
-
   static uint32_t _strlen8(const char *x);
   static uint32_t _strlen16(const char16_t *s);
 
@@ -332,20 +373,7 @@ private:
 //inline void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) { _presentInfo.pWaitSemaphores= &in_finishDrawing, _presentInfo.pImageIndices= &in_surfaceIndex; _vko->QueuePresentKHR(in_queue, &_presentInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
 
 
-
-  struct VkoQueue {
-    uint32_t family;
-    uint32_t index;           // queue index in family
-    VkQueueFlags typeFlags;
-    VkQueue queue;
-    inline operator VkQueue() { return queue; }
-  };
-
-  struct VkoPhysicalDevice {
-    VkPhysicalDevice physicalDevice;
-    VkPhysicalDeviceProperties prop;
-  };
-
+void VkoCommandPool::reset(VkCommandPoolResetFlags in_flags) { _vko->ResetCommandPool(*_vko, commandPool, in_flags); }
 
 #include "vkoGlbFuncs.hpp"
 

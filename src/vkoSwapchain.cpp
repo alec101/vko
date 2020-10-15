@@ -248,7 +248,8 @@ bool VkoSwapchain::build() {
 
   dx= swapInfo.imageExtent.width, dy= swapInfo.imageExtent.height;
 
-  /// old swapchain is saved on check()
+  /// old swapchain is saved on rebuild()
+  /// from what i read, the old swapchain is being retired by the new swapchain, if it is functional
   swapInfo.oldSwapchain= _oldSwapchain;
   
   if(!_vko->errorCheck(_vko->CreateSwapchainKHR(*_vko, &swapInfo, *_vko, &swapchain),
@@ -266,9 +267,11 @@ bool VkoSwapchain::build() {
 
 Exit:
   if(ret== false && swapchain!= 0) destroy();
-  if(_oldSwapchain) {
+
+  /// from what i read, the old swapchain is being retired by the new swapchain, if it is functional
+  if((ret== false) && _oldSwapchain) {
     _vko->DestroySwapchainKHR(*_vko, _oldSwapchain, *_vko);
-    _oldSwapchain= 0;
+    _oldSwapchain= VK_NULL_HANDLE;
   }
 
   return ret;
@@ -296,8 +299,11 @@ void VkoSwapchain::_populateImages() {
 
 
 bool VkoSwapchain::rebuild() {
+  if(_oldSwapchain) _vko->DestroySwapchainKHR(*_vko, _oldSwapchain, *_vko);
+
   _oldSwapchain= swapchain;
-  swapchain= NULL;
+  swapchain= VK_NULL_HANDLE;
+  
   dx= dy= 0;
   currentIndex= ~0;
   return build();

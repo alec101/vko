@@ -1,4 +1,4 @@
-#include "vko/include/vkObject.h"
+#include "../include/vkObject.h"
 // dynamic library link
 #ifdef OS_WIN
 #include <Windows.h>
@@ -55,31 +55,15 @@ VkoFuncs::VkoFuncs() {
 void vkObject::_linkLib() {
   #ifdef VK_VERSION_1_0
   // link to Vulkan library
-  if(_vulkanLib== nullptr) {
+  if(*_vulkanLib()== nullptr) {
     #if defined(OS_WIN)
     //_vulkanLib= LoadLibrary(str8("vulkan-1.dll"));
-    _vulkanLib= LoadLibrary(VKO_STR2WIN("vulkan-1.dll"));
+    *_vulkanLib()= LoadLibrary(VKO_STR2WIN("vulkan-1.dll"));
     #elif defined(OS_LINUX) || defined(OS_MAC)
 
-    
-      and ofc, libvulkan.so is not the easily advetised link to vulkan
+    linux/mac is WIP, but there's nothing much left do to here
 
-        vvv
-        ye but if no driver instals it, then the app will HAVE to come with it
-        therefore, i just get that file and that's that!
-        so libvulkan.so will be required to be on the executable path dir
-        ^^^
-
-        ye, so if libvulkan.so is required to go with the application, then why not link statically, just incorporate it in the executable
-        probly it's the best way to go imho
-        grab the vulkan1.1 library, link it with the program.
-
-        DO NOT DEL THIS TEXT, COMMENT IT, UNTIL IT'S FULLY STATICALLY LINKED IN
-
-
-    _osiVulkanLib= dlopen("libvulkan.so.1.1.92.osi", RTLD_NOW);
-
-
+    *_vulkanLib()= dlopen("libvulkan.so.1.1.92.osi", RTLD_NOW);
 
     #endif
   }
@@ -88,82 +72,9 @@ void vkObject::_linkLib() {
 
 
 
-  if(_vulkanLib== nullptr) { errorText= "Couldn't open vulkan library"; return; }
+  if(*_vulkanLib()== nullptr) { errorText= "Couldn't open vulkan library"; return; }
 }
 #undef VKO_STR2WIN
-
-/*
-// this is called by vko constructor, imediatly linking to the library and getting global-critical functions
-void vkObject::_linkLibAndCriticalFuncs(VkoFuncs *in_f) {
-  bool chatty= true;
-  #ifdef VK_VERSION_1_0
-  // link to Vulkan library
-  if(_vulkanLib== nullptr) {
-    #if defined(OS_WIN)
-    _vulkanLib= LoadLibrary(str8("vulkan-1.dll"));
-    #elif defined(OS_LINUX) || defined(OS_MAC)
-
-    
-      and ofc, libvulkan.so is not the easily advetised link to vulkan
-
-        vvv
-        ye but if no driver instals it, then the app will HAVE to come with it
-        therefore, i just get that file and that's that!
-        so libvulkan.so will be required to be on the executable path dir
-        ^^^
-
-        ye, so if libvulkan.so is required to go with the application, then why not link statically, just incorporate it in the executable
-        probly it's the best way to go imho
-        grab the vulkan1.1 library, link it with the program.
-
-        DO NOT DEL THIS TEXT, COMMENT IT, UNTIL IT'S FULLY STATICALLY LINKED IN
-
-
-    _osiVulkanLib= dlopen("libvulkan.so.1.1.92.osi", RTLD_NOW);
-
-
-
-    #endif
-  }
-
-
-  if(_vulkanLib== nullptr) { errorText= "Couldn't open vulkan library"; return; }
-
-  // instance/global function grabber
-  in_f->GetInstanceProcAddr= nullptr;
-  #if defined(OS_WIN)
-  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)GetProcAddress((HMODULE)_vulkanLib, "vkGetInstanceProcAddr");
-  #elif defined(OS_LINUX) || defined(OS_MAC)
-  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)dlsym(_vulkanLib, "vkGetInstanceProcAddr");
-  #endif
-  if(in_f->GetInstanceProcAddr== nullptr)
-    return;
-  
-  // global functions that will work without a created instance
-  VKO_LINK_INSTANCE_FUNC(nullptr, CreateInstance);
-  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceExtensionProperties);
-  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceLayerProperties);
-  #endif  /// vulkan 1.0
-
-  #ifdef VK_VERSION_1_1   // vulkan 1.1
-  VKO_LINK_INSTANCE_FUNC(nullptr, EnumerateInstanceVersion);
-  #endif
-  
-  // installed api version on the system, instance level
-  if(in_f->CreateInstance) {                             // if not even vkCreateInstance is avaible, the api version will stay 0.0.0
-    if(!in_f->EnumerateInstanceVersion)                  // if EnumerateInstanceVersion is not on the system, it's vulkan 1.0
-      info.installedVulkanVersion= VK_MAKE_VERSION(1, 0, 0);
-      osi.vkApiVersion= VK_MAKE_VERSION(1, 0, 0);
-    else
-      in_f->EnumerateInstanceVersion(&osi.vkApiVersion); // grab the vulkan version
-  }
-
-  if(chatty)
-    printf("Installed Vulkan API ver[%u.%u.%u]\n", VK_VERSION_MAJOR(osi.vkApiVersion), VK_VERSION_MINOR(osi.vkApiVersion), VK_VERSION_PATCH(osi.vkApiVersion));
-}
-*/
-
-
 
 
 void vkObject::_linkCriticalFuncs(VkoFuncs *in_f) {
@@ -175,9 +86,9 @@ void vkObject::_linkCriticalFuncs(VkoFuncs *in_f) {
   // instance/global function grabber
   in_f->GetInstanceProcAddr= nullptr;                      // vulkan 1.0
   #if defined(OS_WIN)
-  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)GetProcAddress((HMODULE)_vulkanLib, "vkGetInstanceProcAddr");
+  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)GetProcAddress((HMODULE)*_vulkanLib(), "vkGetInstanceProcAddr");
   #elif defined(OS_LINUX) || defined(OS_MAC)
-  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)dlsym(_vulkanLib, "vkGetInstanceProcAddr");
+  in_f->GetInstanceProcAddr= (PFN_vkGetInstanceProcAddr)dlsym(*_vulkanLib(), "vkGetInstanceProcAddr");
   #endif
   if(in_f->GetInstanceProcAddr== nullptr) { errorText= "could not link critical function GetInstanceProcAddr"; return; }
 
@@ -464,7 +375,7 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   #ifdef VK_VERSION_1_0
 
   // get the instance-level GetDeviceProcAddr
-  in_f->GetDeviceProcAddr= (PFN_vkGetDeviceProcAddr)in_f->GetInstanceProcAddr(instance, "vkGetDeviceProcAddr");
+  in_f->GetDeviceProcAddr= (PFN_vkGetDeviceProcAddr)in_f->GetInstanceProcAddr(instance(), "vkGetDeviceProcAddr");
   if(in_f->GetDeviceProcAddr== nullptr) { errorText= "Could not aquire instance-level vkGetDeviceProcAddr. aborting"; return; }
 
   // get the device-level GetDeviceProcAddr - IS THIS RIGHT? PROBLY IT'S THE SAME THING BUT, WHO THE HECK KNOWS
@@ -920,6 +831,44 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   #ifdef VK_EXT_host_query_reset
   VKO_LINK_DEVICE_FUNC(ResetQueryPoolEXT);
   #endif
+  
+  #ifdef VK_EXT_extended_dynamic_state
+  VKO_LINK_DEVICE_FUNC(CmdSetCullModeEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetFrontFaceEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetPrimitiveTopologyEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetViewportWithCountEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetScissorWithCountEXT);
+  VKO_LINK_DEVICE_FUNC(CmdBindVertexBuffers2EXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetDepthTestEnableEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetDepthWriteEnableEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetDepthCompareOpEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetDepthBoundsTestEnableEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetStencilTestEnableEXT);
+  VKO_LINK_DEVICE_FUNC(CmdSetStencilOpEXT);
+  #endif
+
+  #ifdef VK_NV_device_generated_commands
+  VKO_LINK_DEVICE_FUNC(GetGeneratedCommandsMemoryRequirementsNV);
+  VKO_LINK_DEVICE_FUNC(CmdPreprocessGeneratedCommandsNV);
+  VKO_LINK_DEVICE_FUNC(CmdExecuteGeneratedCommandsNV);
+  VKO_LINK_DEVICE_FUNC(CmdBindPipelineShaderGroupNV);
+  VKO_LINK_DEVICE_FUNC(CreateIndirectCommandsLayoutNV);
+  VKO_LINK_DEVICE_FUNC(DestroyIndirectCommandsLayoutNV);
+  #endif
+
+  #ifdef VK_EXT_private_data
+  VKO_LINK_DEVICE_FUNC(CreatePrivateDataSlotEXT);
+  VKO_LINK_DEVICE_FUNC(DestroyPrivateDataSlotEXT);
+  VKO_LINK_DEVICE_FUNC(SetPrivateDataEXT);
+  VKO_LINK_DEVICE_FUNC(GetPrivateDataEXT);
+  #endif
+
+
+
+
+
+
+
 
 
   // ANDROID OS specific =====================================================================================

@@ -22,11 +22,6 @@ public:
   VkoSemaphore **signalSemaphores; // [def:null] list with all signal semaphores
   VkFence fence;                   // [def:null] the fence from vkQueueSubmit
 
-  //chainList waitSemaphores;   // chainlist with all wait semaphores
-  //chainList signalSemaphores; // chainList with all signal semaphores
-  //VkoSemaphore **waitSemaphores;    // list with all wait semaphores
-  //VkoSemaphore **signalSemaphores;  // list with all signal semaphores
-
   // configuration
 
   // Set buffer's level [def:VK_COMMAND_BUFFER_LEVEL_PRIMARY]
@@ -89,13 +84,14 @@ public:
   virtual ~VkoCommandBuffer();
   void delData();
 
-private:
-  vkObject *_vko;
-
-  VkCommandBufferLevel _level;
   VkCommandBufferBeginInfo       _beginInfo;
   VkSubmitInfo                   _submitInfo;
   VkCommandBufferInheritanceInfo _inheritanceInfo;
+
+private:
+  vkObject *_vko;
+  VkCommandBufferLevel _level;
+  
   
   friend class VkoCommandPool;
 };

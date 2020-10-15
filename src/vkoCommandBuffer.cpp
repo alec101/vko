@@ -1,4 +1,4 @@
-#include "vko/include/vkObject.h"
+#include "../include/vkObject.h"
 
 ///=======================///
 // VkoCommandBuffer object //
@@ -189,23 +189,6 @@ void VkoCommandBuffer::alloc() {
   _submitInfo.pCommandBuffers= &buffer;
 
 }
-
-
-/*
-void VkoCommandBuffer::reset(VkCommandBufferResetFlags in_flags) {
-  _vko->ResetCommandBuffer(buffer, in_flags);
-}
-
-
-void VkoCommandBuffer::startRecording() {
-  _vko->BeginCommandBuffer(buffer, &_beginInfo);
-}
-
-
-void VkoCommandBuffer::submit(VkQueue in_q) {
-  _vko->QueueSubmit(in_q, 1, &_submitInfo, fence);
-}
-*/
 
 
 void VkoCommandBuffer::updateSemaphoreData() {

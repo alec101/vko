@@ -1,4 +1,4 @@
-#include "vko/include/vkObject.h"
+#include "../include/vkObject.h"
 
 
 
@@ -28,7 +28,7 @@ VkoDynamicSetPool::~VkoDynamicSetPool() {
 void VkoDynamicSetPool::destroy() {
   while(_segments.first) {
     _delSegment((VkoDynamicSetSegment *)_segments.first);
-    _segments.del(_segments.first);
+    //_segments.del(_segments.first);
   }
 }
 
@@ -51,11 +51,14 @@ VkoDynamicSetSegment *VkoDynamicSetPool::_addSegment() {
 
     info.poolSizeCount= _nrDescriptorTypes;
     info.pPoolSizes= _descriptorType;
-  if(_vko->errorCheck(_vko->CreateDescriptorPool(*_vko, &info, *_vko, &p->pool), __FUNCTION__"(): failed to create pool."))
+  if(!_vko->errorCheck(_vko->CreateDescriptorPool(*_vko, &info, *_vko, &p->pool), __FUNCTION__"(): failed to create pool."))
     goto Exit;
 
 
   // sets creation - the sets will always exist;
+  p->freeSpc= new VkDescriptorSet[poolSize];
+  p->freeSpcPeak= poolSize;
+  
   VkDescriptorSetAllocateInfo allocInfo;
     allocInfo.sType= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.pNext= pNext.VkDescriptorSetAllocateInfo;
@@ -90,7 +93,7 @@ void VkoDynamicSetPool::_delSegment(VkoDynamicSetSegment *out_segment) {
   if(out_segment->pool)
     _vko->DestroyDescriptorPool(*_vko, out_segment->pool, *_vko);
 
-  if(out_segment->freeSpc) delete[] out_segment->freeSpc;
+  if(out_segment->freeSpc) { delete[] out_segment->freeSpc; out_segment->freeSpc= nullptr; }
   _segments.del(out_segment);
 }
 
@@ -145,7 +148,8 @@ void VkoDynamicSetPool::configure(VkoDescriptorSetLayout *in_layout, uint32_t in
 bool VkoDynamicSetPool::build() {
   // always there will be one pool/segment
   VkoDynamicSetSegment *s= _addSegment();
-  //_segments.add(s);
+
+  return (s? true: false);
 }
 
 
@@ -197,7 +201,7 @@ void VkoDynamicSetPool::delSet(VkoDynamicSet *out_set) {
 void VkoDynamicSetPool::trimPools() {
   if(_segments.nrNodes<= 1) return;     // quick return on only 1 segment
 
-  // compact segments - move from later segments to first segments, all sets
+  // compact segments - move from later segments to first segments, loop thru all sets
 
   /// static data in VkCopyDescriptorSet
   VkCopyDescriptorSet copy;

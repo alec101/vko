@@ -608,6 +608,46 @@ struct VkoFuncs {
   VKO_FUNC(ResetQueryPoolEXT);
   #endif
 
+  #ifdef VK_EXT_extended_dynamic_state
+  VKO_FUNC(CmdSetCullModeEXT);
+  VKO_FUNC(CmdSetFrontFaceEXT);
+  VKO_FUNC(CmdSetPrimitiveTopologyEXT);
+  VKO_FUNC(CmdSetViewportWithCountEXT);
+  VKO_FUNC(CmdSetScissorWithCountEXT);
+  VKO_FUNC(CmdBindVertexBuffers2EXT);
+  VKO_FUNC(CmdSetDepthTestEnableEXT);
+  VKO_FUNC(CmdSetDepthWriteEnableEXT);
+  VKO_FUNC(CmdSetDepthCompareOpEXT);
+  VKO_FUNC(CmdSetDepthBoundsTestEnableEXT);
+  VKO_FUNC(CmdSetStencilTestEnableEXT);
+  VKO_FUNC(CmdSetStencilOpEXT);
+  #endif
+
+  #ifdef VK_NV_device_generated_commands
+  VKO_FUNC(GetGeneratedCommandsMemoryRequirementsNV);
+  VKO_FUNC(CmdPreprocessGeneratedCommandsNV);
+  VKO_FUNC(CmdExecuteGeneratedCommandsNV);
+  VKO_FUNC(CmdBindPipelineShaderGroupNV);
+  VKO_FUNC(CreateIndirectCommandsLayoutNV);
+  VKO_FUNC(DestroyIndirectCommandsLayoutNV);
+  #endif
+
+  #ifdef VK_EXT_private_data
+  VKO_FUNC(CreatePrivateDataSlotEXT);
+  VKO_FUNC(DestroyPrivateDataSlotEXT);
+  VKO_FUNC(SetPrivateDataEXT);
+  VKO_FUNC(GetPrivateDataEXT);
+  #endif
+
+
+
+
+
+
+
+
+
+
   // ANDROID OS specific =====================================================================================
 
   #ifdef VK_KHR_android_surface

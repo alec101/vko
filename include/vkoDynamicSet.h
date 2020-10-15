@@ -1,6 +1,38 @@
 #pragma once
 
-class VkoDynamicSetSegment;
+/*
+VkoDynamicSetPool class is meant to be a true pool, that expands and contracts (it has trimming capabilities)
+
+The drawback is, that ONLY ONE TYPE of descriptor set can be created from it - ONE LAYOUT, but you can add/delete any number of those sets;
+
+  -you configure it, with only one function, specifying how many sets you _think_ you will use, so you just set how big one segment of the pool is
+  -you can add and delete VkoDynamicSets at free will, there will be a Vulkan memory allocation ONLY if space runs out in the segments of the pool
+  -you can trim the pool, compacting all segments and deleting empty segments, ofc the operation can be costly;
+
+
+  In theory, no memory allocation could happen on add/delete, if all sets are pre-created, but this will require more memory for the VkoDynamicSets
+  I have choosen the other method, to make a small memory alloc for the VkoDynamicSet struct;
+  The reason is, that these sets will be created when a new resource will created, so alot of memory management will happen for the textures/buffers anyway
+
+  It's highly possible i will create the first method too, with zero memory allocations on add/delete (only when the segments are full, another alloc will happen)
+*/
+
+
+//class VkoDynamicSetSegment;
+
+// VkoDynamicSetSegment
+///====================
+
+
+// each segment has a VkDescriptorPool
+class VkoDynamicSetSegment: public chainData {
+public:
+  VkDescriptorPool pool;            // the Vulkan descriptor pool;
+  chainList sets;                   // list with all the sets
+
+  uint32_t freeSpcPeak;             // free space amount; if reaches 0, the pool is full
+  VkDescriptorSet *freeSpc;         // list will all free set slots in pool
+};
 
 
 // VkoDynamicSet
@@ -8,7 +40,7 @@ class VkoDynamicSetSegment;
 struct VkoDynamicSet: public chainData {
   VkDescriptorSet set;
   VkoDynamicSetSegment *segment;       // segment this set is part of; a segment has the VkDescriptorSet pool inside it
-  //VkoDescriptorSetLayout *layout;
+  
   //inline VkoDescriptorSetLayout *getLayout() { return segment-> ;} THIS CAN HAPPEN WITH A POINTER IN THE SEGMENT
   inline VkDescriptorPool getPool() { return segment->pool; }
 };
@@ -25,7 +57,7 @@ class VkoDynamicSetPool: public chainData {
 public:
 
   VkoDescriptorSetLayout *layout;   // the layout all sets will be based on
-  uint32_t poolSize;                // how many sets one pool should handle
+  uint32_t poolSize;                // how many sets one pool/segment will handle
 
   // configuration:
   
@@ -40,16 +72,14 @@ public:
     void delData() { VkDescriptorPoolCreateInfo= VkDescriptorSetAllocateInfo= nullptr; }
   } pNext;
 
-
   // add / delete sets
 
   VkoDynamicSet *addSet();
   void delSet(VkoDynamicSet *);
 
-
   // class handling
 
-  void trimPools();              // WIP <<< TRIM THE SEGMENTS, COMPACT THEM, DELETE EMPTY SEGMENTS
+  void trimPools();              // COSTLY OPERATION- compacts the pool, then empties the empty segments
 
   bool build();
   void destroy();
@@ -77,20 +107,7 @@ private:
 
 
 
-// VkoDynamicSetSegment
-///====================
 
-
-// each segment has a VkDescriptorPool
-class VkoDynamicSetSegment: public chainData {
-public:
-  VkDescriptorPool pool;            // the Vulkan descriptor pool;
-  chainList sets;                   // list with all the sets
-  //VkoDynamicSet *sets;              // array with all the sets
-
-  uint32_t freeSpcPeak;             // free space amount; if reaches 0, the pool is full
-  VkDescriptorSet *freeSpc;         // list will all free set slots in pool
-};
 
 
 

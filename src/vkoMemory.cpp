@@ -70,7 +70,7 @@ bool VkoMemory::configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_require
 
   size= in_size;
   typeIndex= found;
-  typeFlags= _vko->info.memProp.memoryTypes[found].propertyFlags;
+  typeFlags= _vko->info.memProp().memoryTypes[found].propertyFlags;
   return true;
 }
 

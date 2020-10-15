@@ -1,4 +1,4 @@
-#include "vko/include/vkObject.h"
+#include "../include/vkObject.h"
 
 
 ///===================------------------///
@@ -21,7 +21,7 @@ VkoCommandPool::~VkoCommandPool() {
 }
 
 void VkoCommandPool::delData() {
-  _flags= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT& VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+  _flags= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT| VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
   _queueFamily= ~0;
 
   pNext.delData();

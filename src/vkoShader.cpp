@@ -1,9 +1,7 @@
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS 1
-#endif
-
 #include "../include/vkObject.h"
 
+
+//#include <stdio.h>
 
 /* TODO:
   - [TOP PRIORITY] compute pipeline
@@ -168,22 +166,6 @@ void VkoShader::addDescriptorSetFromExisting(VkoDescriptorSetLayout *in_set) {
   descSet= newLayouts;              /// update the descSet list
 
 }
-
-
-/*
-void VkoShader::addDescriptorSet(const VkoSet *in_set) {
-  _SetLayout *p= new _SetLayout;
-  p->layout= in_set->layout;
-  _setLayouts.add(p);
-}
-
-
-void VkoShader::addDescriptorSet(const VkDescriptorSetLayout in_layout) {
-  _SetLayout *p= new _SetLayout;
-  p->layout= in_layout;
-  _setLayouts.add(p);
-}
-*/
 
 
 

@@ -1,0 +1,131 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="INC">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="SRC">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\vkObject.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoBuffer.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoCommandBuffer.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoCommandPool.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoDescriptorPool.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoDynamicSet.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoExt.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoFence.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoFramebuffer.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoFuncs.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoImage.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoMemory.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoRenderPass.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoSampler.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoSemaphore.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoSetLayout.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoShader.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoSwapchain.h">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\chainList.hpp">
+      <Filter>INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vkoGlbFuncs.hpp">
+      <Filter>INC</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\vkObject.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoBuffer.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoCommandBuffer.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoCommandPool.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoDescriptorPool.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoDynamicSet.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoExt.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoFence.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoFramebuffer.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoFuncs.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoImage.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoMemory.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoRenderPass.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoSampler.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoSemaphore.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoSetLayout.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoShader.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoSwapchain.cpp">
+      <Filter>SRC</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

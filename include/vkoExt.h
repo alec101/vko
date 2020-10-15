@@ -215,8 +215,12 @@ struct VkoExtensions {
       VkoExt vk_INTEL_shader_integer_functions2;    // #210 [device] https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_INTEL_shader_integer_functions2
       VkoExt vk_NV_dedicated_allocation_image_aliasing; // #241 [device] https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_NV_dedicated_allocation_image_aliasing
       VkoExt vk_NV_shader_sm_builtins;              // #155 [device] https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_NV_shader_sm_builtins
+      VkoExt vk_EXT_extended_dynamic_state;         // #268 [device] https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_EXT_extended_dynamic_state
+      // 110
+      VkoExt vk_NV_device_generated_commands;       // #278 [device] https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_NV_device_generated_commands
+      VkoExt vk_EXT_private_data;                   // #296 [device] https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_EXT_private_data
     };
-    VkoExt raw[110]; // +terminator
+    VkoExt raw[113]; // +terminator
   } device;
 
   // DEPRECATED

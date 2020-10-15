@@ -29,6 +29,8 @@ public:
   inline bool rebuild() { destroy(); return build(); }
   void destroy();     // all created vko buffers get dealocated from the pool, but all their settings are intact, so they can be rebuilt, if this pool gets rebuilt
 
+  inline void reset(VkCommandPoolResetFlags in_flags= 0); // { _vko->ResetCommandPool(*_vko, commandPool, in_flags); }
+
   VkoCommandPool(vkObject *in_parent);
   virtual ~VkoCommandPool();
   void delData();     // all created VkoCommandBuffers get deleted also

@@ -1,4 +1,4 @@
-#include "vko/include/vkObject.h"
+#include "../include/vkObject.h"
 
 
 ///=======================---------------------///
@@ -84,21 +84,6 @@ bool VkoDescriptorPool::build() {
 
 
 
-
-void VkoDescriptorPool::addDescriptors(VkDescriptorType in_type, uint32_t in_maxDescriptors) {
-  
-  /// search for existing 
-  for(uint32_t a= 0; a< _createInfo.poolSizeCount; a++)
-    // if found, update, return
-    if(_createInfo.pPoolSizes[a].type== in_type) {
-      (uint32_t)(_createInfo.pPoolSizes[a].descriptorCount)+= in_maxDescriptors;
-      return;
-    }
-
-  _addDescriptorTypeToList(in_type, in_maxDescriptors);
-}
-
-
 void VkoDescriptorPool::addDescriptorsFromLayout(VkoDescriptorSetLayout *in_layout, uint32_t in_nrSets) {
 
   /// loop thru all descriptors in set layout
@@ -107,14 +92,16 @@ void VkoDescriptorPool::addDescriptorsFromLayout(VkoDescriptorSetLayout *in_layo
     // search current list for the decriptor type, add to it's count if found
     bool found= false;
     for(uint32_t a= 0; a< _createInfo.poolSizeCount; a++)
-      if(_createInfo.pPoolSizes[a].type== d->type)                            // found
-        (uint32_t)(_createInfo.pPoolSizes[a].descriptorCount)+= in_nrSets,    /// 1 * nrSets
-          found= true;
-
+      if(_createInfo.pPoolSizes[a].type== d->type) {                // found
+        ((VkDescriptorPoolSize *)(_createInfo.pPoolSizes))[a].descriptorCount+= in_nrSets;     /// 1 * nrSets
+        found= true;
+      }
     // if not found, add the descriptor type to the pool list
     if(!found)
       _addDescriptorTypeToList(d->type, in_nrSets);                           /// 1 * nrSets
   } /// for each descriptor
+
+  _createInfo.maxSets+= in_nrSets;
 }
 
 
@@ -135,6 +122,20 @@ void VkoDescriptorPool::_addDescriptorTypeToList(VkDescriptorType in_type, uint3
 
   _createInfo.poolSizeCount++;
   _createInfo.pPoolSizes= newList;
+}
+
+
+void VkoDescriptorPool::addManualDescriptors(VkDescriptorType in_type, uint32_t in_maxDescriptors) {
+  
+  /// search for existing 
+  for(uint32_t a= 0; a< _createInfo.poolSizeCount; a++)
+    // if found, update, return
+    if(_createInfo.pPoolSizes[a].type== in_type) {
+      ((VkDescriptorPoolSize *)(_createInfo.pPoolSizes))[a].descriptorCount+= in_maxDescriptors;
+      return;
+    }
+
+  _addDescriptorTypeToList(in_type, in_maxDescriptors);
 }
 
 
@@ -162,7 +163,7 @@ void VkoDescriptorPool::allocateSets(VkDescriptorSet *out_sets, uint32_t in_nr, 
   else {
     allocInfo.pSetLayouts= new VkDescriptorSetLayout[in_nr];
     for(uint32_t a= 0; a< in_nr; a++)
-      (VkDescriptorSetLayout)(allocInfo.pSetLayouts[a])= in_layout->layout;
+      ((VkDescriptorSetLayout *)(allocInfo.pSetLayouts))[a]= in_layout->layout;
   }
 
   _vko->errorCheck(_vko->AllocateDescriptorSets(*_vko, &allocInfo, out_sets), __FUNCTION__"() Vulkan allocation func failed.");
