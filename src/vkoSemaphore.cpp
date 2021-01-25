@@ -6,7 +6,7 @@
 ///==================///
 
 
-VkoSemaphore::VkoSemaphore(vkObject *in_parent): _vko(in_parent), semaphore(0) {
+VkoSemaphore::VkoSemaphore(vkObject *in_parent): semaphore(0), _vko(in_parent) {
   name= nullptr;                                // INIT 1
   
   delData();
@@ -83,7 +83,7 @@ bool VkoSemaphore::build() {
   *_pNext= pNext.VkExportSemaphoreCreateInfo;   // final pnext is the custom one
 
   if(!_vko->errorCheck(_vko->CreateSemaphore(*_vko, &semInfo, *_vko, &semaphore),
-    __FUNCTION__": vko semaphore create failed."))
+    "VkoSemaphore::build(): vko semaphore create failed."))
     goto Exit;
 
   ret= true;

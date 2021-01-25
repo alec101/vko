@@ -117,7 +117,7 @@ public:
   void destroy();
   //bool rebuild() { destroy(); return rebuild(); }
 
-  inline VkoDescriptorPool(vkObject *in_parent): _vko(in_parent), descriptorPool(0) { delData(); }
+  inline VkoDescriptorPool(vkObject *in_parent): descriptorPool(0), _vko(in_parent) { delData(); }
   inline virtual ~VkoDescriptorPool() { destroy(); delData(); }
   void delData();
 

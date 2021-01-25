@@ -202,26 +202,24 @@ bool VkoSwapchain::build() {
 
   /// surface checks / capabilities
   if(swapInfo.surface== 0) {
-    _vko->errorText= __FUNCTION__": No VkSurfaceKHR specified. Aborting."; goto Exit; }
+    _vko->errorText= "VkoSwapchain::build(): No VkSurfaceKHR specified. Aborting."; goto Exit; }
 
   _vko->GetPhysicalDeviceSurfaceSupportKHR(*_vko, queueFamily, swapInfo.surface, &supported);
   if(supported== false) {
-    _vko->errorText= __FUNCTION__": Swapchain: Surface not supported on configured queue family"; goto Exit; }
+    _vko->errorText= "VkoSwapchain::build(): Swapchain: Surface not supported on configured queue family"; goto Exit; }
 
   if(_vko->GetPhysicalDeviceSurfaceCapabilitiesKHR(*_vko, swapInfo.surface, &surfaceCfg)!= VK_SUCCESS) {
-    _vko->errorText= __FUNCTION__": Swapchain: Could not get capabilities. Aborting."; goto Exit; }
+    _vko->errorText= "VkoSwapchain::build(): Swapchain: Could not get capabilities. Aborting."; goto Exit; }
 
   if(!_isFormatOk(swapInfo.imageFormat, swapInfo.imageColorSpace)) {
-    _vko->errorText= __FUNCTION__": Requested format is not avaible for this surface"; goto Exit; }  
+    _vko->errorText= "VkoSwapchain::build(): Requested format is not avaible for this surface"; goto Exit; }  
 
   // check to see if window is minimized 
   if((!surfaceCfg.currentExtent.height) || (!surfaceCfg.currentExtent.width))
     goto Exit;
 
   // pNext handling
-    swapInfo.pNext= nullptr;
-  
-
+  swapInfo.pNext= nullptr;
   _pNext= &swapInfo.pNext;
 
   /// device group https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkDeviceGroupSwapchainCreateInfoKHR
@@ -253,7 +251,7 @@ bool VkoSwapchain::build() {
   swapInfo.oldSwapchain= _oldSwapchain;
   
   if(!_vko->errorCheck(_vko->CreateSwapchainKHR(*_vko, &swapInfo, *_vko, &swapchain),
-    __FUNCTION__": Swapchain create fail."))
+    "VkoSwapchain::build(): Swapchain create fail."))
     goto Exit;
 
   _populateImages();
@@ -362,7 +360,7 @@ void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemap
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
   
   _presentInfo.pWaitSemaphores= &in_finishDrawing, _presentInfo.pImageIndices= &in_surfaceIndex;
-
+   
   VkResult res= _vko->QueuePresentKHR(in_queue, &_presentInfo);
 
   rebuildRequired= (res== VK_SUCCESS? false: true);

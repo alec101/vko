@@ -694,7 +694,7 @@ struct VkoFuncs {
   VKO_FUNC(GetPhysicalDeviceWaylandPresentationSupportKHR);
   #endif
 
-  // WINDOWS specifi =========================================================================================
+  // WINDOWS specific ========================================================================================
 
   #ifdef VK_KHR_win32_surface // "VK_KHR_win32_surface"
   VKO_FUNC(CreateWin32SurfaceKHR);

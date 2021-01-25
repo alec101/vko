@@ -381,7 +381,7 @@ void VkoShader::_vkCreatePipelineLayout() {
   plci.pPushConstantRanges= pcRange;
 
   _vko->errorCheck(_vko->CreatePipelineLayout(*_vko, &plci, *_vko, &pipelineLayout),
-    __FUNCTION__": Shader Pipeline layout creation failed.");
+    "VkoShader::_vkCreatePipelineLayout(): Shader Pipeline layout creation failed.");
 
   if(pcRange)   delete[] pcRange;     // DEALLOC 1
   if(setLayout) delete[] setLayout;   // DEALLOC 2
@@ -427,7 +427,7 @@ bool VkoShader::_loadModule(const char *in_file, VkShaderModule *out_module) {
 
   // file open & read into mem
   f= fopen(in_file, "rb");
-  if(f== nullptr) { _vko->errorText= __FUNCTION__": file not found. aborting."; goto Exit; }
+  if(f== nullptr) { _vko->errorText= "VkoShader::_loadModule(): file not found. aborting."; goto Exit; }
 
   /// file size
   pos= ftell(f);
@@ -439,12 +439,12 @@ bool VkoShader::_loadModule(const char *in_file, VkShaderModule *out_module) {
   if(chatty) printf("opening file[%s] [%lld]bytes\n", in_file, fs);
   #endif
 
-  if(fs<= 0) { _vko->errorText= __FUNCTION__": filesize is <= 0. aborting."; goto Exit; }
-  if((fs% 4) != 0) { _vko->errorText= __FUNCTION__": shader filesize is not divisible by 4. aborting."; goto Exit; }
+  if(fs<= 0) { _vko->errorText= "VkoShader::_loadModule(): filesize is <= 0. aborting."; goto Exit; }
+  if((fs% 4) != 0) { _vko->errorText= "VkoShader::_loadModule(): shader filesize is not divisible by 4. aborting."; goto Exit; }
 
   buf= new uint8_t[fs];
-  if(buf== nullptr) { _vko->errorText= __FUNCTION__": buffer allocation failed"; goto Exit; }
-  if(fread(buf, 1, fs, f)!= fs) { _vko->errorText= __FUNCTION__": file read error. aborting"; goto Exit; }
+  if(buf== nullptr) { _vko->errorText= "VkoShader::_loadModule(): buffer allocation failed"; goto Exit; }
+  if(fread(buf, 1, fs, f)!= fs) { _vko->errorText= "VkoShader::_loadModule(): file read error. aborting"; goto Exit; }
 
   fclose(f); f= nullptr;
 
@@ -457,7 +457,7 @@ bool VkoShader::_loadModule(const char *in_file, VkShaderModule *out_module) {
   smci.pCode= (const uint32_t *)buf;
   smci.codeSize= (size_t)fs;                // <<< must be divisible by 4
 
-  if(!_vko->errorCheck(_vko->CreateShaderModule(*_vko, &smci, *_vko, out_module), __FUNCTION__": Shader module create failed")) {
+  if(!_vko->errorCheck(_vko->CreateShaderModule(*_vko, &smci, *_vko, out_module), "VkoShader::_loadModule(): Shader module create failed")) {
     *out_module= NULL;
     goto Exit;
   }
@@ -612,7 +612,7 @@ bool VkoShader::build() {
     graphInfo.pNext= pNext.VkGraphicsPipelineCreateInfo;   /// or an extension, atm none i think
     graphInfo.flags= 0;                            // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap9.html#VkPipelineCreateFlagBits
 
-    if(renderPass== NULL) { _vko->errorText= __FUNCTION__": Vulkan renderpass not set. aborting."; goto Exit; }
+    if(renderPass== NULL) { _vko->errorText= "VkoShader::build(): Vulkan renderpass not set. aborting."; goto Exit; }
     graphInfo.renderPass= renderPass;              // the renderpass
     graphInfo.subpass= subpass;                    // index of the subpass
 
@@ -779,7 +779,7 @@ bool VkoShader::build() {
     /// constant viewports
     if(_dynamicViewports== 0) {
       if(_constViewports.nrNodes== 0) {
-        _vko->errorText= __FUNCTION__": Shader pipeline creation failed: no constant or dynamic viewports were defined (use setDynamicViewport()/setConstViewport())";
+        _vko->errorText= "VkoShader::build(): Shader pipeline creation failed: no constant or dynamic viewports were defined (use setDynamicViewport()/setConstViewport())";
         goto Exit;
       }
       viewports.viewportCount= _constViewports.nrNodes;
@@ -891,7 +891,7 @@ bool VkoShader::build() {
     
       
     // pipeline cache is VK_NULL_HANDLE, ATM
-    if(!_vko->errorCheck(_vko->CreateGraphicsPipelines(*_vko, VK_NULL_HANDLE, 1, &graphInfo, *_vko, &pipeline), __FUNCTION__": Vulkan pipeline creation failed")) {
+    if(!_vko->errorCheck(_vko->CreateGraphicsPipelines(*_vko, VK_NULL_HANDLE, 1, &graphInfo, *_vko, &pipeline), "VkoShader::build(): Vulkan pipeline creation failed")) {
       pipeline= NULL;
       goto Exit;
     }
@@ -905,7 +905,7 @@ bool VkoShader::build() {
     if(sConsts[a].pMapEntries)
       delete[] sConsts[a].pMapEntries;    // DEALLOC 1 (in vkPopulateSpecConsts())
     if(sConsts[a].pData)
-      delete[] sConsts[a].pData;          // DEALLOC 2 (in vkPopulateSpecConsts())
+      delete[] (uint8_t *)sConsts[a].pData;          // DEALLOC 2 (in vkPopulateSpecConsts())
   }
   if(viewports.pViewports)
     delete[] viewports.pViewports;        // DEALLOC 3 (const viewports)

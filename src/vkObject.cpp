@@ -435,7 +435,7 @@ Exit:
 
 
 bool vkObject::_createDevice(VkPhysicalDevice in_GPU, VkDevice *out_dev, uint32_t *out_nrQueues, VkoQueue **out_osiQueues) {
-  if(instance== nullptr) { errorText= "vkObject::_createDevice(): vkInstance is nullptr. no instance created? aborting."; return false; }
+  if(instance()== nullptr) { errorText= "vkObject::_createDevice(): vkInstance is nullptr. no instance created? aborting."; return false; }
   bool ret= false;
   errorText= nullptr;
 

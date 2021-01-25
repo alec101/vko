@@ -144,7 +144,7 @@ bool VkoBuffer::build() {
 
   _createInfo.pNext= pNext.VkBufferCreateInfo;
 
-  if(!_vko->errorCheck(_vko->CreateBuffer(*_vko, &_createInfo, *_vko, &buffer), __FUNCTION__": Vulkan buffer create failed"))
+  if(!_vko->errorCheck(_vko->CreateBuffer(*_vko, &_createInfo, *_vko, &buffer), "VkoBuffer::build(): Vulkan buffer create failed"))
     goto Exit;
 
   _vko->GetBufferMemoryRequirements(*_vko, *this, &memRequirements);

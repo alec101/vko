@@ -39,13 +39,13 @@ public:
     void setSurface(VkSurfaceKHR in_s);
 
     // [def:0] surface create flags https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkSwapchainCreateFlagBitsKHR
-    void setFlags(VkSwapchainCreateFlagsKHR in_f) { parent->swapInfo.flags= in_f; parent->swapInfo.minImageCount;}
+    void setFlags(VkSwapchainCreateFlagsKHR in_f) { parent->swapInfo.flags= in_f; }
 
     // [def:2] number of images (buffers) to create for the swapchain
     void setMinImageCount(uint32_t in_n)          { parent->swapInfo.minImageCount= in_n; }
 
     // [def:VK_FORMAT_B8G8R8A8_UNORM] the image format the buffers will be created with
-    void setImageFormat(VkFormat in_f)            { parent->swapInfo.imageFormat; }
+    void setImageFormat(VkFormat in_f)            { parent->swapInfo.imageFormat= in_f; }
 
     // [def:VK_COLOR_SPACE_SRGB_NONLINEAR_KHR] - this is weird, cuz there's only one option here, and you can't even make it undefined
     void setImageColorSpace(VkColorSpaceKHR in_c) { parent->swapInfo.imageColorSpace= in_c; }

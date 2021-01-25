@@ -51,7 +51,7 @@ VkoDynamicSetSegment *VkoDynamicSetPool::_addSegment() {
 
     info.poolSizeCount= _nrDescriptorTypes;
     info.pPoolSizes= _descriptorType;
-  if(!_vko->errorCheck(_vko->CreateDescriptorPool(*_vko, &info, *_vko, &p->pool), __FUNCTION__"(): failed to create pool."))
+  if(!_vko->errorCheck(_vko->CreateDescriptorPool(*_vko, &info, *_vko, &p->pool), "VkoDynamicSetSegment::_addSegment(): failed to create pool."))
     goto Exit;
 
 
@@ -67,7 +67,7 @@ VkoDynamicSetSegment *VkoDynamicSetPool::_addSegment() {
     allocInfo.pSetLayouts= &layout->layout;
 
   for(uint32_t a= 0; a< poolSize; a++)
-    if(!_vko->errorCheck(_vko->AllocateDescriptorSets(*_vko, &allocInfo, &p->freeSpc[a]), __FUNCTION__"(): failed to create set"))
+    if(!_vko->errorCheck(_vko->AllocateDescriptorSets(*_vko, &allocInfo, &p->freeSpc[a]), "VkoDynamicSetSegment::_addSegment(): failed to create set"))
       goto Exit;
 
   _segments.add(p);

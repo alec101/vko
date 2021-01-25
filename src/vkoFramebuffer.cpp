@@ -120,7 +120,7 @@ bool VkoFramebuffer::build() {
       viewInfo.subresourceRange.baseArrayLayer= p->baseLayer;
       viewInfo.subresourceRange.layerCount= p->nrLayers;
       
-      if(!_vko->errorCheck(_vko->CreateImageView(*_vko, &viewInfo, *_vko, &imageView[a]), __FUNCTION__": Vulkan frame buffer image view creation failed"))
+      if(!_vko->errorCheck(_vko->CreateImageView(*_vko, &viewInfo, *_vko, &imageView[a]), "VkoFramebuffer::build(): Vulkan frame buffer image view creation failed"))
         goto Exit;
     } /// for each attachment
   }
@@ -138,7 +138,7 @@ bool VkoFramebuffer::build() {
   fbInfo.layers= layers;
   fbInfo.renderPass= renderPass;
 
-  if(!_vko->errorCheck(_vko->CreateFramebuffer(*_vko, &fbInfo, *_vko, &framebuffer), __FUNCTION__": Vulkan Framebuffer creation failed"))
+  if(!_vko->errorCheck(_vko->CreateFramebuffer(*_vko, &fbInfo, *_vko, &framebuffer), "VkoFramebuffer::build(): Vulkan Framebuffer creation failed"))
     goto Exit;
 
   ret= true; // success

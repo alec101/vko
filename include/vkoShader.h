@@ -407,7 +407,7 @@ private:
     uint32_t offset;            // in bytes; (starting point in the specialization constants data buffer)
     void *value;                // the actual value of the constant, whatever type and size it is
     _SpecConst(): value(nullptr) {}
-    ~_SpecConst() { if(value) delete[] value; } 
+    ~_SpecConst() { if(value) delete[] (uint8_t *)value; } 
   };
 
   class _VertBinding: public chainData {

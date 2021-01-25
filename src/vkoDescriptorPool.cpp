@@ -37,7 +37,7 @@ void VkoDescriptorPool::destroy() {
 
 
 void VkoDescriptorPool::resetPool() {
-  _vko->errorCheck(_vko->ResetDescriptorPool(*_vko, descriptorPool, 0), __FUNCTION__": Reset descriptor pool failed");
+  _vko->errorCheck(_vko->ResetDescriptorPool(*_vko, descriptorPool, 0), "VkoDescriptorPool::resetPool(): Reset descriptor pool failed");
 
   /// mark all sets from this pool as not allocated
   for(VkoSet *p= (VkoSet *)sets.first; p; p= (VkoSet *)p->next)
@@ -70,7 +70,7 @@ bool VkoDescriptorPool::build() {
   // and these are not actually pools, it's just a fixed array of descriptors that are pre-allocated, it can't expand or have any clever functionality
 
   // create
-  if(!_vko->errorCheck(_vko->CreateDescriptorPool(*_vko, &_createInfo, *_vko, &descriptorPool), __FUNCTION__": Vulkan Descriptor Pool create falied."))
+  if(!_vko->errorCheck(_vko->CreateDescriptorPool(*_vko, &_createInfo, *_vko, &descriptorPool), "VkoDescriptorPool::build(): Vulkan Descriptor Pool create falied."))
     return false;
 
   /// if this is a rebuild, all previously created sets can be re-allocated from this pool
@@ -166,7 +166,7 @@ void VkoDescriptorPool::allocateSets(VkDescriptorSet *out_sets, uint32_t in_nr, 
       ((VkDescriptorSetLayout *)(allocInfo.pSetLayouts))[a]= in_layout->layout;
   }
 
-  _vko->errorCheck(_vko->AllocateDescriptorSets(*_vko, &allocInfo, out_sets), __FUNCTION__"() Vulkan allocation func failed.");
+  _vko->errorCheck(_vko->AllocateDescriptorSets(*_vko, &allocInfo, out_sets), "VkoDescriptorPool::allocateSets(): Vulkan allocation func failed.");
 
   if((in_nr> 1) && (allocInfo.pSetLayouts!= nullptr))
     delete[] allocInfo.pSetLayouts;
@@ -196,7 +196,7 @@ bool VkoSet::alloc() {
     allocInfo.descriptorPool= pool->descriptorPool;
     allocInfo.descriptorSetCount= 1;
     allocInfo.pSetLayouts= &layout->layout;
-  if(!pool->_vko->errorCheck(pool->_vko->AllocateDescriptorSets(*pool->_vko, &allocInfo, &set), __FUNCTION__"() Vulkan set allocation func failed."))
+  if(!pool->_vko->errorCheck(pool->_vko->AllocateDescriptorSets(*pool->_vko, &allocInfo, &set), "VkoSet::alloc(): Vulkan set allocation func failed."))
     return false;
   return true;
 }
@@ -207,10 +207,10 @@ bool VkoSet::alloc() {
 
 
 void VkoDescriptorPool::freeSets(VkDescriptorSet *out_sets, uint32_t in_nr) {
-  _vko->errorCheck(_vko->FreeDescriptorSets(*_vko, descriptorPool, in_nr, out_sets), __FUNCTION__"(): free descriptor sets failed");
+  _vko->errorCheck(_vko->FreeDescriptorSets(*_vko, descriptorPool, in_nr, out_sets), "VkoDescriptorPool::freeSets(): free descriptor sets failed");
 }
 
 
 void VkoSet::free() {
-  pool->_vko->errorCheck(pool->_vko->FreeDescriptorSets(*pool->_vko, *pool, 1, &set), __FUNCTION__"(): free descriptor sets failed");
+  pool->_vko->errorCheck(pool->_vko->FreeDescriptorSets(*pool->_vko, *pool, 1, &set), "VkoSet::free(): free descriptor sets failed");
 }

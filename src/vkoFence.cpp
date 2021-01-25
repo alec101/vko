@@ -7,7 +7,7 @@
 
 
 
-VkoFence::VkoFence(vkObject *in_parent): _vko(in_parent), fence(0) {
+VkoFence::VkoFence(vkObject *in_parent): fence(0), _vko(in_parent) {
   delData();
 }
 

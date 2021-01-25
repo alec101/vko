@@ -79,7 +79,7 @@ bool VkoDescriptorSetLayout::build() {
   layoutInfo.pBindings= bindings;
   
   if(!_vko->errorCheck(_vko->CreateDescriptorSetLayout(*_vko, &layoutInfo, *_vko, &layout),
-    __FUNCTION__": Vulkan Descriptor Set Layout create fail"))
+    "VkoDescriptorSetLayout::build(): Vulkan Descriptor Set Layout create fail"))
     goto Exit;
 
   ret= true;    // success if reached this point

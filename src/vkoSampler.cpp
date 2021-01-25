@@ -7,7 +7,7 @@
 ///================///
 
 
-VkoSampler::VkoSampler(vkObject *in_parent): _vko(in_parent), sampler(0) {
+VkoSampler::VkoSampler(vkObject *in_parent): sampler(0), _vko(in_parent){
   delData();
 }
 
@@ -51,7 +51,7 @@ void VkoSampler::destroy() {
 
 bool VkoSampler::build() {
   createInfo.pNext= pNext.VkSamplerCreateInfo;
-  return _vko->errorCheck(_vko->CreateSampler(*_vko, &createInfo, *_vko, &sampler),  __FUNCTION__": vko sampler create failed.");
+  return _vko->errorCheck(_vko->CreateSampler(*_vko, &createInfo, *_vko, &sampler), "VkoSampler::build(): vko sampler create failed.");
 }
 
 

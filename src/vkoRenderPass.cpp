@@ -8,7 +8,7 @@
 
 
 
-VkoRenderPass::VkoRenderPass(vkObject *in_parent): _vko(in_parent), renderPass(0) {
+VkoRenderPass::VkoRenderPass(vkObject *in_parent): renderPass(0), _vko(in_parent) {
   pNext.delData();
 }
 
@@ -78,7 +78,7 @@ void VkoRenderPass::addSubpass(VkSubpassDescriptionFlags in_flags, VkPipelineBin
 
 void VkoRenderPass::addSubpassInputAttachment(uint32_t in_subpass, uint32_t in_attachment, VkImageLayout in_layout) {
   _vko->clearError();
-  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= "VkoRenderPass::addSubpassInputAttachment(): <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _AttachmentRef *p= new _AttachmentRef;
   p->attachment= in_attachment;
@@ -91,7 +91,7 @@ void VkoRenderPass::addSubpassColorAttachment(uint32_t in_subpass,     uint32_t 
                                               bool enableResolve,      uint32_t in_resolveAtt,      VkImageLayout in_resolveLayout,
                                               bool enableDepthStencil, uint32_t in_depthStencilAtt, VkImageLayout in_depthStencilLayout) {
   _vko->clearError();
-  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= "VkoRenderPass::addSubpassColorAttachment(): <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _ColorAtt *p= new _ColorAtt;
   p->colorAtt= in_colorAtt;
@@ -119,8 +119,8 @@ void VkoRenderPass::addSubpassColorAttachment(uint32_t in_subpass,     uint32_t 
 
 void VkoRenderPass::addSubpassColorAttachment2(uint32_t in_subpass, VkAttachmentReference *in_color, VkAttachmentReference *in_resolve, VkAttachmentReference *in_depthStencil) {
   _vko->clearError();
-  if(in_color== nullptr) { _vko->errorText= __FUNCTION__": <in_color> parameter nullptr"; return; }
-  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
+  if(in_color== nullptr) { _vko->errorText= "VkoRenderPass::addSubpassColorAttachment2(): <in_color> parameter nullptr"; return; }
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= "VkoRenderPass::addSubpassColorAttachment2(): <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
 
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _ColorAtt *p= new _ColorAtt;
@@ -176,7 +176,7 @@ void VkoRenderPass::addSubpassDependency2(const VkSubpassDependency *in_dependen
 void VkoRenderPass::addSubpassPreserveAttachment(uint32_t in_subpass, uint32_t in_attachment) {
   // attachments that are not used by this subpass, but whose contents must be preserved throughout the subpass.
   _vko->clearError();
-  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= __FUNCTION__": <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
+  if(in_subpass+ 1> (uint32_t)_subpasses.nrNodes) { _vko->errorText= "VkoRenderPass::addSubpassPreservedAttachment(): <in_subpass> parameter out of bounds of current amount of subpassses"; return; }
   _Subpass *s= (_Subpass *)_subpasses.get(in_subpass);
   _AttachmentRef *p= new _AttachmentRef;
   p->attachment= in_attachment;
@@ -422,7 +422,7 @@ bool VkoRenderPass::build() {
 
   
   if(!_vko->errorCheck(_vko->CreateRenderPass(*_vko, &renderPassInfo, *_vko, &renderPass),
-    __FUNCTION__": Vulkan render pass creation failed"))
+    "VkoRenderpass::build(): Vulkan render pass creation failed"))
     goto Exit;
 
   ret= true;

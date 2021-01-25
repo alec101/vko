@@ -185,7 +185,7 @@ bool VkoImage::build() {
 
   createInfo.pNext= pNext.VkImageCreateInfo;
 
-  if(!_vko->errorCheck(_vko->CreateImage(*_vko, &createInfo, *_vko, &image), __FUNCTION__": Vulkan image create failed"))
+  if(!_vko->errorCheck(_vko->CreateImage(*_vko, &createInfo, *_vko, &image), "VkoImage::build(): Vulkan image create failed"))
     goto Exit;
 
   _vko->GetImageMemoryRequirements(*_vko, *this, &memRequirements);

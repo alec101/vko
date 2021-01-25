@@ -75,7 +75,7 @@ bool VkoCommandPool::build() {
     cpInfo.pNext= pNext.VkCommandPoolCreateInfo;
     cpInfo.flags= _flags;
     cpInfo.queueFamilyIndex= _queueFamily;
-  if(!_vko->errorCheck(_vko->CreateCommandPool(*_vko, &cpInfo, *_vko, &commandPool), __FUNCTION__": Vulkan command pool creation failed"))
+  if(!_vko->errorCheck(_vko->CreateCommandPool(*_vko, &cpInfo, *_vko, &commandPool), "VkoCommandPool::build(): Vulkan command pool creation failed"))
     goto Exit;
 
   // if this is a rebuild, there are already created VkoCommandBuffers

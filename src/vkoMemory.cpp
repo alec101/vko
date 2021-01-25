@@ -64,7 +64,7 @@ bool VkoMemory::configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_require
   if(found== ~0u)
     found= _vko->findMemory(in_typeBits, in_required);
 
-  if(found== ~0u) { _vko->errorText= __FUNCTION__": Could not find required Vulkan physical device memory"; return false; }
+  if(found== ~0u) { _vko->errorText= "VkoMemory::configure(): Could not find required Vulkan physical device memory"; return false; }
 
   // found
 
@@ -215,7 +215,7 @@ bool VkoMemory::build() {
   allocInfo.memoryTypeIndex= typeIndex;
   
   if(!_vko->errorCheck(_vko->AllocateMemory(*_vko, &allocInfo, *_vko, &memory),
-    __FUNCTION__": Failed to build Vulkan memory block."))
+    "VkoMemory::build(): Failed to build Vulkan memory block."))
     goto Exit;
 
   // success
