@@ -14,7 +14,7 @@ public:
   VkPipelineStageFlags stages; // [def:0] _IF_ applicable, what pipeline stages are affected by it
 
   inline void addExport(VkExternalSemaphoreHandleTypeFlags in_handleTypes) { _handleTypes= in_handleTypes; }
-  void addWin32Export(const SECURITY_ATTRIBUTES *in_pAttributes, DWORD in_dwAccess, LPCWSTR in_name);
+  //void addWin32Export(const SECURITY_ATTRIBUTES *in_pAttributes, DWORD in_dwAccess, LPCWSTR in_name);
 
   struct PNext {
     void *VkExportSemaphoreCreateInfo;
@@ -33,10 +33,10 @@ public:
 private:
   // export info
   VkExternalSemaphoreHandleTypeFlags _handleTypes;
-  // win32 additional export info
-  SECURITY_ATTRIBUTES pAttributes;
-  DWORD               dwAccess;
-  LPCWSTR             name;
+  // win32 additional export info - USE PNext, DO YOUR OWN
+  //SECURITY_ATTRIBUTES pAttributes;
+  //DWORD               dwAccess;
+  //LPCWSTR             name;
 
   vkObject *_vko;
   friend class vkObject;

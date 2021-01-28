@@ -28,9 +28,9 @@ public:
   // inport / export / extensions (vulkan 1.1, KHR only)
   
   void addVkExportMemoryAllocateInfo(VkExternalMemoryHandleTypeFlags handleTypes); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryAllocateInfo
-  void addVkExportMemoryWin32HandleInfoKHR(const SECURITY_ATTRIBUTES *pAttributes, DWORD dwAccess, LPCWSTR name); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryWin32HandleInfoKHR
+  //void addVkExportMemoryWin32HandleInfoKHR(const SECURITY_ATTRIBUTES *pAttributes, DWORD dwAccess, LPCWSTR name); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryWin32HandleInfoKHR
   void addVkImportMemoryFdInfoKHR(VkExternalMemoryHandleTypeFlagBits handleType, int fd); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryFdInfoKHR
-  void addVkImportMemoryWin32HandleInfoKHR(VkExternalMemoryHandleTypeFlagBits handleType, HANDLE handle, LPCWSTR name); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryWin32HandleInfoKHR
+  //void addVkImportMemoryWin32HandleInfoKHR(VkExternalMemoryHandleTypeFlagBits handleType, HANDLE handle, LPCWSTR name); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryWin32HandleInfoKHR
   void addVkMemoryAllocateFlagsInfo(VkMemoryAllocateFlags flags, uint32_t deviceMask); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryAllocateFlagsInfo
   void addVkMemoryDedicatedAllocateInfo(VkImage image, VkBuffer buffer); // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryDedicatedAllocateInfo
 
@@ -55,12 +55,12 @@ public:
 
 private:
 
-  VkExportMemoryAllocateInfo       *_exportInfo;
-  VkExportMemoryWin32HandleInfoKHR *_exportWin32;
-  VkImportMemoryFdInfoKHR          *_importFd;
-  VkImportMemoryWin32HandleInfoKHR *_importWin32;
-  VkMemoryAllocateFlagsInfo        *_flagsInfo;
-  VkMemoryDedicatedAllocateInfo    *_dedicatedInfo;
+  VkExportMemoryAllocateInfo    *_exportInfo;
+  //void *_exportWin32;                               // VkExportMemoryWin32HandleInfoKHR *
+  VkImportMemoryFdInfoKHR       *_importFd;
+  //void *_importWin32;                               // VkImportMemoryWin32HandleInfoKHR *
+  VkMemoryAllocateFlagsInfo     *_flagsInfo;
+  VkMemoryDedicatedAllocateInfo *_dedicatedInfo;
 
   vkObject *_vko;
   friend class vkObject;

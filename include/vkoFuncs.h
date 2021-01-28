@@ -639,6 +639,42 @@ struct VkoFuncs {
   VKO_FUNC(GetPrivateDataEXT);
   #endif
 
+  #ifdef VK_NV_fragment_shading_rate_enums
+  VKO_FUNC(CmdSetFragmentShadingRateEnumNV);
+  #endif
+
+  #ifdef VK_NV_acquire_winrt_display
+  VKO_FUNC(AcquireWinrtDisplayNV);
+  VKO_FUNC(GetWinrtDisplayNV);
+  #endif
+
+  #ifdef VK_KHR_acceleration_structure
+  VKO_FUNC(CreateAccelerationStructureKHR);
+  VKO_FUNC(DestroyAccelerationStructureKHR);
+  VKO_FUNC(CmdBuildAccelerationStructuresKHR);
+  VKO_FUNC(CmdBuildAccelerationStructuresIndirectKHR);
+  VKO_FUNC(BuildAccelerationStructuresKHR);
+  VKO_FUNC(CopyAccelerationStructureKHR);
+  VKO_FUNC(CopyAccelerationStructureToMemoryKHR);
+  VKO_FUNC(CopyMemoryToAccelerationStructureKHR);
+  VKO_FUNC(WriteAccelerationStructuresPropertiesKHR);
+  VKO_FUNC(CmdCopyAccelerationStructureKHR);
+  VKO_FUNC(CmdCopyAccelerationStructureToMemoryKHR);
+  VKO_FUNC(CmdCopyMemoryToAccelerationStructureKHR);
+  VKO_FUNC(GetAccelerationStructureDeviceAddressKHR);
+  VKO_FUNC(CmdWriteAccelerationStructuresPropertiesKHR);
+  VKO_FUNC(GetDeviceAccelerationStructureCompatibilityKHR);
+  VKO_FUNC(GetAccelerationStructureBuildSizesKHR);
+  #endif
+
+  #ifdef VK_KHR_ray_tracing_pipeline
+  VKO_FUNC(CmdTraceRaysKHR);
+  VKO_FUNC(CreateRayTracingPipelinesKHR);
+  VKO_FUNC(GetRayTracingCaptureReplayShaderGroupHandlesKHR);
+  VKO_FUNC(CmdTraceRaysIndirectKHR);
+  VKO_FUNC(GetRayTracingShaderGroupStackSizeKHR);
+  VKO_FUNC(CmdSetRayTracingPipelineStackSizeKHR);
+  #endif
 
 
 
@@ -647,22 +683,45 @@ struct VkoFuncs {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+  // -all OS specific funcs, will have a pointer placeholder,
+  //  so this object will remain same size if a platform is specified OR NOT
+  // -this trick is done, so huge header files like <windows.h> won't be forcely required to be loaded anywhere VKO is used.
+  // -there are not that many funcs, so it won't impact anything
 
   // ANDROID OS specific =====================================================================================
 
   #ifdef VK_KHR_android_surface
   VKO_FUNC(CreateAndroidSurfaceKHR);
+  #else
+  void (*CreateAndroidSurfaceKHR)();
   #endif
 
   #ifdef VK_ANDROID_external_memory_android_hardware_buffer
   VKO_FUNC(GetAndroidHardwareBufferPropertiesANDROID);
   VKO_FUNC(GetMemoryAndroidHardwareBufferANDROID);
+  #else
+  void (*GetAndroidHardwareBufferPropertiesANDROID)();
+  void (*GetMemoryAndroidHardwareBufferANDROID)();
   #endif
 
   // FUCHSIA specific ========================================================================================
 
   #ifdef VK_FUCHSIA_imagepipe_surface
   VKO_FUNC(CreateImagePipeSurfaceFUCHSIA);
+  #else
+  void (*CreateImagePipeSurfaceFUCHSIA)();
   #endif
 
   // IOS specific ============================================================================================
@@ -670,21 +729,28 @@ struct VkoFuncs {
   #ifdef VK_MVK_ios_surface
   VKO_FUNC(CreateIOSSurfaceMVK);
   #endif
+  void (*CreateIOSSurfaceMVK)();
 
   // MAC OS specific =========================================================================================
 
   #ifdef VK_MVK_macos_surface // "VK_MVK_macos_surface"
   VKO_FUNC(CreateMacOSSurfaceMVK);
+  #else
+  void (*CreateMacOSSurfaceMVK)();
   #endif
   
   #ifdef VK_EXT_metal_surface
   VKO_FUNC(CreateMetalSurfaceEXT);
+  #else
+  void (*CreateMetalSurfaceEXT)();
   #endif
 
   // VI specific =============================================================================================
 
   #ifdef VK_NN_vi_surface
   VKO_FUNC(CreateViSurfaceNN);
+  #else
+  void (*CreateViSurfaceNN)();
   #endif
 
   // WAYLAND specific ========================================================================================
@@ -692,6 +758,9 @@ struct VkoFuncs {
   #ifdef VK_KHR_wayland_surface // "VK_KHR_wayland_surface"
   VKO_FUNC(CreateWaylandSurfaceKHR);
   VKO_FUNC(GetPhysicalDeviceWaylandPresentationSupportKHR);
+  #else
+  void (*CreateWaylandSurfaceKHR)();
+  void (*GetPhysicalDeviceWaylandPresentationSupportKHR)();
   #endif
 
   // WINDOWS specific ========================================================================================
@@ -699,25 +768,39 @@ struct VkoFuncs {
   #ifdef VK_KHR_win32_surface // "VK_KHR_win32_surface"
   VKO_FUNC(CreateWin32SurfaceKHR);
   VKO_FUNC(GetPhysicalDeviceWin32PresentationSupportKHR);
+  #else
+  void (*CreateWin32SurfaceKHR)();
+  void (*GetPhysicalDeviceWin32PresentationSupportKHR)();
   #endif
 
   #ifdef VK_KHR_external_memory_win32 // "VK_KHR_external_memory_win32"
   VKO_FUNC(GetMemoryWin32HandleKHR);
   VKO_FUNC(GetMemoryWin32HandlePropertiesKHR);
+  #else
+  void (*GetMemoryWin32HandleKHR)();
+  void (*GetMemoryWin32HandlePropertiesKHR)();
   #endif
   
   #ifdef VK_KHR_external_semaphore_win32 // "VK_KHR_external_semaphore_win32"
   VKO_FUNC(ImportSemaphoreWin32HandleKHR);
   VKO_FUNC(GetSemaphoreWin32HandleKHR);
+  #else
+  void (*ImportSemaphoreWin32HandleKHR)();
+  void (*GetSemaphoreWin32HandleKHR)();
   #endif
 
   #ifdef VK_KHR_external_fence_win32 // "VK_KHR_external_fence_win32"
   VKO_FUNC(ImportFenceWin32HandleKHR);
   VKO_FUNC(GetFenceWin32HandleKHR);
+  #else
+  void (*ImportFenceWin32HandleKHR)();
+  void (*GetFenceWin32HandleKHR)();
   #endif
 
   #ifdef VK_NV_external_memory_win32 // "VK_NV_external_memory_win32"
   VKO_FUNC(GetMemoryWin32HandleNV);
+  #else
+  void (*GetMemoryWin32HandleNV)();
   #endif
 
   #ifdef VK_EXT_full_screen_exclusive
@@ -725,6 +808,11 @@ struct VkoFuncs {
   VKO_FUNC(AcquireFullScreenExclusiveModeEXT);
   VKO_FUNC(ReleaseFullScreenExclusiveModeEXT);
   VKO_FUNC(GetDeviceGroupSurfacePresentModes2EXT);
+  #else
+  void (*GetPhysicalDeviceSurfacePresentModes2EXT)();
+  void (*AcquireFullScreenExclusiveModeEXT)();
+  void (*ReleaseFullScreenExclusiveModeEXT)();
+  void (*GetDeviceGroupSurfacePresentModes2EXT)();
   #endif
 
   // LINUX XCB specific ======================================================================================
@@ -732,6 +820,9 @@ struct VkoFuncs {
   #ifdef VK_KHR_xcb_surface // "VK_KHR_xcb_surface"
   VKO_FUNC(CreateXcbSurfaceKHR);
   VKO_FUNC(GetPhysicalDeviceXcbPresentationSupportKHR);
+  #else
+  void (*CreateXcbSurfaceKHR)();
+  void (*GetPhysicalDeviceXcbPresentationSupportKHR)();
   #endif
 
   // LINUX XLIB specific =====================================================================================
@@ -739,6 +830,9 @@ struct VkoFuncs {
   #ifdef VK_KHR_xlib_surface // "VK_KHR_xlib_surface"
   VKO_FUNC(CreateXlibSurfaceKHR);
   VKO_FUNC(GetPhysicalDeviceXlibPresentationSupportKHR);
+  #else
+  void (*CreateXlibSurfaceKHR)();
+  void (*GetPhysicalDeviceXlibPresentationSupportKHR)();
   #endif
 
   // LINUX XRANDR specific ===================================================================================
@@ -746,13 +840,30 @@ struct VkoFuncs {
   #ifdef VK_EXT_acquire_xlib_display // "VK_EXT_acquire_xlib_display"
   VKO_FUNC(AcquireXlibDisplayEXT);
   VKO_FUNC(GetRandROutputDisplayEXT);
+  #else
+  void (*AcquireXlibDisplayEXT)();
+  void (*GetRandROutputDisplayEXT)();
   #endif
 
   // GGP specific ============================================================================================
 
   #ifdef VK_GGP_stream_descriptor_surface
   VKO_FUNC(CreateStreamDescriptorSurfaceGGP);
+  #else
+  void (*CreateStreamDescriptorSurfaceGGP)();
   #endif
+
+  // DIRECT FB specific ======================================================================================
+
+  #ifdef VK_EXT_directfb_surface
+  VKO_FUNC(CreateDirectFBSurfaceEXT);
+  VKO_FUNC(GetPhysicalDeviceDirectFBPresentationSupportEXT);
+  #else
+  void (*CreateDirectFBSurfaceEXT)();
+  void (*GetPhysicalDeviceDirectFBPresentationSupportEXT)();
+  #endif
+
+
 };
 
 

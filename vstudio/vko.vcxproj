@@ -181,6 +181,7 @@
     <ClInclude Include="..\include\vkoGlbFuncs.hpp" />
     <ClInclude Include="..\include\vkoImage.h" />
     <ClInclude Include="..\include\vkoMemory.h" />
+    <ClInclude Include="..\include\vkoPlatform.h" />
     <ClInclude Include="..\include\vkoRenderPass.h" />
     <ClInclude Include="..\include\vkoSampler.h" />
     <ClInclude Include="..\include\vkoSemaphore.h" />
@@ -195,23 +196,57 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\vkoBuffer.cpp" />
-    <ClCompile Include="..\src\vkoCommandBuffer.cpp" />
-    <ClCompile Include="..\src\vkoCommandPool.cpp" />
-    <ClCompile Include="..\src\vkoDescriptorPool.cpp" />
-    <ClCompile Include="..\src\vkoDynamicSet.cpp" />
-    <ClCompile Include="..\src\vkoExt.cpp" />
-    <ClCompile Include="..\src\vkoFence.cpp" />
-    <ClCompile Include="..\src\vkoFramebuffer.cpp" />
-    <ClCompile Include="..\src\vkoFuncs.cpp" />
-    <ClCompile Include="..\src\vkoImage.cpp" />
-    <ClCompile Include="..\src\vkoMemory.cpp" />
-    <ClCompile Include="..\src\vkoRenderPass.cpp" />
-    <ClCompile Include="..\src\vkoSampler.cpp" />
-    <ClCompile Include="..\src\vkoSemaphore.cpp" />
-    <ClCompile Include="..\src\vkoSetLayout.cpp" />
-    <ClCompile Include="..\src\vkoShader.cpp" />
-    <ClCompile Include="..\src\vkoSwapchain.cpp" />
+    <ClCompile Include="..\src\vkoBuffer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoCommandBuffer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoCommandPool.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoDescriptorPool.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoDynamicSet.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoExt.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoFence.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoFramebuffer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoFuncs.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoImage.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoMemory.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoRenderPass.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoSampler.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoSemaphore.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoSetLayout.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoShader.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\vkoSwapchain.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

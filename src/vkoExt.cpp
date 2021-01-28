@@ -311,8 +311,11 @@ VkoExtensions::VkoExtensions() {
   instance.raw[a++]= {"VK_EXT_metal_surface",                 218, 0, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_EXT_metal_surface
   instance.raw[a++]= {"VK_EXT_validation_features",           248, 0, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_EXT_validation_features
   instance.raw[a++]= {"VK_GGP_stream_descriptor_surface",      50, 0, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_GGP_stream_descriptor_surface
+  instance.raw[a++]= {"VK_EXT_directfb_surface",              347, 0, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_directfb_surface
   //instance.raw[a++]= {"",           000, 0, 0, 0}; // 
   instance.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
+
+
 
   // instance extensions DEPRECATED - stop using them
   a= 0;
@@ -325,6 +328,8 @@ VkoExtensions::VkoExtensions() {
   instanceDeprecated.raw[a++]= {"VK_NV_external_memory_capabilities",      56, 0, 0, 0}; // [Deprecated by VK_KHR_external_memory_capabilities that was promoted to Vulkan 1.1] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_NV_external_memory_capabilities
   instanceDeprecated.raw[a++]= {"VK_EXT_validation_flags",                 62, 0, 0, 0}; // Deprecated by VK_EXT_validation_features[instance creation: pNext extra struct] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_EXT_validation_flags
   instanceDeprecated.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
+
+
 
   // device extensions
   a= 0;
@@ -450,11 +455,33 @@ VkoExtensions::VkoExtensions() {
   device.raw[a++]= {"VK_NV_shader_sm_builtins",                155, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap44.html#VK_NV_shader_sm_builtins
   device.raw[a++]= {"VK_EXT_extended_dynamic_state",           268, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_EXT_extended_dynamic_state
   // 110
-  device.raw[a++]= {"vk_NV_device_generated_commands",         278, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_NV_device_generated_commands
+  device.raw[a++]= {"VK_NV_device_generated_commands",         278, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_NV_device_generated_commands
   device.raw[a++]= {"VK_EXT_private_data",                     296, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap48.html#VK_EXT_private_data
-
-  device.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
+  device.raw[a++]= {"VK_QCOM_render_pass_transform",           283, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_QCOM_render_pass_transform
+  device.raw[a++]= {"VK_EXT_device_memory_report",             285, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_device_memory_report
+  device.raw[a++]= {"VK_EXT_robustness2",                      287, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_robustness2
+  device.raw[a++]= {"VK_EXT_custom_border_color",              288, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_custom_border_color
+  device.raw[a++]= {"VK_EXT_pipeline_creation_cache_control",  298, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_pipeline_creation_cache_control
+  device.raw[a++]= {"VK_NV_device_diagnostics_config",         301, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_NV_device_diagnostics_config
+  device.raw[a++]= {"VK_QCOM_render_pass_store_ops",           302, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_QCOM_render_pass_store_ops
+  device.raw[a++]= {"VK_NV_fragment_shading_rate_enums",       327, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_NV_fragment_shading_rate_enums
+  // 120
+  device.raw[a++]= {"VK_EXT_fragment_density_map2",            333, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_fragment_density_map2
+  device.raw[a++]= {"VK_QCOM_rotated_copy_commands",           334, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_QCOM_rotated_copy_commands
+  device.raw[a++]= {"VK_EXT_image_robustness",                 336, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_image_robustness
+  device.raw[a++]= {"VK_EXT_4444_formats",                     341, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_4444_formats
+  device.raw[a++]= {"VK_NV_acquire_winrt_display",             346, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_NV_acquire_winrt_display
+  device.raw[a++]= {"VK_VALVE_mutable_descriptor_type",        352, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_VALVE_mutable_descriptor_type
+  device.raw[a++]= {"VK_KHR_acceleration_structure",           151, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_acceleration_structure
+  device.raw[a++]= {"VK_KHR_ray_tracing_pipeline",             348, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_ray_tracing_pipeline
+  device.raw[a++]= {"VK_KHR_ray_query",                        349, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_ray_query
+  device.raw[a++]= {"VK_EXT_shader_image_atomic_int64",        235, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_shader_image_atomic_int64
+  // 130
+  device.raw[a++]= {"VK_EXT_shader_atomic_float",              261, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_shader_atomic_float
+  device.raw[a++]= {"VK_KHR_shader_non_semantic_info",         294, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_shader_non_semantic_info
   //device.raw[a++]= {"",        000, 1, 0, 0}; // 
+  device.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
+  
 
   // device extensions - DEPRECATED 
   a= 0;
@@ -507,8 +534,17 @@ VkoExtensions::VkoExtensions() {
   deviceDeprecated.raw[a++]= {"VK_AMD_gpu_shader_half_float",           37, 1, 0, 0}; // Deprecated by VK_KHR_shader_float16_int8 -> Promoted to Vulkan 1.2 [support for SPV_AMD_gpu_shader_half_float] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_AMD_gpu_shader_half_float
   deviceDeprecated.raw[a++]= {"VK_AMD_gpu_shader_int16",               133, 1, 0, 0}; // Deprecated by VK_KHR_shader_float16_int8 -> Promoted to Vulkan 1.2 [support for SPV_AMD_gpu_shader_int16] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_AMD_gpu_shader_int16
   deviceDeprecated.raw[a++]= {"VK_KHR_vulkan_memory_model",            212, 1, 0, 0}; // Promoted to Vulkan 1.2 [sync memory accessed by multiple shaders] https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VK_KHR_vulkan_memory_model
+  deviceDeprecated.raw[a++]= {"VK_KHR_depth_stencil_resolve",          200, 1, 0, 0}; // Promoted to 1.2 https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_depth_stencil_resolve
+  deviceDeprecated.raw[a++]= {"VK_KHR_imageless_framebuffer",          109, 1, 0, 0}; // Promoted to 1.2 https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_imageless_framebuffer
+  deviceDeprecated.raw[a++]= {"VK_KHR_separate_depth_stencil_layouts", 242, 1, 0, 0}; // Promoted to 1.2 https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_separate_depth_stencil_layouts
+  deviceDeprecated.raw[a++]= {"VK_KHR_shader_float_controls",          198, 1, 0, 0}; // Promoted to 1.2 https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_shader_float_controls
+  deviceDeprecated.raw[a++]= {"VK_KHR_shader_subgroup_extended_types", 176, 1, 0, 0}; // Promoted to 1.2 https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_shader_subgroup_extended_types
+  // 50
+  deviceDeprecated.raw[a++]= {"VK_KHR_spirv_1_4",                      237, 1, 0, 0}; // Promoted to 1.2 https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_spirv_1_4
+  deviceDeprecated.raw[a++]= {"VK_KHR_uniform_buffer_standard_layout", 254, 1, 0, 0}; // Promoted to 1.2 https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_uniform_buffer_standard_layout
+  deviceDeprecated.raw[a++]= {"VK_KHR_shader_float16_int8",             83, 1, 0, 0}; // Promoted to 1.2 https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_shader_float16_int8
   deviceDeprecated.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
-
+  
   // NEW EXTENSIONS SHOULD BE ADDED AT THE BACK OF EACH LIST
 
   //{"", 000, 0/1, 0, 0}; // [dev/inst] [description] https://location

@@ -15,8 +15,7 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
-//#include "util/typeShortcuts.h"
-//#include "osinteraction.h"
+//#include <stdio.h>
 #include <stdint.h>
 #include "chainList.hpp"
 
@@ -32,9 +31,8 @@
 #endif
 #endif
 
-#include <stdio.h>
 
-
+/*  WIP, trying to get rid of <windows.h>-type of headers
 #ifdef OS_WIN
 #define VK_USE_PLATFORM_WIN32_KHR 1
 #endif
@@ -47,13 +45,17 @@
 #ifdef OS_MAC
 #define VK_USE_PLATFORM_MACOS_MVK 1
 #endif
+*/
+
+
 
 #define VK_NO_PROTOTYPES 1
-//#include "../extlib/vulkan/vulkan.h"
+
 #ifdef VKO_USE_VULKAN_INCLUDE_DIR
 #include VKO_USE_VULKAN_INCLUDE_DIR
 #else
 #include "vulkan.h"
+//#include "../extlib/vulkan/vulkan.h"
 #endif
 
 struct VkoPhysicalDevice;
@@ -114,7 +116,7 @@ public:
     // list with every phyical device on system; populated after buildInstance() is called
     inline static VkoPhysicalDevice **physicalDevice()        { static VkoPhysicalDevice *pd= nullptr;     return &pd; } 
     // memory properties struct
-    inline static VkPhysicalDeviceMemoryProperties &memProp() { static VkPhysicalDeviceMemoryProperties m; return m; }
+    VkPhysicalDeviceMemoryProperties memProp;         // memory properties, tied to current device/vkObject
 
     ~VkoInfo();
   } info;

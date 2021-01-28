@@ -1,4 +1,6 @@
+#include "../include/vkoPlatform.h"
 #include "../include/vkObject.h"
+#include <stdio.h>
 
 /*
   TODO:
@@ -19,8 +21,8 @@ vkObject::vkObject(): VkoFuncs() {
   cfg.extensions._vko= this;
 
   info.apiVersion= 0;
-  info.memProp().memoryHeapCount= 0;
-  info.memProp().memoryTypeCount= 0;
+  info.memProp.memoryHeapCount= 0;
+  info.memProp.memoryTypeCount= 0;
 
   _linkLib();
   _linkCriticalFuncs(this);
@@ -75,8 +77,8 @@ vkObject::VkoInfo::~VkoInfo() {
 
 uint32_t vkObject::findMemory(uint32_t in_memTypeBits, VkMemoryPropertyFlags in_prop) {
   // mem type https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryPropertyFlagBits
-  for(uint32_t a= 0; a< info.memProp().memoryTypeCount; a++)
-    if((in_memTypeBits& (1 << a)) && ((info.memProp().memoryTypes[a].propertyFlags& in_prop)== in_prop))
+  for(uint32_t a= 0; a< info.memProp.memoryTypeCount; a++)
+    if((in_memTypeBits& (1 << a)) && ((info.memProp.memoryTypes[a].propertyFlags& in_prop)== in_prop))
       return a;
 
   return ~0u;
@@ -852,7 +854,7 @@ bool vkObject::build() {
   _linkDeviceFuncs(this, instance(), *this);
 
   // memory information
-  GetPhysicalDeviceMemoryProperties(*this, &info.memProp());
+  GetPhysicalDeviceMemoryProperties(*this, &info.memProp);
 
   _populateVkQueue();
 

@@ -1,7 +1,5 @@
 #include "../include/vkObject.h"
-
-
-//#include <stdio.h>
+#include <stdio.h>
 
 /* TODO:
   - [TOP PRIORITY] compute pipeline

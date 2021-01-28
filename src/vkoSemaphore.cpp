@@ -7,7 +7,7 @@
 
 
 VkoSemaphore::VkoSemaphore(vkObject *in_parent): semaphore(0), _vko(in_parent) {
-  name= nullptr;                                // INIT 1
+  //name= nullptr;                                // INIT 1
   
   delData();
 }
@@ -15,16 +15,16 @@ VkoSemaphore::VkoSemaphore(vkObject *in_parent): semaphore(0), _vko(in_parent) {
 
 void VkoSemaphore::delData() {
   // dealocs
-  if(name) { delete[] name; name= nullptr; }    // DEALOC 1
+  //if(name) { delete[] name; name= nullptr; }    // DEALOC 1
 
   pNext.delData();
 
   stages= 0,
-  _handleTypes= 0,
-  dwAccess= 0,
-  pAttributes.bInheritHandle= 0,
-  pAttributes.lpSecurityDescriptor= 0,
-  pAttributes.nLength= 0;
+  _handleTypes= 0;
+  //dwAccess= 0,
+  //pAttributes.bInheritHandle= 0,
+  //pAttributes.lpSecurityDescriptor= 0,
+  //pAttributes.nLength= 0;
 }
 
 
@@ -39,7 +39,7 @@ void VkoSemaphore::destroy() {
 
 
 
-
+/*
 void VkoSemaphore::addWin32Export(const SECURITY_ATTRIBUTES *in_pAttributes, DWORD in_dwAccess, LPCWSTR in_name) {
   pAttributes= *in_pAttributes, dwAccess= in_dwAccess;
   if(name) delete[] name; name= nullptr;
@@ -50,14 +50,14 @@ void VkoSemaphore::addWin32Export(const SECURITY_ATTRIBUTES *in_pAttributes, DWO
     vkObject::_memcpy((void *)name, in_name, l);
   }
 }
-
+*/
 
 bool VkoSemaphore::build() {
   bool ret= false;
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap6.html#synchronization-semaphores
   VkSemaphoreCreateInfo semInfo= { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0 };
   VkExportSemaphoreCreateInfo exportInfo; 
-  VkExportSemaphoreWin32HandleInfoKHR win32ExportInfo;
+  //VkExportSemaphoreWin32HandleInfoKHR win32ExportInfo;
   const void **_pNext= &semInfo.pNext;
   
   if(semaphore!= NULL) destroy();
@@ -69,7 +69,7 @@ bool VkoSemaphore::build() {
     exportInfo.handleTypes= _handleTypes;
     _pNext= &exportInfo.pNext;
   }
-
+  /*
   if(dwAccess!= 0 || name || pAttributes.nLength || pAttributes.bInheritHandle || pAttributes.lpSecurityDescriptor|| pAttributes.nLength) {
     *_pNext= &win32ExportInfo;
     win32ExportInfo.sType= VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR;
@@ -79,7 +79,7 @@ bool VkoSemaphore::build() {
     win32ExportInfo.name= name;
     _pNext= &win32ExportInfo.pNext;
   }
-
+  */
   *_pNext= pNext.VkExportSemaphoreCreateInfo;   // final pnext is the custom one
 
   if(!_vko->errorCheck(_vko->CreateSemaphore(*_vko, &semInfo, *_vko, &semaphore),

@@ -1,4 +1,6 @@
+#include "../include/vkoPlatform.h"
 #include "../include/vkObject.h"
+
 // dynamic library link
 #ifdef OS_WIN
 #include <Windows.h>
@@ -155,6 +157,22 @@ void vkObject::_linkInstanceFuncs(VkoFuncs *in_f, VkInstance in_i) {
   VKO_LINK_INSTANCE_FUNC(in_i, GetPhysicalDeviceExternalFenceProperties);
   VKO_LINK_INSTANCE_FUNC(in_i, GetPhysicalDeviceExternalSemaphoreProperties);
   #endif ///VK_VERSION_1_0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   #ifdef VK_KHR_surface // "VK_KHR_surface"
   VKO_LINK_INSTANCE_FUNC(in_i, DestroySurfaceKHR);
@@ -355,6 +373,13 @@ void vkObject::_linkInstanceFuncs(VkoFuncs *in_f, VkInstance in_i) {
   VKO_LINK_INSTANCE_FUNC(in_i, CreateStreamDescriptorSurfaceGGP);
   #endif
 
+  // DIRECT FB specific ======================================================================================
+
+  #ifdef VK_EXT_directfb_surface
+  VKO_LINK_INSTANCE_FUNC(in_i, CreateDirectFBSurfaceEXT);
+  VKO_LINK_INSTANCE_FUNC(in_i, GetPhysicalDeviceDirectFBPresentationSupportEXT);
+  #endif
+
   in_f->instInit= true;
 }
 
@@ -525,6 +550,27 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(UpdateDescriptorSetWithTemplate);
   VKO_LINK_DEVICE_FUNC(GetDescriptorSetLayoutSupport);
   #endif /// #ifdef VK_VERSION_1_1
+
+  // VULKAN 1.2 ========================================================================
+  #ifdef VK_VERSION_1_2
+  VKO_LINK_DEVICE_FUNC(CmdDrawIndirectCount);
+  VKO_LINK_DEVICE_FUNC(CmdDrawIndexedIndirectCount);
+  VKO_LINK_DEVICE_FUNC(CreateRenderPass2);
+  VKO_LINK_DEVICE_FUNC(CmdBeginRenderPass2);
+  VKO_LINK_DEVICE_FUNC(CmdNextSubpass2);
+  VKO_LINK_DEVICE_FUNC(CmdEndRenderPass2);
+  VKO_LINK_DEVICE_FUNC(ResetQueryPool);
+  VKO_LINK_DEVICE_FUNC(GetSemaphoreCounterValue);
+  VKO_LINK_DEVICE_FUNC(WaitSemaphores);
+  VKO_LINK_DEVICE_FUNC(SignalSemaphore);
+  VKO_LINK_DEVICE_FUNC(GetBufferDeviceAddress);
+  VKO_LINK_DEVICE_FUNC(GetBufferOpaqueCaptureAddress);
+  VKO_LINK_DEVICE_FUNC(GetDeviceMemoryOpaqueCaptureAddress);
+  #endif /// VK_VERSION_1_2
+
+
+
+
 
   // VULKAN EXTENSIONS ==================================================================================
 
@@ -862,6 +908,52 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(SetPrivateDataEXT);
   VKO_LINK_DEVICE_FUNC(GetPrivateDataEXT);
   #endif
+  
+  #ifdef VK_NV_fragment_shading_rate_enums
+  VKO_LINK_DEVICE_FUNC(CmdSetFragmentShadingRateEnumNV);
+  #endif
+
+  #ifdef VK_NV_acquire_winrt_display
+  VKO_LINK_DEVICE_FUNC(AcquireWinrtDisplayNV);
+  VKO_LINK_DEVICE_FUNC(GetWinrtDisplayNV);
+  #endif
+
+  #ifdef VK_KHR_acceleration_structure
+  VKO_LINK_DEVICE_FUNC(CreateAccelerationStructureKHR);
+  VKO_LINK_DEVICE_FUNC(DestroyAccelerationStructureKHR);
+  VKO_LINK_DEVICE_FUNC(CmdBuildAccelerationStructuresKHR);
+  VKO_LINK_DEVICE_FUNC(CmdBuildAccelerationStructuresIndirectKHR);
+  VKO_LINK_DEVICE_FUNC(BuildAccelerationStructuresKHR);
+  VKO_LINK_DEVICE_FUNC(CopyAccelerationStructureKHR);
+  VKO_LINK_DEVICE_FUNC(CopyAccelerationStructureToMemoryKHR);
+  VKO_LINK_DEVICE_FUNC(CopyMemoryToAccelerationStructureKHR);
+  VKO_LINK_DEVICE_FUNC(WriteAccelerationStructuresPropertiesKHR);
+  VKO_LINK_DEVICE_FUNC(CmdCopyAccelerationStructureKHR);
+  VKO_LINK_DEVICE_FUNC(CmdCopyAccelerationStructureToMemoryKHR);
+  VKO_LINK_DEVICE_FUNC(CmdCopyMemoryToAccelerationStructureKHR);
+  VKO_LINK_DEVICE_FUNC(GetAccelerationStructureDeviceAddressKHR);
+  VKO_LINK_DEVICE_FUNC(CmdWriteAccelerationStructuresPropertiesKHR);
+  VKO_LINK_DEVICE_FUNC(GetDeviceAccelerationStructureCompatibilityKHR);
+  VKO_LINK_DEVICE_FUNC(GetAccelerationStructureBuildSizesKHR);
+  #endif
+
+  #ifdef VK_KHR_ray_tracing_pipeline
+  VKO_LINK_DEVICE_FUNC(CmdTraceRaysKHR);
+  VKO_LINK_DEVICE_FUNC(CreateRayTracingPipelinesKHR);
+  VKO_LINK_DEVICE_FUNC(GetRayTracingCaptureReplayShaderGroupHandlesKHR);
+  VKO_LINK_DEVICE_FUNC(CmdTraceRaysIndirectKHR);
+  VKO_LINK_DEVICE_FUNC(GetRayTracingShaderGroupStackSizeKHR);
+  VKO_LINK_DEVICE_FUNC(CmdSetRayTracingPipelineStackSizeKHR);
+  #endif
+
+
+
+
+
+
+
+
+
 
 
 

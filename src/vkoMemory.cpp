@@ -1,3 +1,4 @@
+#include "../include/vkoPlatform.h"
 #include "../include/vkObject.h"
 
 
@@ -12,9 +13,9 @@ VkoMemory::VkoMemory(vkObject *in_parent): _vko(in_parent) {
   // init pointers
 
   _exportInfo=    nullptr;
-  _exportWin32=   nullptr;
+  //_exportWin32=   nullptr;
   _importFd=      nullptr;
-  _importWin32=   nullptr;
+  //_importWin32=   nullptr;
   _flagsInfo=     nullptr;
   _dedicatedInfo= nullptr;
 
@@ -29,16 +30,21 @@ VkoMemory::~VkoMemory() {
 
 
 void VkoMemory::delData() {
+  /*
   if(_exportWin32) {
-    if(_exportWin32->pAttributes) delete   _exportWin32->pAttributes;
-    if(_exportWin32->name)        delete[] _exportWin32->name;
-    delete _exportWin32; _exportWin32= nullptr;
+    if(((VkExportMemoryWin32HandleInfoKHR *)_exportWin32)->pAttributes)
+      delete   ((VkExportMemoryWin32HandleInfoKHR *)_exportWin32)->pAttributes;
+    if(((VkExportMemoryWin32HandleInfoKHR *)_exportWin32)->name)
+      delete[] ((VkExportMemoryWin32HandleInfoKHR *)_exportWin32)->name;
+    delete (VkExportMemoryWin32HandleInfoKHR *)_exportWin32; _exportWin32= nullptr;
   }
 
   if(_importWin32) {
-    if(_importWin32->name)        delete[] _importWin32->name;
-    delete _importWin32; _importWin32= nullptr;
+    if(((VkImportMemoryWin32HandleInfoKHR *)_importWin32)->name)
+      delete[] ((VkImportMemoryWin32HandleInfoKHR *)_importWin32)->name;
+    delete (VkImportMemoryWin32HandleInfoKHR *)_importWin32; _importWin32= nullptr;
   }
+  */
 
   if(_exportInfo)    { delete _exportInfo;    _exportInfo=    nullptr; }
   if(_importFd)      { delete _importFd;      _importFd=      nullptr; }
@@ -70,7 +76,7 @@ bool VkoMemory::configure(VkDeviceSize in_size, VkMemoryPropertyFlags in_require
 
   size= in_size;
   typeIndex= found;
-  typeFlags= _vko->info.memProp().memoryTypes[found].propertyFlags;
+  typeFlags= _vko->info.memProp.memoryTypes[found].propertyFlags;
   return true;
 }
 
@@ -83,26 +89,29 @@ void VkoMemory::addVkExportMemoryAllocateInfo(VkExternalMemoryHandleTypeFlags ha
   _exportInfo->handleTypes= handleTypes;
 }
 
-
+/*
 void VkoMemory::addVkExportMemoryWin32HandleInfoKHR(const SECURITY_ATTRIBUTES* pAttributes, DWORD dwAccess, LPCWSTR name) {
-  if(_exportWin32== nullptr)
+  VkExportMemoryWin32HandleInfoKHR *p= (VkExportMemoryWin32HandleInfoKHR *)_exportWin32;
+  if(_exportWin32== nullptr) {
     _exportWin32= new VkExportMemoryWin32HandleInfoKHR;
-  else {
-    if(_exportWin32->pAttributes) delete _exportWin32->pAttributes; _exportWin32->pAttributes= nullptr;
-    if(_exportWin32->name) delete[] _exportWin32->name; _exportWin32->name= nullptr;
+    p= (VkExportMemoryWin32HandleInfoKHR *)_exportWin32;
+  } else {
+    if(p->pAttributes) delete p->pAttributes; p->pAttributes= nullptr;
+    if(p->name) delete[] p->name;
+    ((VkImportMemoryWin32HandleInfoKHR *)_exportWin32)->name= nullptr;
   }
 
-  _exportWin32->sType= VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
-  _exportWin32->pAttributes= new SECURITY_ATTRIBUTES;
-  ((SECURITY_ATTRIBUTES *)_exportWin32->pAttributes)->bInheritHandle= pAttributes->bInheritHandle;
-  ((SECURITY_ATTRIBUTES *)_exportWin32->pAttributes)->lpSecurityDescriptor= pAttributes->lpSecurityDescriptor;
-  ((SECURITY_ATTRIBUTES *)_exportWin32->pAttributes)->nLength= pAttributes->nLength;
+  p->sType= VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
+  p->pAttributes= new SECURITY_ATTRIBUTES;
+  ((SECURITY_ATTRIBUTES *)p->pAttributes)->bInheritHandle= pAttributes->bInheritHandle;
+  ((SECURITY_ATTRIBUTES *)p->pAttributes)->lpSecurityDescriptor= pAttributes->lpSecurityDescriptor;
+  ((SECURITY_ATTRIBUTES *)p->pAttributes)->nLength= pAttributes->nLength;
 
-  _exportWin32->dwAccess= dwAccess;
-  _exportWin32->name= (LPCWSTR)new uint8_t[vkObject::_strlen16((char16_t *)name)];
-  vkObject::_strcpy16((char16_t *)_exportWin32->name, (char16_t *)name);
+  p->dwAccess= dwAccess;
+  p->name= (LPCWSTR)new uint8_t[vkObject::_strlen16((char16_t *)name)];
+  vkObject::_strcpy16((char16_t *)p->name, (char16_t *)name);
 }
-
+*/
 
 void VkoMemory::addVkImportMemoryFdInfoKHR(VkExternalMemoryHandleTypeFlagBits handleType, int fd) {
   if(_importFd== nullptr)
@@ -112,21 +121,23 @@ void VkoMemory::addVkImportMemoryFdInfoKHR(VkExternalMemoryHandleTypeFlagBits ha
   _importFd->fd= fd;
 }
 
-
+/*
 void VkoMemory::addVkImportMemoryWin32HandleInfoKHR(VkExternalMemoryHandleTypeFlagBits handleType, HANDLE handle, LPCWSTR name) {
-  if(_importWin32== nullptr)
+  VkImportMemoryWin32HandleInfoKHR *p= (VkImportMemoryWin32HandleInfoKHR *)_importWin32;
+  if(_importWin32== nullptr) {
     _importWin32= new VkImportMemoryWin32HandleInfoKHR;
-  else {
-    if(_importWin32->name) delete[] _importWin32->name; _importWin32->name= nullptr;
+    p= (VkImportMemoryWin32HandleInfoKHR *)_importWin32;
+  } else {
+    if(p->name) delete[] p->name; p->name= nullptr;
   }
-  _importWin32->sType= VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
-  _importWin32->handleType= handleType;
-  _importWin32->handle= handle;
+  p->sType= VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
+  p->handleType= handleType;
+  p->handle= handle;
 
-  _importWin32->name= (LPCWSTR)new uint8_t[vkObject::_strlen16((char16_t *)name)];
-  vkObject::_strcpy16((char16_t *)_importWin32->name, (char16_t *)name);
+  p->name= (LPCWSTR)new uint8_t[vkObject::_strlen16((char16_t *)name)];
+  vkObject::_strcpy16((char16_t *)p->name, (char16_t *)name);
 }
-
+*/
 
 void VkoMemory::addVkMemoryAllocateFlagsInfo(VkMemoryAllocateFlags flags, uint32_t deviceMask) {
   if(_flagsInfo== nullptr)
@@ -167,35 +178,39 @@ bool VkoMemory::build() {
   allocInfo.pNext= nullptr;
   const void **_pNext= &allocInfo.pNext;
 
-  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryAllocateInfo
+  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap12.html#VkExportMemoryAllocateInfo
   if(_exportInfo!= nullptr) {
     *_pNext= _exportInfo;
     _exportInfo->pNext= nullptr;
     _pNext= &_exportInfo->pNext;
   }
 
-  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkExportMemoryWin32HandleInfoKHR
+  /*
+  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap12.html#VkExportMemoryWin32HandleInfoKHR
   if(_exportWin32!= nullptr) {
     *_pNext= _exportWin32;
-    _exportWin32->pNext= nullptr;
-    _pNext= &_exportWin32->pNext;
+    ((VkExportMemoryWin32HandleInfoKHR *)_exportWin32)->pNext= nullptr;
+    _pNext= &((VkExportMemoryWin32HandleInfoKHR *)_exportWin32)->pNext;
   }
+  */
 
-  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryFdInfoKHR
+  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap12.html#VkImportMemoryFdInfoKHR
   if(_importFd!= nullptr) {
     *_pNext= _importFd;
     _importFd->pNext= nullptr;
     _pNext= &_importFd->pNext;
   }
 
-  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkImportMemoryWin32HandleInfoKHR
+  /*
+  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap12.html#VkImportMemoryWin32HandleInfoKHR
   if(_importWin32!= nullptr) {
     *_pNext= _importWin32;
-    _importWin32->pNext= nullptr;
-    _pNext= &_importWin32->pNext;
+    ((VkImportMemoryWin32HandleInfoKHR *)_importWin32)->pNext= nullptr;
+    _pNext= &((VkImportMemoryWin32HandleInfoKHR *)_importWin32)->pNext;
   }
+  */
 
-  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap10.html#VkMemoryAllocateFlagsInfo
+  // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap12.html#VkMemoryAllocateFlagsInfo
   if(_flagsInfo!= nullptr) {
     *_pNext= _flagsInfo;
     _flagsInfo->pNext= nullptr;

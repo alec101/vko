@@ -1,5 +1,7 @@
 #include "../include/vkObject.h"
-
+#ifdef VKO_BE_CHATTY
+#include <stdio.h>
+#endif
 
 
 ///=======================///

@@ -71,6 +71,9 @@
     <ClInclude Include="..\include\vkoGlbFuncs.hpp">
       <Filter>INC</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\vkoPlatform.h">
+      <Filter>INC</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\vkObject.cpp">
