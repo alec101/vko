@@ -10,7 +10,7 @@ public:
   VkRenderPass renderPass;    // vulkan render pass instance
   inline operator VkRenderPass() { return renderPass; }
 
-  // customisation funcs - add stuff to the renderpass / configure, then call build() to finalize
+  // customization funcs - add stuff to the renderpass / configure, then call build() to finalize
 
   void addAttachment(const VkAttachmentDescription *in_attDescription);
   void addAttachment2(VkAttachmentDescriptionFlags flags,          VkFormat            format,        VkSampleCountFlagBits samples,
@@ -41,6 +41,7 @@ public:
   void addSubpassColorAttachment(uint32_t in_subpass, uint32_t in_colorAtt, VkImageLayout in_colorLayout,
                                   bool enableResolve,      uint32_t in_resolveAtt,      VkImageLayout in_resolveLayout,
                                   bool enableDepthStencil, uint32_t in_depthStencilAtt, VkImageLayout in_depthStencilLayout);
+
   // <in_subpass>:    index of the subpass that will add the color attachment
   // <in_color>:      color attachment
   // <in_resolve>/<in_depthStencil>: resolve and depth/stencil attachments; if left nullptr, the color attachment won't use them
@@ -57,7 +58,6 @@ public:
   // !!! Care should be taken to avoid a data race here;
   // !!! if any subpasses access attachments with overlapping memory locations,
   // !!! and one of those accesses is a write, a subpass dependency needs to be included between them.
-
   void addSubpassDependency(uint32_t             srcSubpass,    uint32_t             dstSubpass, 
                             VkPipelineStageFlags srcStageMask,  VkPipelineStageFlags dstStageMask,
                             VkAccessFlags        srcAccessMask, VkAccessFlags        dstAccessMask,
@@ -74,9 +74,9 @@ public:
   // enable render pass multiview. https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap7.html#VkRenderPassMultiviewCreateInfo
   // there is not much info on all of this.
   // all pointers are copied from, so if they're allocated, they can be safely deleted after calling the func
-  void addMultiView(uint32_t subpassCount, const uint32_t *pViewMasks,
-                              uint32_t dependencyCount, const int32_t *pViewOffsets,
-                              uint32_t correlationMaskCount, const uint32_t *pCorrelationMasks);
+  void addMultiView(uint32_t subpassCount,         const uint32_t *pViewMasks,
+                    uint32_t dependencyCount,      const int32_t *pViewOffsets,
+                    uint32_t correlationMaskCount, const uint32_t *pCorrelationMasks);
 
   inline void disableMultiView() { _multiView.delData(); }
 
@@ -126,7 +126,7 @@ private:
     bool enableResolve;
     bool enableDepthStencil;
     inline _Subpass() { delData(); }
-    inline void delData() { enableResolve= false; enableDepthStencil= false; }
+    inline void delData() { enableResolve= false; enableDepthStencil= false; flags= 0; }
   };
 
   class _ColorAtt: public chainData {

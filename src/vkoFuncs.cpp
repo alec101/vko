@@ -1,8 +1,15 @@
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN 1
+#endif
+
 #include "../include/vkoPlatform.h"
 #include "../include/vkObject.h"
 
 // dynamic library link
 #ifdef OS_WIN
+#ifndef WIN32_LEAN_AND_MEAN
+//#define WIN32_LEAN_AND_MEAN 1
+#endif
 #include <Windows.h>
 #endif
 
@@ -14,11 +21,9 @@
 
 /// there is a conflict with some WIN32 defines for CreateSemaphore and CreateEvent
 #ifdef CreateSemaphore
-#define OSICREATESEMAPHOREDEF CreateSemaphore
 #undef CreateSemaphore
 #endif
 #ifdef CreateEvent
-#define OSICREATEEVENT CreateEvent
 #undef CreateEvent
 #endif
 

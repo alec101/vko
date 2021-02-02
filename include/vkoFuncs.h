@@ -2,11 +2,9 @@
 
 /// there is a conflict with some WIN32 defines for CreateSemaphore and CreateEvent
 #ifdef CreateSemaphore
-#define OSICREATESEMAPHOREDEF CreateSemaphore
 #undef CreateSemaphore
 #endif
 #ifdef CreateEvent
-#define OSICREATEEVENT CreateEvent
 #undef CreateEvent
 #endif
 
@@ -38,7 +36,7 @@ struct VkoFuncs {
   VKO_FUNC(GetPhysicalDeviceProperties);
   VKO_FUNC(GetPhysicalDeviceQueueFamilyProperties);
   VKO_FUNC(GetPhysicalDeviceMemoryProperties);
-  //VKO_FUNC(GetInstanceProcAddr);                       // 1.0 critical func, avaible from start
+  //VKO_FUNC(GetInstanceProcAddr);                     // 1.0 critical func, avaible from start
   VKO_FUNC(GetDeviceProcAddr);
   VKO_FUNC(CreateDevice);
   VKO_FUNC(DestroyDevice);

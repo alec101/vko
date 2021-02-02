@@ -4,7 +4,7 @@
 
 // if this define exists, VKO will create all the global vulkan functions, linked by instance,
 //   and the vkObject::glb pointer that can be changed to make global funcs call a specific device/vko
-#define VKO_USE_GLOBAL_FUNCS 1
+//#define VKO_USE_GLOBAL_FUNCS 1
 
 // prints various info on console - helps for info/debug
 #if !defined NDEBUG
@@ -15,7 +15,6 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
-//#include <stdio.h>
 #include <stdint.h>
 #include "chainList.hpp"
 
@@ -32,20 +31,6 @@
 #endif
 
 
-/*  WIP, trying to get rid of <windows.h>-type of headers
-#ifdef OS_WIN
-#define VK_USE_PLATFORM_WIN32_KHR 1
-#endif
-#ifdef OS_LINUX
-//#define VK_USE_PLATFORM_WAYLAND_KHR 1   <<<<<<<<<< FUTURE?
-//#define VK_USE_PLATFORM_XCB_KHR 1
-#define VK_USE_PLATFORM_XLIB_KHR 1
-#define VK_USE_PLATFORM_XLIB_XRANDR_EXT 1
-#endif
-#ifdef OS_MAC
-#define VK_USE_PLATFORM_MACOS_MVK 1
-#endif
-*/
 
 
 
@@ -55,7 +40,6 @@
 #include VKO_USE_VULKAN_INCLUDE_DIR
 #else
 #include "vulkan.h"
-//#include "../extlib/vulkan/vulkan.h"
 #endif
 
 struct VkoPhysicalDevice;
@@ -70,11 +54,9 @@ class vkObject;
 
 #include "vkoSwapchain.h"
 #include "vkoCommandPool.h"
-//#include "vkoCommandBuffer.h"
 #include "vkoShader.h"
 
 #include "vkoSetLayout.h"
-//#include "vkoSet.h"
 #include "vkoDescriptorPool.h"
 #include "vkoDynamicSet.h"
 
@@ -86,7 +68,6 @@ class vkObject;
 
 class VkoSemaphore;
 class VkoFence;
-//struct VkoQueue;
 struct VkoFuncs;
 
 struct VkoQueue {
@@ -128,7 +109,7 @@ public:
     
     // [def: 1, 1, 0] requested vulkan version; if you set appInfo::apiVersion directly, this is ignored
     struct VkoVer { uint32_t major, minor, patch; };
-    inline static VkoVer &versionRequest() { static VkoVer v= {1, 1, 0 }; return v; }
+    inline static VkoVer &versionRequest() { static VkoVer v= { 1, 1, 0 }; return v; }
 
     // instanceInfo.pApplicationInfo points to this. if apiVersion is 0, version struct is used
     inline static VkApplicationInfo &appInfo() { static VkApplicationInfo _appInfo= { VK_STRUCTURE_TYPE_APPLICATION_INFO, nullptr, 0, 0, 0, 0 }; return _appInfo; }
@@ -328,7 +309,6 @@ private:
   void _populateVkQueue();
   
 
-  //void _linkLibAndCriticalFuncs(VkoFuncs *in_f);
   void _linkLib();
   void _linkCriticalFuncs(VkoFuncs *in_f);
   void _linkInstanceFuncs(VkoFuncs *in_f, VkInstance in_i);
@@ -348,17 +328,12 @@ private:
   
 
   static void _memcpy(void *dst, const void *src, uint64_t n);  // copies 8 bytes at a time
-  
   static uint32_t _strlen8(const char *x);
   static uint32_t _strlen16(const char16_t *s);
-
   static void _strcpy8(char *dst, const char *src);
   static void _strcpy16(char16_t *dst, const char16_t *src);
-
   static int32_t _strcmp8(const char *, const char *);
-
   static void _strCopy(char **out_dst, const char *src);        // deletes <dst> if not null, allocates <dst> then copyes <src> into <dst>
-
 
   friend class VkoSemaphore;
   friend class VkoShader;
@@ -372,7 +347,6 @@ private:
 #include "vkoSemaphore.h"
 #include "vkoFence.h"
 #include "vkoCommandBuffer.h"
-//inline void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemaphore in_finishDrawing) { _presentInfo.pWaitSemaphores= &in_finishDrawing, _presentInfo.pImageIndices= &in_surfaceIndex; _vko->QueuePresentKHR(in_queue, &_presentInfo); };   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
 
 
 void VkoCommandPool::reset(VkCommandPoolResetFlags in_flags) { _vko->ResetCommandPool(*_vko, commandPool, in_flags); }

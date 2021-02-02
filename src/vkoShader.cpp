@@ -604,7 +604,7 @@ bool VkoShader::build() {
     
     VkComputePipelineCreateInfo compInfo;
     // MAKEME
-
+    
 
 
 

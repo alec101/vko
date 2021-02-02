@@ -3,11 +3,9 @@
 
 /// there is a conflict with some WIN32 defines for CreateSemaphore and CreateEvent
 #ifdef CreateSemaphore
-#define OSICREATESEMAPHOREDEF CreateSemaphore
 #undef CreateSemaphore
 #endif
 #ifdef CreateEvent
-#define OSICREATEEVENT CreateEvent
 #undef CreateEvent
 #endif
 

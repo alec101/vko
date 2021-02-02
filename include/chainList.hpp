@@ -26,7 +26,7 @@ public:
 
 /// manipulator class, no derives necesary, just make a var from this one
 struct chainList {
-  chainData *first, *last;    // last is important for add(), else there has to be a passthru till the last member (if the list is 100k long?)
+  chainData *first, *last;    // last is important for add(), else there has to be a passthru till the last member
   uint32_t nrNodes;           // VERY USEFUL - number of nodes in list
 
   // fast funcs
