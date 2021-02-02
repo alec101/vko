@@ -59,20 +59,12 @@ void vkObject::_linkLib() {
   // link to Vulkan library
   if(*_vulkanLib()== nullptr) {
     #if defined(OS_WIN)
-    //_vulkanLib= LoadLibrary(str8("vulkan-1.dll"));
     *_vulkanLib()= LoadLibrary(VKO_STR2WIN("vulkan-1.dll"));
     #elif defined(OS_LINUX) || defined(OS_MAC)
-
-    linux/mac is WIP, but there's nothing much left do to here
-
-    *_vulkanLib()= dlopen("libvulkan.so.1.1.92.osi", RTLD_NOW);
-
+    *_vulkanLib()= dlopen("libvulkan.so.1", RTLD_NOW);
     #endif
   }
-
   #endif /// vulkan 1,0
-
-
 
   if(*_vulkanLib()== nullptr) { errorText= "Couldn't open vulkan library"; return; }
 }

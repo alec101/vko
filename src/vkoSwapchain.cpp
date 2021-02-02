@@ -55,7 +55,7 @@ void VkoSwapchain::delData() {
   swapInfo.imageColorSpace= VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
   
   // imageExtent is the size (in pixels) of the swapchain image(s). The behavior is platform-dependent if the image extent
-  //   does not match the surface’s currentExtent as returned by vkGetPhysicalDeviceSurfaceCapabilitiesKHR.
+  //   does not match the surfaceï¿½s currentExtent as returned by vkGetPhysicalDeviceSurfaceCapabilitiesKHR.
   // Note:
   //  On some platforms, it is normal that maxImageExtent may become (0, 0), for example when the window is minimized.
   //  In such a case, it is not possible to create a swapchain due to the Valid Usage requirements.
@@ -83,6 +83,7 @@ void VkoSwapchain::delData() {
   _presentInfo.pNext= nullptr;
   _presentInfo.waitSemaphoreCount= 1;
   _presentInfo.swapchainCount= 1;
+  _presentInfo.pResults= nullptr;
   
   _oldSwapchain= 0;
 
@@ -190,7 +191,7 @@ bool VkoSwapchain::build() {
   "To avoid tearing, an application should coordinate access with the presentation engine.
   This requires presentation engine timing information through platform-specific mechanisms
   and ensuring that color attachment writes are made available during the portion
-  of the presentation engine’s refresh cycle they are intended for."
+  of the presentation engineï¿½s refresh cycle they are intended for."
   */
 
   // swapchain - https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#_wsi_swapchain
@@ -362,7 +363,6 @@ void VkoSwapchain::queueShow(uint32_t in_surfaceIndex, VkQueue in_queue, VkSemap
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap29.html#VkPresentInfoKHR
   
   _presentInfo.pWaitSemaphores= &in_finishDrawing, _presentInfo.pImageIndices= &in_surfaceIndex;
-   
   VkResult res= _vko->QueuePresentKHR(in_queue, &_presentInfo);
 
   rebuildRequired= (res== VK_SUCCESS? false: true);

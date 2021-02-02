@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="100">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="HeaderFiles" displayName="INC" projectFiles="true">
+      <itemPath>../include/chainList.hpp</itemPath>
+      <itemPath>../include/vkObject.h</itemPath>
+      <itemPath>../include/vkoBuffer.h</itemPath>
+      <itemPath>../include/vkoCommandBuffer.h</itemPath>
+      <itemPath>../include/vkoCommandPool.h</itemPath>
+      <itemPath>../include/vkoDescriptorPool.h</itemPath>
+      <itemPath>../include/vkoDynamicSet.h</itemPath>
+      <itemPath>../include/vkoExt.h</itemPath>
+      <itemPath>../include/vkoFence.h</itemPath>
+      <itemPath>../include/vkoFramebuffer.h</itemPath>
+      <itemPath>../include/vkoFuncs.h</itemPath>
+      <itemPath>../include/vkoGlbFuncs.hpp</itemPath>
+      <itemPath>../include/vkoImage.h</itemPath>
+      <itemPath>../include/vkoMemory.h</itemPath>
+      <itemPath>../include/vkoPlatform.h</itemPath>
+      <itemPath>../include/vkoRenderPass.h</itemPath>
+      <itemPath>../include/vkoSampler.h</itemPath>
+      <itemPath>../include/vkoSemaphore.h</itemPath>
+      <itemPath>../include/vkoSetLayout.h</itemPath>
+      <itemPath>../include/vkoShader.h</itemPath>
+      <itemPath>../include/vkoSwapchain.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="SourceFiles" displayName="SRC" projectFiles="true">
+      <itemPath>../src/vkObject.cpp</itemPath>
+      <itemPath>../src/vkoBuffer.cpp</itemPath>
+      <itemPath>../src/vkoCommandBuffer.cpp</itemPath>
+      <itemPath>../src/vkoCommandPool.cpp</itemPath>
+      <itemPath>../src/vkoDescriptorPool.cpp</itemPath>
+      <itemPath>../src/vkoDynamicSet.cpp</itemPath>
+      <itemPath>../src/vkoExt.cpp</itemPath>
+      <itemPath>../src/vkoFence.cpp</itemPath>
+      <itemPath>../src/vkoFramebuffer.cpp</itemPath>
+      <itemPath>../src/vkoFuncs.cpp</itemPath>
+      <itemPath>../src/vkoImage.cpp</itemPath>
+      <itemPath>../src/vkoMemory.cpp</itemPath>
+      <itemPath>../src/vkoRenderPass.cpp</itemPath>
+      <itemPath>../src/vkoSampler.cpp</itemPath>
+      <itemPath>../src/vkoSemaphore.cpp</itemPath>
+      <itemPath>../src/vkoSetLayout.cpp</itemPath>
+      <itemPath>../src/vkoShader.cpp</itemPath>
+      <itemPath>../src/vkoSwapchain.cpp</itemPath>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="lin64.dbg" type="3">
+      <toolsSet>
+        <compilerSet>CLang|CLang</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <incDir>
+            <pElem>../..</pElem>
+            <pElem>../../Vulkan-Headers/include/vulkan</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>../..</pElem>
+            <pElem>../../Vulkan-Headers/include/vulkan</pElem>
+          </incDir>
+        </ccTool>
+        <archiverTool>
+          <output>../lib/vko.lin64.dbg.so</output>
+        </archiverTool>
+      </compileType>
+      <item path="../include/chainList.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkObject.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoBuffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoCommandBuffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoCommandPool.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoDescriptorPool.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoDynamicSet.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoExt.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoFence.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoFramebuffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoFuncs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoGlbFuncs.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoImage.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoMemory.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoPlatform.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoRenderPass.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoSampler.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoSemaphore.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoSetLayout.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoShader.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoSwapchain.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/vkObject.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoBuffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoCommandBuffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoCommandPool.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoDescriptorPool.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoDynamicSet.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoExt.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoFence.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoFramebuffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoFuncs.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoImage.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoMemory.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoRenderPass.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoSampler.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoSemaphore.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoSetLayout.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoShader.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoSwapchain.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+    </conf>
+    <conf name="lin64" type="3">
+      <toolsSet>
+        <compilerSet>CLang|CLang</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+          <incDir>
+            <pElem>../..</pElem>
+            <pElem>../../Vulkan-Headers/include/vulkan</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+          <incDir>
+            <pElem>../..</pElem>
+            <pElem>../../Vulkan-Headers/include/vulkan</pElem>
+          </incDir>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+        <archiverTool>
+          <output>../lib/vko.lin64.so</output>
+        </archiverTool>
+      </compileType>
+      <item path="../include/chainList.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkObject.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoBuffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoCommandBuffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoCommandPool.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoDescriptorPool.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoDynamicSet.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoExt.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoFence.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoFramebuffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoFuncs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoGlbFuncs.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoImage.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoMemory.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoPlatform.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoRenderPass.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoSampler.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoSemaphore.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoSetLayout.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoShader.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../include/vkoSwapchain.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/vkObject.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoBuffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoCommandBuffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoCommandPool.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoDescriptorPool.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoDynamicSet.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoExt.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoFence.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoFramebuffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoFuncs.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoImage.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoMemory.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoRenderPass.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoSampler.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoSemaphore.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoSetLayout.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoShader.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/vkoSwapchain.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

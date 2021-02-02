@@ -14,6 +14,7 @@
 #endif
 #ifdef __APPLE__
 #define VK_USE_PLATFORM_MACOS_MVK 1
+#define VK_USE_PLATFORM_METAL_EXT 1 <<OR THIS MAKEME;
 #endif
 
 

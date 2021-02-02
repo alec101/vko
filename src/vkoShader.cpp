@@ -100,7 +100,19 @@ void VkoShader::delData() {
   _depthBoundsDynamic= false;
 
   _stencilTestEnable= false;             // controls whether stencil testing is enabled. https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap25.html#fragops-stencil
-
+  
+  // <failOp> is a VkStencilOp value specifying the action performed on samples that fail the stencil test.
+  // <passOp> is a VkStencilOp value specifying the action performed on samples that pass both the depth and stencil tests.
+  // <depthFailOp> is a VkStencilOp value specifying the action performed on samples that pass the stencil test and fail the depth test.
+  // <compareOp> is a VkCompareOp value specifying the comparison operator used in the stencil test.
+  // <compareMask> selects the bits of the unsigned integer stencil values participating in the stencil test.
+  // <writeMask> selects the bits of the unsigned integer stencil values updated by the stencil test in the stencil framebuffer attachment.
+  // <reference> is an integer reference value that is used in the unsigned stencil comparison.
+  
+  _stencilTestOpBack= {};
+  _stencilTestOpFront= {};
+  
+  
   // color blend
   _colorBlendLogicOpEnable= false;
   _colorBlendLogicOp= VK_LOGIC_OP_COPY;
