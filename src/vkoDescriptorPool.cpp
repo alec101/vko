@@ -84,7 +84,7 @@ bool VkoDescriptorPool::build() {
 
 
 
-void VkoDescriptorPool::addDescriptorsFromLayout(VkoDescriptorSetLayout *in_layout, uint32_t in_nrSets) {
+void VkoDescriptorPool::cfgAddDescriptorsFromLayout(VkoDescriptorSetLayout *in_layout, uint32_t in_nrSets) {
 
   /// loop thru all descriptors in set layout
   for(VkoDescriptorLayout *d= (VkoDescriptorLayout *)in_layout->descriptors.first; d; d= (VkoDescriptorLayout *)d->next) {
@@ -125,7 +125,7 @@ void VkoDescriptorPool::_addDescriptorTypeToList(VkDescriptorType in_type, uint3
 }
 
 
-void VkoDescriptorPool::addManualDescriptors(VkDescriptorType in_type, uint32_t in_maxDescriptors) {
+void VkoDescriptorPool::cfgAddManualDescriptors(VkDescriptorType in_type, uint32_t in_maxDescriptors) {
   
   /// search for existing 
   for(uint32_t a= 0; a< _createInfo.poolSizeCount; a++)

@@ -22,7 +22,7 @@ public:
 
   // [def: 0]
   // VK_FENCE_CREATE_SIGNALED_BIT - specifies that the fence object is created in the signaled state
-  inline void setFlags(VkFenceCreateFlagBits in_flags) { _createInfo.flags= in_flags; }
+  inline void cfgFlags(VkFenceCreateFlagBits in_flags) { _createInfo.flags= in_flags; }
 
   // main usage funcs
 

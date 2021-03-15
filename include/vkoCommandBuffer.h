@@ -26,30 +26,30 @@ public:
 
   // Set buffer's level [def:VK_COMMAND_BUFFER_LEVEL_PRIMARY]
   // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap5.html#VkCommandBufferLevel
-  inline void setLevel(VkCommandBufferLevel in_level) { _level= in_level; }
+  inline void cfgLevel(VkCommandBufferLevel in_level) { _level= in_level; }
 
   // Set buffer's usage flags on submit [def:VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT]
   // usage flags: https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap5.html#VkCommandBufferUsageFlagBits
-  inline void setUsage(VkCommandBufferUsageFlags in_flags) { _beginInfo.flags= in_flags; }
+  inline void cfgUsage(VkCommandBufferUsageFlags in_flags) { _beginInfo.flags= in_flags; }
    
   // Adds a custom pre-created wait semaphore and specify what pipeline stages are afected by it
-  void addCustomWaitSemaphore(VkoSemaphore *in_s, VkPipelineStageFlags in_stages= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+  void cfgAddCustomWaitSemaphore(VkoSemaphore *in_s, VkPipelineStageFlags in_stages= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
 
   // Creates and adds a wait semaphore. You can specify what pipeline stages are affected by it
-  VkoSemaphore *addWaitSemaphore(VkPipelineStageFlags in_stages= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+  VkoSemaphore *cfgAddWaitSemaphore(VkPipelineStageFlags in_stages= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
 
   // Adds a custom pre-created signal semaphore. It's signaled when job is done
-  void addCustomSignalSemaphore(VkoSemaphore *in_s);
+  void cfgAddCustomSignalSemaphore(VkoSemaphore *in_s);
 
   // Creates and adds a signal semaphore. It's signaled when job is done
-  VkoSemaphore *addSignalSemaphore();
+  VkoSemaphore *cfgAddSignalSemaphore();
 
   // queue submit fence
-  inline void setFence(VkFence in_f) { fence= in_f; }
+  inline void cfgFence(VkFence in_f) { fence= in_f; }
 
   // if this is a secondary buffer, the inheritance should be filled in
   // https://www.khronos.org/registry/vulkan/specs/1.1/html/chap5.html#VkCommandBufferBeginInfo
-  void setInheritance(VkRenderPass renderPass,                           // [def:null]
+  void cfgInheritance(VkRenderPass renderPass,                           // [def:null]
                       uint32_t subpass,                                  // [def:0]
                       VkFramebuffer framebuffer,                         // [def:null]
                       VkBool32 occlusionQueryEnable,                     // [def:false]

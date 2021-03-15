@@ -141,7 +141,7 @@ void VkoShader::destroy() {
 
 VkoDescriptorSetLayout *VkoShader::addDescriptorSet(VkDescriptorSetLayoutCreateFlags in_flags) {
   VkoDescriptorSetLayout *p= _vko->objects.addDescriptorSetLayout();
-  p->setDescriptorSetFlags(in_flags);
+  p->cfgDescriptorSetFlags(in_flags);
 
   addDescriptorSetFromExisting(p);
 
@@ -154,7 +154,7 @@ void VkoShader::addDescriptor(uint32_t in_set, uint32_t in_binding, VkDescriptor
   if(descSet== nullptr) { _vko->result= VK_INCOMPLETE, _vko->errorText= "no descriptor set was added prior"; return; }
   if(in_set> nrDescSets- 1) { _vko->result= VK_INCOMPLETE, _vko->errorText= "<in_set> greater than current number of sets"; return; }
 
-  descSet[in_set]->addDescriptor(in_binding, in_type, in_count, in_stages, in_pImutableSampler);
+  descSet[in_set]->cfgAddDescriptor(in_binding, in_type, in_count, in_stages, in_pImutableSampler);
 }
 
 
@@ -554,11 +554,11 @@ void VkoShader::_vkPopulateSpecConsts(VkShaderStageFlags in_stage, VkSpecializat
 
 
 bool VkoShader::build() {
-  #define IX_MAX_SHADER_STAGES 6    // vert+tesc+tese+geom+frag+comp = 6; more can just be added
+  #define VKO_MAX_SHADER_STAGES 6    // vert+tesc+tese+geom+frag+comp = 6; more can just be added
   _vko->clearError();
   bool ret= false;
-  VkPipelineShaderStageCreateInfo ssInfo[IX_MAX_SHADER_STAGES];
-  VkSpecializationInfo sConsts[IX_MAX_SHADER_STAGES];
+  VkPipelineShaderStageCreateInfo ssInfo[VKO_MAX_SHADER_STAGES];
+  VkSpecializationInfo sConsts[VKO_MAX_SHADER_STAGES];
   uint32_t nrStages= 0;
   VkVertexInputAttributeDescription     *vertAttribs;           /// vertex attribs
   VkVertexInputBindingDescription       *vertBindings;          /// vertex bindings
@@ -572,7 +572,7 @@ bool VkoShader::build() {
   VkPipelineDynamicStateCreateInfo       dynStates;             /// dynamic parts of the pipeline
 
   /// setting all allocation pointers to nullptr, to know if they are to be deallocated
-  for(uint32_t a= 0; a< IX_MAX_SHADER_STAGES; a++)
+  for(uint32_t a= 0; a< VKO_MAX_SHADER_STAGES; a++)
     sConsts[a].pData= nullptr,             // INIT 1
     sConsts[a].pMapEntries= nullptr;       // INIT 2
   viewports.pViewports= nullptr;           // INIT 3
@@ -911,7 +911,7 @@ bool VkoShader::build() {
 
   Exit:
 
-  for(uint32_t a= 0; a< IX_MAX_SHADER_STAGES; a++) {
+  for(uint32_t a= 0; a< VKO_MAX_SHADER_STAGES; a++) {
     if(sConsts[a].pMapEntries)
       delete[] sConsts[a].pMapEntries;    // DEALLOC 1 (in vkPopulateSpecConsts())
     if(sConsts[a].pData)

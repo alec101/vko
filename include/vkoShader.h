@@ -9,8 +9,6 @@ class vkObject;
 class VkoDescriptorSetLayout;
 class VkoDescriptorLayout;
 
-//using namespace mlib;
-
 
 
 class VkoShader: public chainData {
@@ -441,8 +439,8 @@ private:
     VkDynamicState dyn;
   };
 
-  friend class ixShaderSys;
-  friend class Ix;
+  //friend class ixShaderSys;
+  //friend class Ix;
 };
 
 

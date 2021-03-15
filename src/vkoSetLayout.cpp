@@ -35,7 +35,7 @@ void VkoDescriptorSetLayout::destroy() {
 
 // funcs
 
-VkoDescriptorLayout *VkoDescriptorSetLayout::addDescriptor(uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler) {
+VkoDescriptorLayout *VkoDescriptorSetLayout::cfgAddDescriptor(uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler) {
   VkoDescriptorLayout *p= new VkoDescriptorLayout(this);
     p->binding= in_binding;
     p->type= in_type;

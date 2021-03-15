@@ -674,8 +674,16 @@ struct VkoFuncs {
   VKO_FUNC(CmdSetRayTracingPipelineStackSizeKHR);
   #endif
 
-
-
+  #ifdef VK_KHR_synchronization2
+  VKO_FUNC(CmdSetEvent2KHR);
+  VKO_FUNC(CmdResetEvent2KHR);
+  VKO_FUNC(CmdWaitEvents2KHR);
+  VKO_FUNC(CmdPipelineBarrier2KHR);
+  VKO_FUNC(CmdWriteTimestamp2KHR);
+  VKO_FUNC(QueueSubmit2KHR);
+  VKO_FUNC(CmdWriteBufferMarker2AMD);
+  VKO_FUNC(GetQueueCheckpointData2NV);
+  #endif
 
 
 

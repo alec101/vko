@@ -23,16 +23,12 @@ VkoImage::~VkoImage() {
 
 
 void VkoImage::delData() {
-  if(image) destroy();
+  if(image) { destroy(); image= 0; }
   offset= 0;
-  size= 0;
-
-  pNext.delData();
 
   memRequirements.alignment= 0;
   memRequirements.memoryTypeBits= 0;
   memRequirements.size= 0;
-
 
   // DEFAULT values
 
@@ -78,7 +74,7 @@ void VkoImage::destroy() {
 
 // settings
 
-void VkoImage::setSize(uint32_t in_dx, uint32_t in_dy, uint32_t in_depth, uint32_t in_mipLevels, uint32_t in_layers) {
+void VkoImage::cfgSize(uint32_t in_dx, uint32_t in_dy, uint32_t in_depth, uint32_t in_mipLevels, uint32_t in_layers) {
   createInfo.extent.width=  in_dx,
   createInfo.extent.height= in_dy,
   createInfo.extent.depth=  in_depth,
@@ -86,62 +82,54 @@ void VkoImage::setSize(uint32_t in_dx, uint32_t in_dy, uint32_t in_depth, uint32
   createInfo.arrayLayers=   in_layers;
 }
 
-void VkoImage::setSize2(VkExtent3D in_size, uint32_t in_mipLevels, uint32_t in_layers) {
+void VkoImage::cfgSize2(VkExtent3D in_size, uint32_t in_mipLevels, uint32_t in_layers) {
   createInfo.extent= in_size,
   createInfo.mipLevels= in_mipLevels,
   createInfo.arrayLayers= in_layers;
 }
 
-void VkoImage::setFlags(VkImageCreateFlags in_flags) {
+void VkoImage::cfgFlags(VkImageCreateFlags in_flags) {
   // https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap11.html#VkImageCreateFlagBits
   createInfo.flags= in_flags;
 }
 
-void VkoImage::setType(VkImageType in_type) {
+void VkoImage::cfgType(VkImageType in_type) {
   // https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap11.html#VkImageType
   createInfo.imageType= in_type;
 }
 
-void VkoImage::setFormat(VkFormat in_format) {
+void VkoImage::cfgFormat(VkFormat in_format) {
   // https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap11.html#VkImageType
   createInfo.format= in_format;
 }
 
-void VkoImage::setSamples(VkSampleCountFlagBits in_samples) {
+void VkoImage::cfgSamples(VkSampleCountFlagBits in_samples) {
   // https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap35.html#VkSampleCountFlagBits  
   createInfo.samples= in_samples;
 }
 
-void VkoImage::setTiling(VkImageTiling in_tiling) {
+void VkoImage::cfgTiling(VkImageTiling in_tiling) {
   // https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap11.html#VkImageTiling
   createInfo.tiling= in_tiling;
 }
 
-void VkoImage::setUsage(VkImageUsageFlags in_usage) {
+void VkoImage::cfgUsage(VkImageUsageFlags in_usage) {
   // https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap11.html#VkImageUsageFlagBits
   createInfo.usage= in_usage;
 }
 
-void VkoImage::setSharingMode(VkSharingMode in_sharing) {
+void VkoImage::cfgSharingMode(VkSharingMode in_sharing) {
   // https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap11.html#VkSharingMode
   createInfo.sharingMode= in_sharing;
 }
 
-void VkoImage::addFamily(uint32_t in_f) {
+void VkoImage::cfgAddFamily(uint32_t in_f) {
   uint32_t oldNr= createInfo.queueFamilyIndexCount;
   uint32_t *oldFamilies= (uint32_t *)createInfo.pQueueFamilyIndices;
 
   createInfo.queueFamilyIndexCount++;
   createInfo.pQueueFamilyIndices= nullptr;
   createInfo.pQueueFamilyIndices= new uint32_t[createInfo.queueFamilyIndexCount];
-
-  if(createInfo.pQueueFamilyIndices== nullptr) {
-    /// revert
-    createInfo.queueFamilyIndexCount= oldNr;
-    createInfo.pQueueFamilyIndices= oldFamilies;
-    oldFamilies= nullptr;
-    goto Exit;
-  }
 
   // copy old families
   if(oldNr)
@@ -150,12 +138,11 @@ void VkoImage::addFamily(uint32_t in_f) {
 
   ((uint32_t *)createInfo.pQueueFamilyIndices)[createInfo.queueFamilyIndexCount- 1]= in_f;
   
-Exit:
   if(oldFamilies) delete[] oldFamilies;
 }
 
 // same as addFamily, but sets all families in one go
-void VkoImage::setFamilies(uint32_t in_nrFamilies, const uint32_t *in_families) {
+void VkoImage::cfgFamilies(uint32_t in_nrFamilies, const uint32_t *in_families) {
   if(createInfo.pQueueFamilyIndices) {
     delete[] createInfo.pQueueFamilyIndices;
     createInfo.pQueueFamilyIndices= nullptr;
@@ -168,7 +155,7 @@ void VkoImage::setFamilies(uint32_t in_nrFamilies, const uint32_t *in_families) 
 
 }
 
-void VkoImage::setInitialLayout(VkImageLayout in_initial) {
+void VkoImage::cfgInitialLayout(VkImageLayout in_initial) {
   // https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap11.html#VkImageLayout
   createInfo.initialLayout= in_initial;
 }
@@ -181,19 +168,12 @@ void VkoImage::setInitialLayout(VkImageLayout in_initial) {
 ///======---------------------------------///
 
 bool VkoImage::build() {
-  bool ret= false;
-
-  createInfo.pNext= pNext.VkImageCreateInfo;
-
   if(!_vko->errorCheck(_vko->CreateImage(*_vko, &createInfo, *_vko, &image), "VkoImage::build(): Vulkan image create failed"))
-    goto Exit;
+    return false;
 
   _vko->GetImageMemoryRequirements(*_vko, *this, &memRequirements);
 
-  ret= true; // success
-
-Exit:
-  return ret;
+  return true;
 }
 
 

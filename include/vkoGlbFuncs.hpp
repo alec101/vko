@@ -1018,6 +1018,36 @@ inline VKAPI_ATTR void VKAPI_CALL vkGetPrivateDataEXT(VkDevice device, VkObjectT
   (*vkObject::glb())->GetPrivateDataEXT(device, objectType, objectHandle, privateDataSlot, pData); }
 #endif
 
+#ifdef VK_KHR_synchronization2
+inline VKAPI_ATTR void VKAPI_CALL vkCmdSetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, const VkDependencyInfoKHR *pDependencyInfo) {
+                (*vkObject::glb())->CmdSetEvent2KHR(                commandBuffer,         event,                            pDependencyInfo); }
+inline VKAPI_ATTR void VKAPI_CALL vkCmdResetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags2KHR stageMask) {
+                (*vkObject::glb())->CmdResetEvent2KHR(                commandBuffer,         event,                          stageMask); }
+inline VKAPI_ATTR void VKAPI_CALL vkCmdWaitEvents2KHR(VkCommandBuffer commandBuffer, uint32_t eventCount, const VkEvent *pEvents, const VkDependencyInfoKHR *pDependencyInfos) {
+                (*vkObject::glb())->CmdWaitEvents2KHR(                commandBuffer,          eventCount,                pEvents,                            pDependencyInfos); }
+inline VKAPI_ATTR void VKAPI_CALL vkCmdPipelineBarrier2KHR(VkCommandBuffer commandBuffer, const VkDependencyInfoKHR *pDependencyInfo) {
+                (*vkObject::glb())->CmdPipelineBarrier2KHR(                commandBuffer,                            pDependencyInfo); }
+inline VKAPI_ATTR void VKAPI_CALL vkCmdWriteTimestamp2KHR(VkCommandBuffer commandBuffer, VkPipelineStageFlags2KHR stage, VkQueryPool queryPool, uint32_t query) {
+                (*vkObject::glb())->CmdWriteTimestamp2KHR(                commandBuffer,                          stage,             queryPool,          query); }
+inline VKAPI_ATTR VkResult VKAPI_CALL vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2KHR *pSubmits, VkFence fence) {
+  return            (*vkObject::glb())->QueueSubmit2KHR(        queue,          submitCount,                         pSubmits,         fence); }
+inline VKAPI_ATTR void VKAPI_CALL vkCmdWriteBufferMarker2AMD(VkCommandBuffer commandBuffer, VkPipelineStageFlags2KHR stage, VkBuffer dstBuffer, VkDeviceSize dstOffset, uint32_t marker) {
+                (*vkObject::glb())->CmdWriteBufferMarker2AMD(                commandBuffer,                          stage,          dstBuffer,              dstOffset,          marker); }
+inline VKAPI_ATTR void VKAPI_CALL vkGetQueueCheckpointData2NV(VkQueue queue, uint32_t *pCheckpointDataCount, VkCheckpointData2NV *pCheckpointData) {
+                (*vkObject::glb())->GetQueueCheckpointData2NV(        queue,           pCheckpointDataCount,                      pCheckpointData); }
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

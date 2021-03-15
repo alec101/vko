@@ -37,13 +37,13 @@ public:
   // <in_stages>:  shader stages that will use this descriptor https://www.khronos.org/registry/vulkan/specs/1.1-khr-extensions/html/chap9.html#VkShaderStageFlagBits
   // <in_imutableSampler>: imutable / constant samplers, but i'd just not change them -.- imhho this ext is extra stuff that could be avoided. i think there's an extension for these
   // returns the created VkoDescriptor object.
-  VkoDescriptorLayout *addDescriptor(uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler= nullptr);
+  VkoDescriptorLayout *cfgAddDescriptor(uint32_t in_binding, VkDescriptorType in_type, uint32_t in_count, VkShaderStageFlags in_stages, VkSampler *in_pImutableSampler= nullptr);
 
   // this func is mainly for descriptor push
   //  VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR - specifies that descriptor sets must not be allocated using this layout,
   //  and descriptors are instead pushed by vkCmdPushDescriptorSetKHR
   // In specs, it says there should be only one set with dynamic push, in an array of sets that are to be used
-  inline void setDescriptorSetFlags(VkDescriptorSetLayoutCreateFlags in_flags) { _flags= in_flags; }
+  inline void cfgDescriptorSetFlags(VkDescriptorSetLayoutCreateFlags in_flags) { _flags= in_flags; }
 
   struct PNext {
     void *VkDescriptorSetLayoutCreateInfo;

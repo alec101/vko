@@ -20,19 +20,24 @@
 
 
 #ifndef _OS_TYPE
-#define _OS_TYPE
-#ifdef _WIN32
-#define OS_WIN 1
-#elif defined __linux__
-#define OS_LINUX 1
-#elif defined __APPLE__
-#define OS_MAC 1
+  #define _OS_TYPE
+    #ifdef _WIN32
+  #define OS_WIN 1
+  #elif defined __linux__
+    #define OS_LINUX 1
+  #elif defined __APPLE__
+    #define OS_MAC 1
+  #endif
 #endif
+
+
+
+
+#ifdef OS_WIN
+  #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN 1
+  #endif
 #endif
-
-
-
-
 
 #define VK_NO_PROTOTYPES 1
 

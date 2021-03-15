@@ -13,8 +13,8 @@ public:
 
   VkPipelineStageFlags stages; // [def:0] _IF_ applicable, what pipeline stages are affected by it
 
-  inline void addExport(VkExternalSemaphoreHandleTypeFlags in_handleTypes) { _handleTypes= in_handleTypes; }
-  //void addWin32Export(const SECURITY_ATTRIBUTES *in_pAttributes, DWORD in_dwAccess, LPCWSTR in_name);
+  inline void cfgAddExport(VkExternalSemaphoreHandleTypeFlags in_handleTypes) { _handleTypes= in_handleTypes; }
+  //void cfgAddWin32Export(const SECURITY_ATTRIBUTES *in_pAttributes, DWORD in_dwAccess, LPCWSTR in_name);
 
   struct PNext {
     void *VkExportSemaphoreCreateInfo;

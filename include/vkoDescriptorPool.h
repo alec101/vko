@@ -54,7 +54,7 @@ public:
 
   // [def:0] can be VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, allowing the use of vkFreeDescriptorSets;
   //         a pool without this flag up, will reset fast, and work faster, in general.
-  inline void setPoolFlags(VkDescriptorPoolCreateFlags in_flags) { _createInfo.flags= in_flags; }
+  inline void cfgPoolFlags(VkDescriptorPoolCreateFlags in_flags) { _createInfo.flags= in_flags; }
 
 
 
@@ -62,7 +62,7 @@ public:
   // <in_layout>: specify what set layout the pool should make sure can be allocated
   // <in_nrSets>: specify how many of those sets can be alocated from this pool
   // pool max sets is auto-updated
-  void addDescriptorsFromLayout(VkoDescriptorSetLayout *in_layout, uint32_t in_nrSets);
+  void cfgAddDescriptorsFromLayout(VkoDescriptorSetLayout *in_layout, uint32_t in_nrSets);
 
   // Enlarges the pool, so one or more sets with the specified layout can be allocated from it;
   // same as addDescriptorsFromLayout(..) but you specify a shader and a set index from that shader
@@ -70,7 +70,7 @@ public:
   // <in_setIndex>: specify the shader's set index
   // <in_nrSetsToAdd>: specify how many of that set you intend to allocate from the pool
   // pool max sets is auto-updated
-  inline void addDescriptorsFromLayout2(VkoShader *in_shader, uint32_t in_setIndex, uint32_t in_nrSetsToAdd) { return addDescriptorsFromLayout(in_shader->descSet[in_setIndex], in_nrSetsToAdd); }
+  inline void cfgAddDescriptorsFromLayout2(VkoShader *in_shader, uint32_t in_setIndex, uint32_t in_nrSetsToAdd) { return cfgAddDescriptorsFromLayout(in_shader->descSet[in_setIndex], in_nrSetsToAdd); }
 
 
 
@@ -79,11 +79,11 @@ public:
 
   // manually set the maximum amount of a certain descriptor type, the pool can handle. 
   // if you use this func, you MUST use setManualPoolMaxSets() too
-  void addManualDescriptors(VkDescriptorType in_type, uint32_t in_maxDescriptors);
+  void cfgAddManualDescriptors(VkDescriptorType in_type, uint32_t in_maxDescriptors);
 
   // [def:0] set the maximum number of descriptor sets that can be allocated from the pool
   // if left 0, it will automatically count them from the descriptor sets added in this pool, before calling build() func
-  inline void setManualPoolMaxSets(uint32_t in_maxSets) { _createInfo.maxSets= in_maxSets; }
+  inline void cfgManualPoolMaxSets(uint32_t in_maxSets) { _createInfo.maxSets= in_maxSets; }
 
   struct PNext {
     void *VkDescriptorPoolCreateInfo;

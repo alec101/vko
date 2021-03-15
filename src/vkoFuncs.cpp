@@ -7,9 +7,9 @@
 
 // dynamic library link
 #ifdef OS_WIN
-#ifndef WIN32_LEAN_AND_MEAN
+//#ifndef WIN32_LEAN_AND_MEAN
 //#define WIN32_LEAN_AND_MEAN 1
-#endif
+//#endif
 #include <Windows.h>
 #endif
 
@@ -943,7 +943,16 @@ void vkObject::_linkDeviceFuncs(VkoFuncs *in_f, VkInstance in_i, VkDevice in_d) 
   VKO_LINK_DEVICE_FUNC(CmdSetRayTracingPipelineStackSizeKHR);
   #endif
 
-
+  #ifdef VK_KHR_synchronization2
+  VKO_LINK_DEVICE_FUNC(CmdSetEvent2KHR);
+  VKO_LINK_DEVICE_FUNC(CmdResetEvent2KHR);
+  VKO_LINK_DEVICE_FUNC(CmdWaitEvents2KHR);
+  VKO_LINK_DEVICE_FUNC(CmdPipelineBarrier2KHR);
+  VKO_LINK_DEVICE_FUNC(CmdWriteTimestamp2KHR);
+  VKO_LINK_DEVICE_FUNC(QueueSubmit2KHR);
+  VKO_LINK_DEVICE_FUNC(CmdWriteBufferMarker2AMD);
+  VKO_LINK_DEVICE_FUNC(GetQueueCheckpointData2NV);
+  #endif
 
 
 

@@ -44,7 +44,7 @@ void VkoFramebuffer::destroy() {
 // configuration funcs
 ///-------------------///
 
-void VkoFramebuffer::addAttachment(VkImage in_image, VkFormat in_imageFormat, VkImageAspectFlags in_aspect, uint32_t in_baseLayer, uint32_t in_nrLayers) {
+void VkoFramebuffer::cfgAddAttachment(VkImage in_image, VkFormat in_imageFormat, VkImageAspectFlags in_aspect, uint32_t in_baseLayer, uint32_t in_nrLayers) {
   _Attachment *p= new _Attachment;
   p->image= in_image;
   p->imageFormat= in_imageFormat;

@@ -80,13 +80,10 @@ void VkoCommandBuffer::free() {
 
 
 // add a wait semaphore and what pipeline stages should wait for it [def:all].
-void VkoCommandBuffer::addCustomWaitSemaphore(VkoSemaphore *in_s, VkPipelineStageFlags in_stages) {
+void VkoCommandBuffer::cfgAddCustomWaitSemaphore(VkoSemaphore *in_s, VkPipelineStageFlags in_stages) {
   VkoSemaphore **oldList= waitSemaphores;
+  const VkSemaphore *oldSemaphores= _submitInfo.pWaitSemaphores;
   const VkPipelineStageFlags *oldStages= _submitInfo.pWaitDstStageMask;
-
-  if(waitSemaphores)                { delete[] waitSemaphores;                waitSemaphores=                nullptr; }
-  if(_submitInfo.pWaitSemaphores)   { delete[] _submitInfo.pWaitSemaphores;   _submitInfo.pWaitSemaphores=   nullptr; }
-  if(_submitInfo.pWaitDstStageMask) { delete[] _submitInfo.pWaitDstStageMask; _submitInfo.pWaitDstStageMask= nullptr; }
 
   nrWaitSemaphores++, _submitInfo.waitSemaphoreCount++;
 
@@ -106,26 +103,26 @@ void VkoCommandBuffer::addCustomWaitSemaphore(VkoSemaphore *in_s, VkPipelineStag
   ((VkPipelineStageFlags *)_submitInfo.pWaitDstStageMask)[nrWaitSemaphores- 1]= in_stages;
 
   if(oldList) delete[] oldList;
+  if(oldSemaphores) delete[] oldSemaphores;
   if(oldStages) delete[] oldStages;
 }
 
 
-VkoSemaphore *VkoCommandBuffer::addWaitSemaphore(VkPipelineStageFlags in_stages) {
+VkoSemaphore *VkoCommandBuffer::cfgAddWaitSemaphore(VkPipelineStageFlags in_stages) {
   VkoSemaphore *p= _vko->objects.addSemaphore();
   p->stages= in_stages;
   p->build();
 
-  addCustomWaitSemaphore(p, in_stages);
+  cfgAddCustomWaitSemaphore(p, in_stages);
 
   return p;
 }
 
 
 // add a signal semaphore. this is signaled when job is done
-void VkoCommandBuffer::addCustomSignalSemaphore(VkoSemaphore *in_s) {
+void VkoCommandBuffer::cfgAddCustomSignalSemaphore(VkoSemaphore *in_s) {
   VkoSemaphore **oldList= signalSemaphores;
-  if(signalSemaphores) { delete[] signalSemaphores; signalSemaphores= nullptr; }
-  if(_submitInfo.pSignalSemaphores) { delete[] _submitInfo.pSignalSemaphores; _submitInfo.pSignalSemaphores= nullptr; }
+  const VkSemaphore *oldSemaphores= _submitInfo.pSignalSemaphores;
 
   nrSignalSemaphores++, _submitInfo.signalSemaphoreCount++;
 
@@ -135,28 +132,29 @@ void VkoCommandBuffer::addCustomSignalSemaphore(VkoSemaphore *in_s) {
   // copy from old list
   for(uint32_t a= 0; a< nrSignalSemaphores- 1; a++)
     signalSemaphores[a]= oldList[a],
-    ((VkSemaphore *)_submitInfo.pSignalSemaphores)[a]= oldList[a]->semaphore;
+    ((VkSemaphore *)_submitInfo.pSignalSemaphores)[a]= oldSemaphores[a];
 
   // add new member
   signalSemaphores[nrSignalSemaphores- 1]= in_s;
   ((VkSemaphore *)_submitInfo.pSignalSemaphores)[nrSignalSemaphores- 1]= in_s->semaphore;
 
   if(oldList) delete[] oldList;
+  if(oldSemaphores) delete[] oldSemaphores;
 }
 
 
-VkoSemaphore *VkoCommandBuffer::addSignalSemaphore() {
+VkoSemaphore *VkoCommandBuffer::cfgAddSignalSemaphore() {
   VkoSemaphore *p= _vko->objects.addSemaphore();
   p->build();
 
-  addCustomSignalSemaphore(p);
+  cfgAddCustomSignalSemaphore(p);
 
   return p;
 }
 
 
 // if this is a secondary buffer, the inheritance should be filled in https://www.khronos.org/registry/vulkan/specs/1.1/html/chap5.html#VkCommandBufferBeginInfo
-void VkoCommandBuffer::setInheritance(VkRenderPass in_renderPass, uint32_t in_subpass, VkFramebuffer in_framebuffer, VkBool32 in_occlusionQueryEnable, VkQueryControlFlags in_queryFlags, VkQueryPipelineStatisticFlags in_pipelineStatistics) {
+void VkoCommandBuffer::cfgInheritance(VkRenderPass in_renderPass, uint32_t in_subpass, VkFramebuffer in_framebuffer, VkBool32 in_occlusionQueryEnable, VkQueryControlFlags in_queryFlags, VkQueryPipelineStatisticFlags in_pipelineStatistics) {
   _inheritanceInfo.renderPass=           in_renderPass;
   _inheritanceInfo.subpass=              in_subpass;
   _inheritanceInfo.framebuffer=          in_framebuffer;

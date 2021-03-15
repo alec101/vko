@@ -4,7 +4,12 @@
 #include <stdio.h>
 #endif
 
-
+// ext adding:
+// 1. vkoExt.h
+// 2. vkoExt.cpp
+// 3. vkoFuncs.h
+// 4. vkoFuncs.cpp
+// 5. vkoGlbFuncs.hpp
 
 
 bool VkoExtensions::populateAvailabilityInstance() {
@@ -479,6 +484,7 @@ VkoExtensions::VkoExtensions() {
   // 130
   device.raw[a++]= {"VK_EXT_shader_atomic_float",              261, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_EXT_shader_atomic_float
   device.raw[a++]= {"VK_KHR_shader_non_semantic_info",         294, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_shader_non_semantic_info
+  device.raw[a++]= {"VK_KHR_synchronization2",                 315, 1, 0, 0}; // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap50.html#VK_KHR_synchronization2
   //device.raw[a++]= {"",        000, 1, 0, 0}; // 
   device.raw[a++]= { nullptr, 0, 0, 0, 0}; // terminator
   
