@@ -74,7 +74,8 @@ public:
 
   // add / delete sets
 
-  VkoDynamicSet *addSet();
+  virtual VkoDynamicSet *addSet();
+  void addCustomSet (VkoDynamicSet *);  // alloc mem first, then call this func
   void delSet(VkoDynamicSet *);
 
   // class handling

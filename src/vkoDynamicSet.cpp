@@ -155,10 +155,7 @@ bool VkoDynamicSetPool::build() {
 
 
 
-
-
-
-VkoDynamicSet *VkoDynamicSetPool::addSet() {
+void VkoDynamicSetPool::addCustomSet(VkoDynamicSet *out_set) {
   // find a segment with free space
   VkoDynamicSetSegment *s= (VkoDynamicSetSegment *)_segments.first;
   while(s) {
@@ -170,15 +167,19 @@ VkoDynamicSet *VkoDynamicSetPool::addSet() {
   if(s== nullptr)
     s= _addSegment();
 
-  // create+ populate returned set
-  VkoDynamicSet *ret= new VkoDynamicSet;
-  ret->segment= s;
-  ret->set= s->freeSpc[s->freeSpcPeak- 1];
+  // populate set
+  out_set->segment= s;
+  out_set->set= s->freeSpc[s->freeSpcPeak- 1];
 
   // update segment
-  s->sets.add(ret);                         /// add set to the segment
+  s->sets.add(out_set);                         /// add set to the segment
   s->freeSpcPeak--;                         /// decrease segment free space
+}
 
+
+VkoDynamicSet *VkoDynamicSetPool::addSet() {
+  VkoDynamicSet *ret= new VkoDynamicSet;
+  addCustomSet(ret);
   return ret;
 }
 
