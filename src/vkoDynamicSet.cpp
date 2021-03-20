@@ -20,7 +20,7 @@ VkoDynamicSetPool::VkoDynamicSetPool(vkObject *in_parent): _vko(in_parent) {
 
 VkoDynamicSetPool::~VkoDynamicSetPool() {
   destroy();
-  if(_descriptorType) delete[] _descriptorType;
+  if(_descriptorType) { delete[] _descriptorType; _descriptorType= nullptr; }
 }
 
 
