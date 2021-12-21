@@ -51,7 +51,7 @@ void VkoShader::delData() {
   pNext.delData();
 
   renderPass= VK_NULL_HANDLE;
-  subpass= VK_NULL_HANDLE;
+  subpass= 0; // VK_NULL_HANDLE; NULL_HANDLE was changed from 0 to nullptr
   nrDescSets= 0;
 
   /// input assembly
